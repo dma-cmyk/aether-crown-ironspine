@@ -1,0 +1,174 @@
+{
+	"format": 1,
+	"id": "relay_strike",
+	"order": 2,
+	"title": "北の中継塔",
+	"subtitle": "Silence the Relay",
+	"description": "前線の West Foundry から北西の橋を渡り、北の中継塔を奪う。ヴァルケシュの反撃に耐えて3分間守り抜けば勝利。",
+	"map": "ironspine",
+	"next": "iron_tide",
+	"victory_text": "The relay falls silent. The Dominion is blind.",
+	"defeat_text": "The strike was scattered in the north.",
+	"teams": {"0": {"material": 700, "aether": 350}, "1": {"aggression": 0.5}},
+	"vars": {"phase": 1},
+	"map_start": false,
+	"start": {
+		"buildings": [
+			{"id": "citadel", "team": 0, "at": [-152.0, 152.0], "facing": 135},
+			{"id": "barracks", "team": 0, "at": [-168.0, 116.0], "facing": 135},
+			{"id": "citadel", "team": 1, "at": [152.0, -152.0], "facing": -45},
+			{"id": "barracks", "team": 1, "at": [168.0, -116.0], "facing": -45},
+			{"id": "foundry", "team": 1, "at": [116.0, -168.0], "facing": -45}
+		],
+		"units": [
+			{"id": "aetherguard", "team": 1, "at": [58.0, -50.0], "facing": -45},
+			{"id": "aetherguard", "team": 1, "at": [50.0, -60.0], "facing": -45},
+			{"id": "walker", "team": 1, "at": [66.0, -62.0], "facing": -45},
+			{"id": "artificer", "team": 1, "at": [134.0, -136.0], "facing": -45},
+			{"id": "aetherguard", "team": 1, "at": [140.0, -126.0], "facing": -45},
+			{"id": "walker", "team": 0, "at": [-132, -12], "facing": 135},
+			{"id": "walker", "team": 0, "at": [-124, -4], "facing": 135},
+			{"id": "aetherguard", "team": 0, "at": [-140, -4], "facing": 135},
+			{"id": "aetherguard", "team": 0, "at": [-132, 4], "facing": 135},
+			{"id": "aetherguard", "team": 0, "at": [-146, -16], "facing": 135},
+			{"id": "mortar", "team": 0, "at": [-148, 6], "facing": 135},
+			{"id": "artificer", "team": 0, "at": [-152, 0], "facing": 135},
+			{"id": "artificer", "team": 0, "at": [-156, -6], "facing": 135}
+		]
+	},
+	"objectives": {
+		"title": "Silence the Relay",
+		"subtitle": "Cut the Dominion's eyes.",
+		"list": [
+			{"id": "take", "text": "北の中継塔を占領する", "done_when": {"type": "fired", "trigger": "relay_taken"}},
+			{
+				"id": "hold",
+				"text": "中継塔を守り抜く  {timer:relay_taken:180}",
+				"done_when": {"type": "fired", "trigger": "relay_held"}
+			}
+		]
+	},
+	"triggers": [
+		{
+			"id": "intro",
+			"when": {"type": "time", "at": 0},
+			"do": [
+				{"type": "site", "id": "west_foundry", "team": 0},
+				{"type": "site", "id": "north_relay", "team": 1},
+				{
+					"type": "spawn",
+					"team": 1,
+					"units": {"aetherguard": 3, "walker": 1},
+					"at": [5, -138],
+					"facing": -45,
+					"tag": "guard",
+					"order": "hold",
+					"target": [5, -138],
+					"spread": 6,
+					"difficulty_scale": true,
+					"columns": 3
+				},
+				{"type": "banner", "title": "SILENCE THE RELAY", "text": "北の中継塔を奪い、ヴァルケシュの連絡網を断て。", "seconds": 7},
+				{"type": "advisor", "text": "SPEED IS\nA WEAPON."},
+				{"type": "focus", "at": [5, -152]}
+			]
+		},
+		{
+			"id": "hint1",
+			"when": {"type": "time", "at": 4},
+			"do": [{"type": "message", "text": "ヒント：北西の橋を渡った先に北の中継塔がある。守備隊を片付けてから工兵を輪に入れると速く占領できる。", "at": [5, -152]}]
+		},
+		{
+			"id": "hint2",
+			"when": {"type": "time", "at": 25},
+			"do": [{"type": "message", "text": "ヒント：臼砲は D で展開すると射程が 72m まで伸びる。守備隊を遠くから叩こう。"}]
+		},
+		{
+			"id": "relay_taken",
+			"when": {"type": "sites", "team": 0, "id": "north_relay"},
+			"do": [
+				{"type": "banner", "title": "RELAY SEIZED", "text": "ヴァルケシュが奪い返しに来る。3分間守り抜け。", "seconds": 6},
+				{"type": "sound", "name": "objective"},
+				{"type": "ai", "aggression": 0}
+			]
+		},
+		{
+			"id": "counter1",
+			"when": {"type": "time", "since": "relay_taken", "at": 35},
+			"do": [
+				{
+					"type": "spawn",
+					"team": 1,
+					"units": {"aetherguard": 4, "walker": 1},
+					"at": [96, -150],
+					"facing": -90,
+					"tag": "counter",
+					"order": "attack_move",
+					"target": [5, -152],
+					"spread": 6,
+					"difficulty_scale": true
+				},
+				{"type": "message", "text": "ヴァルケシュの反撃部隊が中継塔へ向かっている！", "at": [60, -150], "sound": "alert"}
+			]
+		},
+		{
+			"id": "counter2",
+			"when": {"type": "time", "since": "relay_taken", "at": 95},
+			"do": [
+				{
+					"type": "spawn",
+					"team": 1,
+					"units": {"aetherguard": 4, "walker": 2, "mortar": 1},
+					"at": [96, -150],
+					"facing": -90,
+					"tag": "counter",
+					"order": "attack_move",
+					"target": [5, -152],
+					"spread": 6,
+					"difficulty_scale": true
+				},
+				{"type": "message", "text": "第2の反撃部隊が接近中！", "at": [60, -150], "sound": "alert"}
+			]
+		},
+		{
+			"id": "counter3",
+			"when": {"type": "time", "since": "relay_taken", "at": 150},
+			"do": [
+				{
+					"type": "spawn",
+					"team": 1,
+					"units": {"airship": 1, "aetherguard": 3},
+					"at": [110, -120],
+					"facing": -90,
+					"tag": "counter",
+					"order": "attack_move",
+					"target": [5, -152],
+					"spread": 6,
+					"difficulty_scale": true
+				},
+				{"type": "message", "text": "飛行艦が中継塔に向かっている！", "at": [70, -130], "sound": "alert"}
+			]
+		},
+		{
+			"id": "relay_lost",
+			"when": {
+				"type": "all",
+				"of": [
+					{"type": "fired", "trigger": "relay_taken"},
+					{"type": "sites", "team": 0, "id": "north_relay", "cmp": "==", "value": 0}
+				]
+			},
+			"repeat": true,
+			"cooldown": 30,
+			"do": [{"type": "message", "text": "中継塔を奪われた！取り返せ。", "at": [5, -152], "sound": "alert"}]
+		},
+		{
+			"id": "relay_held",
+			"when": {
+				"type": "all",
+				"of": [{"type": "time", "since": "relay_taken", "at": 180}, {"type": "sites", "team": 0, "id": "north_relay"}]
+			},
+			"do": [{"type": "victory"}]
+		}
+	]
+}

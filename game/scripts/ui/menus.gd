@@ -10,6 +10,7 @@ var end_box: PanelContainer
 var end_title: Label
 var end_sub: Label
 var end_stats: Label
+var next_button: Button
 
 
 func setup(h: HUD) -> void:
@@ -26,8 +27,9 @@ func setup(h: HUD) -> void:
 	settings_box = SettingsPanel.make(func(): settings_box.visible = false; pause_box.visible = true)
 	add_child(settings_box)
 	settings_box.visible = false
-	end_box = _box("VICTORY", [["もう一度", _restart], ["タイトルへ戻る", _title]])
+	end_box = _box("VICTORY", [["次のミッションへ", _next], ["もう一度", _restart], ["タイトルへ戻る", _title]])
 	var v := end_box.get_child(0) as VBoxContainer
+	next_button = v.get_child(1) as Button
 	end_title = v.get_child(0) as Label
 	end_sub = UITheme.label("", 18, UITheme.GOLD, UITheme.italic_font())
 	end_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -87,7 +89,10 @@ func show_end(victory: bool) -> void:
 	var p := w.player(0)
 	end_title.text = "VICTORY" if victory else "DEFEAT"
 	end_title.add_theme_color_override("font_color", UITheme.GOLD if victory else UITheme.RED)
-	end_sub.text = "The Crown ascends. Ironspine stands." if victory else "The Ironspine has fallen silent."
+	var scn: Scenario = hud.match_node.scenario
+	end_sub.text = str(scn.data.get("victory_text" if victory else "defeat_text",
+			"The Crown ascends. Ironspine stands." if victory else "The Ironspine has fallen silent."))
+	next_button.visible = victory and scn.next_path() != ""
 	var t := int(w.match_time)
 	end_stats.text = "戦闘時間 %02d:%02d\n生産 %d   損失 %d   撃破 %d\n占領した拠点 %d" % [t / 60, t % 60, p.stats["built"], p.stats["lost"], p.stats["kills"], p.stats["captured"]]
 	end_box.visible = true
@@ -110,6 +115,11 @@ func _open_settings() -> void:
 func _restart() -> void:
 	get_tree().paused = false
 	Game.start_match()
+
+
+func _next() -> void:
+	get_tree().paused = false
+	Game.start_match(hud.match_node.scenario.next_path())
 
 
 func _title() -> void:

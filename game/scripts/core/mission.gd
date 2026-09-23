@@ -23,7 +23,7 @@ var _triggers: Array[Dictionary] = []
 var _victory := {}
 var _defeat := {}
 var _tick := 0.0
-var _tags := RegEx.create_from_string("\\{(var|countdown|sites|units):([^}]*)\\}")
+var _tags := RegEx.create_from_string("\\{(var|countdown|timer|sites|units):([^}]*)\\}")
 
 
 func setup(w: World, a: EnemyAI, h: HUD, s: Scenario) -> void:
@@ -112,6 +112,8 @@ func _eval(c: Dictionary) -> bool:
 		return false
 	match str(c["type"]):
 		"time":
+			if c.has("since"):
+				return fired.has(c["since"]) and world.match_time - float(fired[c["since"]]) >= float(c["at"])
 			return world.match_time >= float(c["at"])
 		"var":
 			return _cmp(get_var(c["name"]), c)
@@ -228,6 +230,10 @@ func _act(a: Dictionary) -> void:
 			focus_point = _flat(a["at"])
 		"sound":
 			world.sfx.play_ui(str(a["name"]), float(a.get("volume_db", 0.0)))
+		"site":
+			for s in world.sites:
+				if s.site_id == str(a["id"]):
+					s.assign(int(a["team"]))
 		"victory":
 			world.end_game(Defs.TEAM_PLAYER)
 		"defeat":
@@ -305,7 +311,7 @@ func _refresh() -> void:
 	hud.set_objectives(objective_title, objective_sub, items)
 
 
-## Fills {var:name}, {countdown:seconds}, {sites:team} and {units:team[:tag]} in scenario text.
+## Fills {var:name}, {countdown:seconds}, {timer:trigger:seconds}, {sites:team} and {units:team[:tag]}.
 func _text(s: String) -> String:
 	var out := s
 	for m in _tags.search_all(s):
@@ -316,8 +322,11 @@ func _text(s: String) -> String:
 				var x := get_var(arg)
 				v = str(int(x)) if is_equal_approx(x, roundf(x)) else "%.1f" % x
 			"countdown":
-				var remain := int(maxf(0.0, float(arg) - world.match_time))
-				v = "%d:%02d" % [remain / 60, remain % 60]
+				v = _clock(float(arg) - world.match_time)
+			"timer":
+				var since := arg.get_slice(":", 0)
+				var length := float(arg.get_slice(":", 1))
+				v = _clock(length - (world.match_time - float(fired[since]) if fired.has(since) else 0.0))
 			"sites":
 				v = str(_sites({"team": arg}))
 			"units":
@@ -327,6 +336,11 @@ func _text(s: String) -> String:
 				v = str(_units(f).size())
 		out = out.replace(m.get_string(), v)
 	return out
+
+
+static func _clock(seconds: float) -> String:
+	var s := int(maxf(0.0, seconds))
+	return "%d:%02d" % [s / 60, s % 60]
 
 
 static func _flat(p: Array) -> Vector3:

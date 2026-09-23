@@ -20,7 +20,7 @@ const ACTIONS := {
 	"message": ["text"], "banner": ["title"], "advisor": ["text"], "spawn": ["team", "units", "at"],
 	"spawn_building": ["team", "id", "at"], "order": ["order"], "resources": ["team"], "ai": ["aggression"],
 	"objectives": ["list"], "objective": ["id", "state"], "set_var": ["name", "value"], "add_var": ["name", "value"],
-	"focus": ["at"], "sound": ["name"], "victory": [], "defeat": [],
+	"focus": ["at"], "sound": ["name"], "site": ["id", "team"], "victory": [], "defeat": [],
 }
 
 static var _site_cache := {}
@@ -49,18 +49,24 @@ static func load_file(p: String) -> Scenario:
 	return s
 
 
-## Built-in scenarios first, then the player's own folder, each sorted by file name.
+## Built-in scenarios first, then the player's own folder, each sorted by "order" and file name.
 static func list_all() -> Array[Scenario]:
 	var out: Array[Scenario] = []
 	for dir: String in [BUILTIN_DIR, USER_DIR]:
 		if not DirAccess.dir_exists_absolute(dir):
 			continue
-		var files := DirAccess.get_files_at(dir)
-		files.sort()
-		for f in files:
+		var group: Array[Scenario] = []
+		for f in DirAccess.get_files_at(dir):
 			if f.get_extension() == "json":
-				out.append(load_file(dir.path_join(f)))
+				group.append(load_file(dir.path_join(f)))
+		group.sort_custom(func(a: Scenario, b: Scenario) -> bool: return a.order() < b.order() or (a.order() == b.order() and a.path < b.path))
+		out.append_array(group)
 	return out
+
+
+## "next" and other scenario references: a file name in the same folder, with or without ".json".
+static func resolve(ref: String, from_path: String) -> String:
+	return from_path.get_base_dir().path_join(ref if ref.ends_with(".json") else ref + ".json")
 
 
 ## Creates the player's scenario folder if needed and returns its absolute path.
@@ -79,6 +85,15 @@ func is_builtin() -> bool:
 
 func title() -> String:
 	return str(data.get("title", path.get_file().get_basename()))
+
+
+func order() -> float:
+	var v: Variant = data.get("order", 100)
+	return float(v) if v is float or v is int else 100.0
+
+
+func next_path() -> String:
+	return resolve(str(data["next"]), path) if str(data.get("next", "")) != "" else ""
 
 
 # ---------------------------------------------------------------- validation
@@ -116,6 +131,11 @@ func _validate() -> void:
 			_check_action("start.buildings[%d]" % i, _with_type(sb[i], "spawn_building"))
 		for i in su.size():
 			_check_start_unit("start.units[%d]" % i, su[i])
+	for key in ["subtitle", "description", "next", "victory_text", "defeat_text"]:
+		if d.has(key) and not d[key] is String:
+			_err(key, "文字列で書いてください")
+	if str(d.get("next", "")) != "" and not FileAccess.file_exists(next_path()):
+		_err("next", "次のシナリオ \"%s\" が見つかりません" % next_path().get_file())
 	if d.has("vars") and not d["vars"] is Dictionary:
 		_err("vars", "{\"名前\": 数値} で書いてください")
 	if d.has("objectives"):
@@ -189,6 +209,8 @@ func _check_condition(at: String, c: Variant) -> void:
 		_err(at, "cmp は %s のどれかです" % " ".join(CMPS))
 	_check_team(at, c)
 	_check_area(at, c)
+	if c.has("since"):
+		_fired_refs.append([at, str(c["since"])])
 	match type:
 		"all", "any":
 			if not c.get("of") is Array:
@@ -226,7 +248,7 @@ func _check_action(at: String, a: Variant) -> void:
 	for key: String in ACTIONS[type]:
 		if not a.has(key):
 			_err(at, "%s には \"%s\" が必要です" % [type, key])
-	_check_team(at, a)
+	_check_team(at, a, type == "site")
 	_check_area(at, a)
 	if a.has("at"):
 		_check_pos(at, a, "at")
@@ -248,6 +270,9 @@ func _check_action(at: String, a: Variant) -> void:
 		"objective":
 			if not str(a.get("state", "")) in STATES:
 				_err(at, "state は %s のどれかです" % ", ".join(STATES))
+		"site":
+			if MAPS.has(str(data.get("map", ""))) and not str(a.get("id", "")) in _site_ids():
+				_err(at, "このマップに都市 \"%s\" はありません（あるもの: %s）" % [a.get("id", ""), ", ".join(_site_ids())])
 
 
 func _check_objectives(at: String, o: Variant) -> void:
@@ -285,12 +310,12 @@ func _check_id(at: String, d: Dictionary, key: String, table: Dictionary) -> voi
 		_err(at, "不明な %s \"%s\"（使えるもの: %s）" % [key, d[key], ", ".join(table.keys())])
 
 
-func _check_team(at: String, d: Dictionary) -> void:
+func _check_team(at: String, d: Dictionary, allow_neutral: bool = false) -> void:
 	if not d.has("team"):
 		return
 	var t: Variant = d["team"]
-	if not (t is float or t is int) or not int(t) in [0, 1]:
-		_err(at, "team は 0（王冠）か 1（ヴァルケシュ）です")
+	if not (t is float or t is int) or not int(t) in ([-1, 0, 1] if allow_neutral else [0, 1]):
+		_err(at, "team は 0（王冠）か 1（ヴァルケシュ）です" + ("（-1 で中立）" if allow_neutral else ""))
 
 
 func _check_pos(at: String, d: Dictionary, key: String) -> void:

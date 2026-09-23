@@ -1,10 +1,14 @@
 {
 	"format": 1,
 	"id": "hold_the_gate",
+	"order": 1,
 	"title": "アイアンスパインの門",
 	"subtitle": "Hold the Gate",
 	"description": "ヴァルケシュ軍の4度の攻勢からアイアンスパイン門を守り、援軍と合流して中央ネクサスを奪い、ヴァルケシュ本拠地を破壊する。",
 	"map": "ironspine",
+	"next": "relay_strike",
+	"victory_text": "The Crown ascends. Ironspine stands.",
+	"defeat_text": "The Ironspine has fallen silent.",
 	"teams": {"1": {"aggression": 0}},
 	"vars": {"waves": 0, "gate_lost": 0, "phase": 0},
 	"objectives": {

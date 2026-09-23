@@ -108,6 +108,14 @@ func tick(dt: float) -> void:
 				World.inst.raise_alert(global_position, "%s の支配を失った" % site_name, Defs.TEAM_PLAYER)
 
 
+## Scenario setup: hand the site to a team (-1 = neutral) without alerts or capture stats.
+func assign(t: int) -> void:
+	owner_team = t
+	capturing_team = -1
+	capture = 1.0 if t >= 0 else 0.0
+	_refresh_owner()
+
+
 func _set_owner(t: int) -> void:
 	owner_team = t
 	if t >= 0:

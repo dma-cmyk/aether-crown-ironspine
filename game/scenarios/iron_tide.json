@@ -1,0 +1,306 @@
+{
+	"format": 1,
+	"id": "iron_tide",
+	"order": 3,
+	"title": "鉄の潮",
+	"subtitle": "The Iron Tide",
+	"description": "ヴァルケシュの総攻撃。中央・北西・南東から押し寄せる8回の攻勢に耐え、12分間本拠地を守り抜く。",
+	"map": "ironspine",
+	"victory_text": "The tide breaks upon the Ironspine.",
+	"defeat_text": "The tide swallowed the Crown.",
+	"teams": {"0": {"material": 900, "aether": 450}, "1": {"aggression": 0}},
+	"vars": {"waves": 0, "phase": 0},
+	"start": {"buildings": [{"id": "foundry", "team": 0, "at": [-116, 168], "facing": 135}]},
+	"objectives": {
+		"title": "The Iron Tide",
+		"subtitle": "Stand until the tide breaks.",
+		"list": [
+			{
+				"id": "hold",
+				"text": "本拠地を守り抜く  {countdown:720}",
+				"done_when": {"type": "fired", "trigger": "tide_breaks"}
+			},
+			{
+				"id": "waves",
+				"text": "攻勢を退ける（{var:waves} / 8 波）",
+				"done_when": {
+					"type": "all",
+					"of": [
+						{"type": "var", "name": "waves", "cmp": ">=", "value": 8},
+						{"type": "units", "team": 1, "tag": "wave", "cmp": "==", "value": 0}
+					]
+				}
+			},
+			{
+				"id": "brassholm",
+				"text": "ブラスホルムを守る",
+				"failed_when": {"type": "sites", "team": 0, "id": "brassholm", "cmp": "==", "value": 0}
+			}
+		]
+	},
+	"triggers": [
+		{
+			"id": "intro",
+			"when": {"type": "time", "at": 0},
+			"do": [
+				{"type": "site", "id": "west_foundry", "team": 0},
+				{"type": "site", "id": "south_works", "team": 0},
+				{"type": "banner", "title": "THE IRON TIDE", "text": "ヴァルケシュの総攻撃が始まる。12分間、本拠地を守り抜け。", "seconds": 7},
+				{"type": "advisor", "text": "STAND.\nAND BE COUNTED."},
+				{"type": "focus", "at": [-51.5, 51.5]}
+			]
+		},
+		{
+			"id": "hint1",
+			"when": {"type": "time", "at": 4},
+			"do": [{"type": "message", "text": "ヒント：攻撃は中央の橋だけでなく、北西（West Foundry）と南東（South Works）からも来る。"}]
+		},
+		{
+			"id": "hint2",
+			"when": {"type": "time", "at": 20},
+			"do": [{"type": "message", "text": "ヒント：本拠地で B を押して見張り塔（Bastion Tower）を建てると、守りが固くなる。"}]
+		},
+		{
+			"id": "warn1",
+			"when": {"type": "time", "at": 33},
+			"do": [{"type": "message", "text": "敵が中央の橋に集結している！", "at": [40, -40]}]
+		},
+		{
+			"id": "wave1",
+			"when": {"type": "time", "at": 45},
+			"do": [
+				{
+					"type": "spawn",
+					"team": 1,
+					"units": {"aetherguard": 4},
+					"at": [78, -78],
+					"facing": -135,
+					"tag": "wave",
+					"order": "attack_move",
+					"target": [-60, 60],
+					"spread": 6,
+					"difficulty_scale": true,
+					"rotate": -45
+				},
+				{"type": "message", "text": "ヴァルケシュ軍の第1波が来る！", "at": [78, -78], "sound": "alert"},
+				{"type": "add_var", "name": "waves", "value": 1}
+			]
+		},
+		{
+			"id": "warn2",
+			"when": {"type": "time", "at": 98},
+			"do": [{"type": "message", "text": "敵が北西の橋へ向かっている！ West Foundry が狙われる。", "at": [-60, -80]}]
+		},
+		{
+			"id": "wave2",
+			"when": {"type": "time", "at": 110},
+			"do": [
+				{
+					"type": "spawn",
+					"team": 1,
+					"units": {"aetherguard": 3, "walker": 1},
+					"at": [5, -140],
+					"facing": -135,
+					"tag": "wave",
+					"order": "attack_move",
+					"target": [-150, 5],
+					"spread": 6,
+					"difficulty_scale": true,
+					"rotate": 0
+				},
+				{"type": "message", "text": "ヴァルケシュ軍の第2波が来る！", "at": [5, -140], "sound": "alert"},
+				{"type": "add_var", "name": "waves", "value": 1}
+			]
+		},
+		{
+			"id": "warn3",
+			"when": {"type": "time", "at": 168},
+			"do": [{"type": "message", "text": "敵が中央の橋に集結している！", "at": [40, -40]}]
+		},
+		{
+			"id": "wave3",
+			"when": {"type": "time", "at": 180},
+			"do": [
+				{
+					"type": "spawn",
+					"team": 1,
+					"units": {"aetherguard": 4, "walker": 1, "mortar": 1},
+					"at": [78, -78],
+					"facing": -135,
+					"tag": "wave",
+					"order": "attack_move",
+					"target": [-60, 60],
+					"spread": 6,
+					"difficulty_scale": true,
+					"rotate": -45
+				},
+				{"type": "message", "text": "ヴァルケシュ軍の第3波が来る！", "at": [78, -78], "sound": "alert"},
+				{"type": "add_var", "name": "waves", "value": 1}
+			]
+		},
+		{
+			"id": "warn4",
+			"when": {"type": "time", "at": 238},
+			"do": [{"type": "message", "text": "敵が南東の橋へ向かっている！ South Works が狙われる。", "at": [80, 60]}]
+		},
+		{
+			"id": "wave4",
+			"when": {"type": "time", "at": 250},
+			"do": [
+				{
+					"type": "spawn",
+					"team": 1,
+					"units": {"aetherguard": 4, "walker": 1},
+					"at": [140, -5],
+					"facing": 135,
+					"tag": "wave",
+					"order": "attack_move",
+					"target": [-5, 152],
+					"spread": 6,
+					"difficulty_scale": true,
+					"rotate": 90
+				},
+				{"type": "message", "text": "ヴァルケシュ軍の第4波が来る！", "at": [140, -5], "sound": "alert"},
+				{"type": "add_var", "name": "waves", "value": 1}
+			]
+		},
+		{
+			"id": "warn5",
+			"when": {"type": "time", "at": 308},
+			"do": [{"type": "message", "text": "中央と北西から同時に来る！", "at": [0, -60]}]
+		},
+		{
+			"id": "wave5",
+			"when": {"type": "time", "at": 320},
+			"do": [
+				{
+					"type": "spawn",
+					"team": 1,
+					"units": {"aetherguard": 5, "walker": 2},
+					"at": [78, -78],
+					"facing": -135,
+					"tag": "wave",
+					"order": "attack_move",
+					"target": [-60, 60],
+					"spread": 6,
+					"difficulty_scale": true,
+					"rotate": -45
+				},
+				{
+					"type": "spawn",
+					"team": 1,
+					"units": {"aetherguard": 3},
+					"at": [5, -140],
+					"facing": -135,
+					"tag": "wave",
+					"order": "attack_move",
+					"target": [-150, 5],
+					"spread": 6,
+					"difficulty_scale": true,
+					"rotate": 0
+				},
+				{"type": "message", "text": "ヴァルケシュ軍の第5波が来る！", "at": [78, -78], "sound": "alert"},
+				{"type": "add_var", "name": "waves", "value": 1}
+			]
+		},
+		{
+			"id": "warn6",
+			"when": {"type": "time", "at": 388},
+			"do": [{"type": "message", "text": "飛行艦隊が本拠地へ向かっている！", "at": [60, -60]}]
+		},
+		{
+			"id": "wave6",
+			"when": {"type": "time", "at": 400},
+			"do": [
+				{
+					"type": "spawn",
+					"team": 1,
+					"units": {"airship": 2},
+					"at": [140, -140],
+					"facing": -135,
+					"tag": "wave",
+					"order": "attack_move",
+					"target": [-140, 140],
+					"spread": 6,
+					"difficulty_scale": true,
+					"rotate": -45
+				},
+				{"type": "message", "text": "ヴァルケシュ軍の第6波が来る！", "at": [140, -140], "sound": "alert"},
+				{"type": "add_var", "name": "waves", "value": 1}
+			]
+		},
+		{
+			"id": "warn7",
+			"when": {"type": "time", "at": 468},
+			"do": [{"type": "message", "text": "中央と南東から同時に来る！", "at": [40, 20]}]
+		},
+		{
+			"id": "wave7",
+			"when": {"type": "time", "at": 480},
+			"do": [
+				{
+					"type": "spawn",
+					"team": 1,
+					"units": {"aetherguard": 5, "walker": 2, "mortar": 2},
+					"at": [78, -78],
+					"facing": -135,
+					"tag": "wave",
+					"order": "attack_move",
+					"target": [-60, 60],
+					"spread": 6,
+					"difficulty_scale": true,
+					"rotate": -45
+				},
+				{
+					"type": "spawn",
+					"team": 1,
+					"units": {"aetherguard": 4, "walker": 1},
+					"at": [140, -5],
+					"facing": 135,
+					"tag": "wave",
+					"order": "attack_move",
+					"target": [-5, 152],
+					"spread": 6,
+					"difficulty_scale": true,
+					"rotate": 90
+				},
+				{"type": "message", "text": "ヴァルケシュ軍の第7波が来る！", "at": [78, -78], "sound": "alert"},
+				{"type": "add_var", "name": "waves", "value": 1}
+			]
+		},
+		{
+			"id": "warn8",
+			"when": {"type": "time", "at": 568},
+			"do": [{"type": "message", "text": "ヴァルケシュの最後の総攻撃だ！", "at": [40, -40]}]
+		},
+		{
+			"id": "wave8",
+			"when": {"type": "time", "at": 580},
+			"do": [
+				{
+					"type": "spawn",
+					"team": 1,
+					"units": {"aetherguard": 6, "walker": 3, "mortar": 1, "airship": 1},
+					"at": [78, -78],
+					"facing": -135,
+					"tag": "wave",
+					"order": "attack_move",
+					"target": [-60, 60],
+					"spread": 6,
+					"difficulty_scale": true,
+					"rotate": -45
+				},
+				{"type": "message", "text": "ヴァルケシュ軍の第8波が来る！", "at": [78, -78], "sound": "alert"},
+				{"type": "add_var", "name": "waves", "value": 1}
+			]
+		},
+		{
+			"id": "tide_breaks",
+			"when": {"type": "time", "at": 720},
+			"do": [
+				{"type": "banner", "title": "THE TIDE BREAKS", "text": "ヴァルケシュの攻勢は尽きた。", "seconds": 6},
+				{"type": "victory"}
+			]
+		}
+	]
+}
