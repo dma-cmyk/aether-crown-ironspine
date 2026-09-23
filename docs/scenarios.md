@@ -111,6 +111,7 @@
 
 ## 使える ID
 
-- ユニット: `aetherguard`（歩兵）、`artificer`（工兵）、`walker`（歩行機）、`mortar`（臼砲）、`airship`（飛行艦）
-- 建物: `citadel` `barracks` `foundry` `skyport` `refinery` `habitat` `bastion` `gate`
+- ユニット: `aetherguard`（歩兵）、`artificer`（工兵）、`walker`（歩行機）、`mortar`（臼砲）、`airship`（飛行艦）、
+  `cerberus`（ケルベロス）、`cyclops`（サイクロプス）、`griffin`（グリフォン）、`dragon`（ドラゴン）
+- 建物: `citadel` `barracks` `foundry` `skyport` `refinery` `habitat` `bastion` `sanctum`（神獣の祠） `gate`
 - 都市: `central_nexus` `brassholm` `west_foundry` `south_works` `aether_works` `east_bastion` `north_relay`
