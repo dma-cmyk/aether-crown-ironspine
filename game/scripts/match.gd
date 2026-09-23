@@ -178,6 +178,10 @@ func _setup_capture() -> void:
 	var cap := preload("res://scripts/dev/capture.gd").new()
 	add_child(cap)
 	camera.input_enabled = false
+	camera.look_up = float(Game.arg("cam_up", "0"))
+	if Game.args.has("nolabels"):
+		for s in world.sites:
+			s.label.visible = false
 	var v := Game.arg("cam", "")
 	if v != "":
 		var p := v.split(",")
@@ -186,8 +190,10 @@ func _setup_capture() -> void:
 	if scenario != "":
 		DevScenarios.run(scenario, world, commander, camera, self)
 	if Game.args.has("select"):
+		# --select picks the first player units, --select=cyclops,dragon only those kinds
+		var ids := Game.arg("select").split(",") if Game.arg("select") != "1" else PackedStringArray()
 		var sel := []
 		for u in world.units:
-			if u.team == 0:
+			if u.team == 0 and u.alive and (ids.is_empty() or u.def_id in ids):
 				sel.append(u)
 		commander.set_selection(sel.slice(0, 6))

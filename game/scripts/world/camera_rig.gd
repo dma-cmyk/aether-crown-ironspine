@@ -17,6 +17,9 @@ var distance := 72.0
 var target_distance := 72.0
 var target_focus := Vector3.ZERO
 var input_enabled := true
+## Dev shots: a pitch that no longer follows the zoom, and a look-at point raised off the ground.
+var fixed_pitch := -1.0
+var look_up := 0.0
 var bounds := 185.0
 var _dragging := false
 var _last_mouse := Vector2.ZERO
@@ -48,6 +51,7 @@ func set_view(p: Vector3, yaw_deg: float, dist: float, pitch_deg: float = -1.0) 
 	target_distance = dist
 	if pitch_deg > 0.0:
 		pitch = deg_to_rad(pitch_deg)
+		fixed_pitch = pitch
 	look_at_point(p, true)
 
 
@@ -137,9 +141,10 @@ func _process(delta: float) -> void:
 func _update_transform() -> void:
 	var t := inverse_lerp(MIN_DIST, MAX_DIST, distance)
 	var p := lerpf(deg_to_rad(38.0), deg_to_rad(60.0), sqrt(clampf(t, 0.0, 1.0))) + _pitch_offset
-	pitch = clampf(p, deg_to_rad(18.0), deg_to_rad(80.0))
+	pitch = clampf(p, deg_to_rad(18.0), deg_to_rad(80.0)) if fixed_pitch < 0.0 else fixed_pitch
 	var off := Vector3(sin(yaw) * cos(pitch), sin(pitch), cos(yaw) * cos(pitch)) * distance
-	var pos := focus + off
+	var at := focus + Vector3(0, look_up, 0)
+	var pos := at + off
 	if terrain:
 		var g := terrain.height_at(pos.x, pos.z) + 3.0
 		if pos.y < g:
@@ -148,7 +153,7 @@ func _update_transform() -> void:
 		var jitter := Vector3.ZERO
 		if _shake > 0.0:
 			jitter = Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * _shake * 0.35
-		cam.global_transform = Transform3D(Basis(), pos + jitter).looking_at(focus + jitter * 0.5, Vector3.UP)
+		cam.global_transform = Transform3D(Basis(), pos + jitter).looking_at(at + jitter * 0.5, Vector3.UP)
 	moved.emit()
 
 

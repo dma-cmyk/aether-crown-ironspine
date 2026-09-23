@@ -70,6 +70,46 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 			world.spawn_unit("walker", 1, Vector3(-76, 0, 70), deg_to_rad(-45)).order_attack_move(Vector3(-110, 0, 105))
 			world.spawn_unit("mortar", 1, Vector3(-68, 0, 64), deg_to_rad(-45)).order_attack_move(Vector3(-110, 0, 105))
 			world.spawn_unit("airship", 1, Vector3(-70, 0, 74), deg_to_rad(-45)).order_attack_move(Vector3(-110, 0, 105))
+		"bridge":
+			# the Crown's beasts storm the north-west bridge
+			world.fog.enabled = false
+			# a mid-game Crown (three cities, a habitat, no start units) so the HUD's population adds up
+			for u in world.units.duplicate():
+				if u.team == 0:
+					u.die()
+			for s in world.sites:
+				if s.site_id in ["brassholm", "west_foundry", "south_works"]:
+					s.assign(0)
+			world.spawn_building("habitat", 0, Vector3(-120, 0, 168), deg_to_rad(135))
+			var br: Dictionary = world.terrain.bridges.filter(func(b: Dictionary) -> bool: return b["id"] == "nw_bridge")[0]
+			var on := func(t: float, s: float) -> Vector3:
+				var p: Vector2 = br["a"] + br["u"] * t + br["n"] * s
+				return Vector3(p.x, 0, p.y)
+			var face := atan2(br["u"].x, br["u"].y)
+			var goal: Vector3 = on.call(80.0, 0.0)
+			for c: Array in [["cyclops", 24, 0], ["cerberus", 34, -2.5], ["cerberus", 32, 3], ["griffin", 40, 12], ["griffin", 46, -12], ["dragon", 38, -10]]:
+				world.spawn_unit(c[0], 0, on.call(c[1], c[2]), face).order_attack_move(goal)
+			for i in 6:
+				world.spawn_unit("aetherguard", 0, on.call(6.0 + (i / 2) * 5.0, -2.5 + (i % 2) * 5.0), face).order_attack_move(goal)
+			for i in 8:
+				world.spawn_unit("aetherguard", 1, on.call(58.0 + (i / 4) * 6.0, -6.0 + (i % 4) * 4.0), face + PI).order_hold()
+			world.spawn_unit("walker", 1, on.call(64.0, -9.0), face + PI).order_hold()
+			world.spawn_unit("walker", 1, on.call(66.0, 8.0), face + PI).order_hold()
+			world.spawn_unit("mortar", 1, on.call(78.0, 0.0), face + PI).toggle_deploy()
+			world.spawn_unit("airship", 1, on.call(62.0, 16.0), face + PI).order_hold()
+		"lineup":
+			# the four beasts before a Beast Sanctum; --lineup=x,z,facing_deg
+			world.fog.enabled = false
+			var q := Game.arg("lineup", "-135,-70,-5").split(",")
+			var at := Vector3(float(q[0]), 0, float(q[1]))
+			var face := deg_to_rad(float(q[2]))
+			world.spawn_building("sanctum", 0, at, face)
+			var basis := Basis(Vector3.UP, face)
+			for c: Array in [["griffin", -10, 8, 25], ["cerberus", -5, 18.5, 18], ["cyclops", 7, 15, -20], ["dragon", 9, 1, 0]]:
+				var u := world.spawn_unit(c[0], 0, at + basis * Vector3(c[1], 0, c[2]), face + deg_to_rad(c[3]))
+				u.order_hold()
+				if c[0] == "cerberus":
+					u.use_special()
 		"base":
 			world.fog.enabled = false
 		"nofog":

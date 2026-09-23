@@ -52,6 +52,7 @@ func _stage_scene() -> void:
 		var site := Site.new()
 		world.add_child(site)
 		site.setup(s)
+		site.label.visible = false
 		world.sites.append(site)
 	for g in L["gates"]:
 		var f: Array = g["facing"]

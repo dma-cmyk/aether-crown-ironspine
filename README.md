@@ -3,11 +3,13 @@
 工業と魔導（エーテル）が交わる大地を舞台にした、Godot 4 製の3Dクォータービュー RTS です。
 渓谷に架かるアイアンスパイン門を守り抜き、中央ネクサスを奪って、ヴァルケシュ本拠地を破壊します。
 
-![戦闘](docs/screenshots/battle_bridge.png)
+![北西の橋で神獣がヴァルケシュ軍に攻めかかる](docs/screenshots/battle.webp)
 
-| タイトル | 戦闘画面 |
+| 神獣の祠 | 戦闘画面 |
 |---|---|
-| ![タイトル](docs/screenshots/title.png) | ![HUD](docs/screenshots/hud.png) |
+| ![神獣の祠と4体の神獣](docs/screenshots/beasts.png) | ![ドラゴンを選択中の戦闘画面](docs/screenshots/hud.png) |
+| **北西の橋** | **タイトル** |
+| ![北西の橋の戦い](docs/screenshots/battle_bridge.png) | ![タイトル画面](docs/screenshots/title.png) |
 
 ## 起動
 
@@ -43,13 +45,16 @@ godot --path game
 
 都市のリレー塔の輪に地上部隊を置くと占領でき、資材・エーテル・人口上限が増えます（工兵は占領が速い）。
 
+**神獣**：神獣の祠を建てると、ケルベロス・サイクロプス・グリフォン・ドラゴンを呼べます。
+機械ではないので修理はできませんが、戦闘から離れると自然に回復します。敵のヴァルケシュも祠を建てて神獣を使ってきます。
+
 | 操作 | 内容 |
 |---|---|
 | 左クリック / 左ドラッグ | 選択（Shift で追加、ダブルクリックで同種を全選択） |
 | 右クリック | 移動・攻撃・修理（建物選択中は集結地点）。Shift で経由地点 |
 | M / H / A / P | 移動 / 陣地保持 / 攻撃移動 / 巡回 |
 | F / R / D / S | 構え / 修理 / 展開（臼砲の射程延長） / 特殊能力 |
-| Q W E R T Y | 選択中の建物で生産（本拠地は B で建設メニュー） |
+| Q W E R T Y U | 選択中の建物で生産（本拠地は B で建設メニュー） |
 | Ctrl+数字 / 数字 | 部隊登録 / 呼び出し |
 | 矢印・画面端・ホイール・中ドラッグ | カメラ移動・ズーム・回転 |
 | Home / Space / F1 / F2 / F3 / Esc | 本拠地 / 最新の警報 / 待機ユニット / 全戦闘部隊 / FPS 表示 / メニュー |
@@ -73,8 +78,8 @@ game/                  Godot プロジェクト（Mobile レンダラー、GDScr
   assets/              生成済みアセット（terrain / models / textures / fx / ui / audio）
 tools/                 アセット生成スクリプト
   blender/terrain/     地形パイプライン（mapgen.py = numpy で高さ場など、build_terrain.py = Blender で .blend/.glb 化）
-  blender/models/      環境プロップ・建物・ユニットの手続きモデリング
-  textures/            Material Maker（CLI 書き出し）＋ ImageMagick
+  blender/models/      環境プロップ・建物・ユニットの手続きモデリング（神獣は骨付きのスキンメッシュ）
+  textures/            Material Maker（CLI 書き出し）＋ ImageMagick、神獣の皮・鱗・毛・羽は numpy で生成
   ui/make_icons.py     HUD アイコン（SVG）
   audio/gen_audio.py   効果音・環境音・BGM の合成（numpy）
 art/blend/             生成された .blend（Blender で開いて確認・編集できる）
@@ -98,7 +103,10 @@ Material Maker は CLI 書き出し後も終了しないため、`build_textures
 
 ```bash
 # 画面を撮影して終了（平均 FPS と GPU 時間も表示）
-godot --path game -- --capture=x --out=/tmp/x.png --frames=400 [--cam=x,z,yaw,dist] [--scenario=showcase] [--quality=0..2]
+godot --path game -- --capture=x --out=/tmp/x.png --frames=400 [--cam=x,z,yaw,dist[,pitch]] [--scenario=showcase] [--quality=0..2]
+# README の画像（--nohud で HUD なし、--select=dragon で選択、--title でタイトル画面。動画は Godot の --write-movie）
+godot --path game --fixed-fps 30 -- --capture=x --mission=res://scenarios/skirmish.json --scenario=bridge --cam=-116,-124,15,48,24 --cam_up=4 --nohud --nolabels --frames=120 --out=/tmp/battle.png
+godot --path game -- --capture=x --mission=res://scenarios/skirmish.json --scenario=lineup --cam=-136.2,-55,-15,27,11 --cam_up=7 --nohud --nolabels --frames=80 --out=/tmp/beasts.png
 # プレイヤー側をボットが操作し、ミッションを早回しで最後まで流す（ヘッドレス可）
 godot --headless --path game -- --match --autoplay --timescale=10
 # 全モデルの確認用ギャラリー
