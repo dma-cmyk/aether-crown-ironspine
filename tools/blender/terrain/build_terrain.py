@@ -119,10 +119,12 @@ def build_water(g, mat_water):
         d[:-1, :] |= cells[1:, :]
         d[:, 1:] |= cells[:, :-1]
         d[:, :-1] |= cells[:, 1:]
-        # never spill past the crest downstream
-        sd_cell = g.cf["sd"][:-1, :-1]
-        d &= sd_cell < reg["hi"] + 0.5
-        d &= sd_cell > reg["lo"] - 4.0
+        # never spill past the crest downstream: test every corner, or the stair-stepped
+        # edge pokes out over the waterfall curtain
+        sd = g.cf["sd"]
+        corners = np.stack([sd[:-1, :-1], sd[1:, :-1], sd[:-1, 1:], sd[1:, 1:]])
+        d &= corners.max(axis=0) < reg["hi"] + 0.5
+        d &= corners.min(axis=0) > reg["lo"] - 4.0
         if not d.any():
             continue
         faces = grid_faces(N, N, d)
@@ -176,7 +178,7 @@ def build_waterfalls(g, mat_fall, placements):
         perp = np.array([-d[1], d[0]])
         hw = wf["half_width"]
         rows = []
-        nv = 10
+        nv = 14
         nu = 16
         # flat white-water lip lying on the upper surface (hides the stepped water edge)
         for fwd, dy in ((-3.2, 0.07), (-1.4, 0.08), (0.4, 0.09), (1.6, 0.02)):
@@ -186,10 +188,23 @@ def build_waterfalls(g, mat_fall, placements):
                 q = p + perp * u + d * fwd
                 row.append((q[0], wf["top"] + dy, q[1]))
             rows.append(row)
+        drop = wf["top"] - wf["bottom"] + 0.6
+        # widen the arc downstream until the stepped riverbed stays behind the whole curtain
+        ts = np.linspace(0.02, 1.0, 60)[:, None]
+        us = np.linspace(-hw * 0.85, hw * 0.85, 48)[None, :]  # the faded edges may touch the banks
+        ys = wf["top"] + 0.02 - drop * ts ** 1.25
+        above = ys > wf["bottom"]
+        extra = 0.0
+        while extra < 4.0:
+            fw = 1.6 + (2.4 + extra) * np.sqrt(ts)
+            h = g.height_at(p[0] + perp[0] * us + d[0] * fw, p[1] + perp[1] * us + d[1] * fw)
+            if not np.any((h > ys - 0.4) & above):
+                break
+            extra += 0.2
         for i in range(1, nv + 1):
             t = i / nv
-            y = wf["top"] + 0.02 - (wf["top"] - wf["bottom"] + 0.6) * (t ** 1.25)
-            fwd = 1.6 + 2.4 * math.sqrt(t)
+            y = wf["top"] + 0.02 - drop * (t ** 1.25)
+            fwd = 1.6 + (2.4 + extra) * math.sqrt(t)
             row = []
             for j in range(nu + 1):
                 u = -hw + 2 * hw * j / nu
@@ -197,8 +212,13 @@ def build_waterfalls(g, mat_fall, placements):
                 row.append((q[0], y, q[1]))
             rows.append(row)
         curtain("waterfall_%d" % k, rows, mat_fall)
-        base = p + d * 3.5
-        placements["mist"].append([round(float(base[0]), 2), round(wf["bottom"] + 0.6, 2), round(float(base[1]), 2), round(hw, 2)])
+        log("waterfall %d: arc widened by %.1f m" % (k, extra))
+        # spray along the foot of the curtain
+        n_mist = max(2, int(round(2 * hw / 5.5)))
+        for m in range(n_mist):
+            u = -hw * 0.85 + 1.7 * hw * (m + 0.5) / n_mist
+            q = p + perp * u + d * (4.5 + extra)
+            placements["mist"].append([round(float(q[0]), 2), round(wf["bottom"] + 0.4, 2), round(float(q[1]), 2), 3.0])
     for k, cf in enumerate(g.cliff_falls()):
         prof = cf["profile"]
         d = cf["dir"]
