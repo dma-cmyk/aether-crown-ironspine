@@ -23,6 +23,8 @@ var last_damage_time := -100.0
 var last_attacker: Entity
 var seen_by_player := true
 var kills := 0
+## Free-form label that scenario triggers use to find this entity.
+var tag := ""
 
 var _ring: MeshInstance3D
 var _bar: MeshInstance3D

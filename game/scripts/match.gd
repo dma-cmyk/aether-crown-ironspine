@@ -9,12 +9,14 @@ var commander: Commander
 var hud: Control
 var hud_layer: CanvasLayer
 var mission: Mission
+var scenario: Scenario
 var ai: EnemyAI
 var music: AudioStreamPlayer
 var ambience: Array[AudioStreamPlayer] = []
 
 
 func _ready() -> void:
+	scenario = _load_scenario()
 	env_rig = EnvRig.new()
 	env_rig.name = "Environment"
 	add_child(env_rig)
@@ -56,7 +58,10 @@ func _ready() -> void:
 	mission = Mission.new()
 	mission.name = "Mission"
 	add_child(mission)
-	mission.setup(world, ai, hud)
+	mission.setup(world, ai, hud, scenario)
+	var diff: float = [0.85, 1.0, 1.2][Game.difficulty]
+	world.player(Defs.TEAM_ENEMY).income_mult = diff
+	world.player(Defs.TEAM_ENEMY).material *= diff
 	world.fog.hide_enemy_buildings()
 	world.fog.recompute()
 	camera.set_view(Vector3(-40, 0, 40), -45.0, 104.0)
@@ -85,13 +90,22 @@ func _spawn_start() -> void:
 	for g in L["gates"]:
 		var f: Array = g["facing"]
 		world.spawn_building("gate", int(g["team"]), Vector3(g["pos"][0], 0, g["pos"][1]), atan2(f[0], f[1]), true)
+	if not scenario.data.get("map_start", true):
+		return
 	for b in L["start_buildings"]:
 		world.spawn_building(b["id"], int(b["team"]), Vector3(b["pos"][0], 0, b["pos"][1]), deg_to_rad(float(b["rot"])), true)
 	for u in L["start_units"]:
 		world.spawn_unit(u["id"], int(u["team"]), Vector3(u["pos"][0], 0, u["pos"][1]), deg_to_rad(float(u["rot"])))
-	var diff: float = [0.85, 1.0, 1.2][Game.difficulty]
-	world.player(1).income_mult = diff
-	world.player(1).material *= diff
+
+
+## The scenario chosen on the title screen (or --mission=<path>); falls back to the campaign.
+func _load_scenario() -> Scenario:
+	var s := Scenario.load_file(Game.arg("mission", Game.scenario_path))
+	if s.is_valid():
+		return s
+	for e in s.errors:
+		push_error("%s: %s" % [s.path, e])
+	return Scenario.load_file(Scenario.DEFAULT)
 
 
 func _start_audio() -> void:

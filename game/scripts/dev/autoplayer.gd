@@ -54,7 +54,7 @@ func _process(delta: float) -> void:
 		var p := world.player(0)
 		var e := world.player(1)
 		_log("status: M=%d A=%d pop=%d/%d units=%d | enemy M=%d units=%d bld=%d | phase=%d stage=%s" % [p.material, p.aether,
-				p.pop_used, p.pop_cap, world.count_units(0), e.material, world.count_units(1), world.count_buildings(1), mission.phase, _stage])
+				p.pop_used, p.pop_cap, world.count_units(0), e.material, world.count_units(1), world.count_buildings(1), int(mission.get_var("phase")), _stage])
 
 
 func _economy() -> void:
@@ -104,7 +104,7 @@ func _army() -> void:
 		if a.order != Unit.Order.IDLE:
 			continue
 		for s in world.sites:
-			if s.site_id == targets[i % targets.size()] and s.owner_team != 0 and (s.site_id != "central_nexus" or mission.phase == 1):
+			if s.site_id == targets[i % targets.size()] and s.owner_team != 0 and (s.site_id != "central_nexus" or int(mission.get_var("phase")) == 1):
 				a.order_move(s.global_position)
 	var idle: Array = army.filter(func(u): return u.order in [Unit.Order.IDLE, Unit.Order.HOLD])
 	match _stage:
@@ -112,7 +112,7 @@ func _army() -> void:
 			for u: Unit in idle:
 				if u.flat_distance_to(Vector3(-60, 0, 60)) > 25.0:
 					u.order_attack_move(Vector3(-60, 0, 60) + Vector3(randf_range(-10, 10), 0, randf_range(-10, 10)))
-			if mission.phase == 1 and army.size() >= 12:
+			if int(mission.get_var("phase")) == 1 and army.size() >= 12:
 				_stage = "nexus"
 				_log("army -> Central Nexus (%d units)" % army.size())
 				commander.move_group(army, Vector3(0, 0, 0), false, true)

@@ -1,0 +1,261 @@
+{
+	"format": 1,
+	"id": "hold_the_gate",
+	"title": "アイアンスパインの門",
+	"subtitle": "Hold the Gate",
+	"description": "ヴァルケシュ軍の4度の攻勢からアイアンスパイン門を守り、援軍と合流して中央ネクサスを奪い、ヴァルケシュ本拠地を破壊する。",
+	"map": "ironspine",
+	"teams": {"1": {"aggression": 0}},
+	"vars": {"waves": 0, "gate_lost": 0, "phase": 0},
+	"objectives": {
+		"title": "Hold the Gate",
+		"subtitle": "For a Stronger Tomorrow.",
+		"list": [
+			{
+				"id": "gate",
+				"text": "アイアンスパイン門を守る",
+				"failed_when": {"type": "var", "name": "gate_lost", "cmp": ">=", "value": 1}
+			},
+			{
+				"id": "repel",
+				"text": "ヴァルケシュの攻勢を退ける（{var:waves} / 4 波）",
+				"done_when": {
+					"type": "all",
+					"of": [
+						{"type": "var", "name": "waves", "cmp": ">=", "value": 4},
+						{"type": "units", "team": 1, "tag": "wave", "cmp": "==", "value": 0}
+					]
+				}
+			},
+			{"id": "hold", "text": "援軍到着まで持ちこたえる  {countdown:330}"}
+		]
+	},
+	"triggers": [
+		{
+			"id": "intro",
+			"when": {"type": "time", "at": 0},
+			"do": [
+				{
+					"type": "banner",
+					"title": "HOLD THE GATE",
+					"text": "ヴァルケシュ軍がアイアンスパイン門に迫っている。援軍到着まで持ちこたえよ。",
+					"seconds": 7
+				},
+				{"type": "advisor", "text": "SOME THINGS\nOUTLIVE EMPIRES."},
+				{"type": "focus", "at": [-51.5, 51.5]}
+			]
+		},
+		{
+			"id": "hint1",
+			"when": {"type": "time", "at": 3},
+			"do": [{"type": "message", "text": "ヒント：左ドラッグで部隊を選び、右クリックで移動・攻撃。F で構えると被ダメージが半減する。"}]
+		},
+		{
+			"id": "hint2",
+			"when": {"type": "time", "at": 18},
+			"do": [{"type": "message", "text": "ヒント：本拠地（Home キー）を選んで B で建設メニュー。工廠（W）を建てると歩行機と臼砲が作れる。"}]
+		},
+		{
+			"id": "hint3",
+			"when": {"type": "time", "at": 36},
+			"do": [{"type": "message", "text": "ヒント：工兵で近くの West Foundry / South Works を占領すると収入と人口上限が増える。"}]
+		},
+		{
+			"id": "hint4",
+			"when": {"type": "time", "at": 150},
+			"do": [{"type": "message", "text": "ヒント：臼砲は D で展開すると射程が 72m まで伸びる。橋の手前に並べよう。"}]
+		},
+		{
+			"id": "hint5",
+			"when": {"type": "time", "at": 240},
+			"do": [{"type": "message", "text": "ヒント：S で特殊能力。歩兵のエーテル弾は装甲にも効く。"}]
+		},
+		{
+			"id": "warn1",
+			"when": {"type": "time", "at": 43},
+			"do": [{"type": "message", "text": "敵の攻撃部隊が中央の橋に集結している！", "at": [40, -40]}]
+		},
+		{
+			"id": "wave1",
+			"when": {"type": "time", "at": 55},
+			"do": [
+				{
+					"type": "spawn",
+					"team": 1,
+					"units": {"aetherguard": 3},
+					"at": [78, -78],
+					"columns": 4,
+					"spacing": [5, 6],
+					"rotate": -45,
+					"facing": -135,
+					"difficulty_scale": true,
+					"tag": "wave",
+					"order": "attack_move",
+					"target": [-54, 54],
+					"spread": 6
+				},
+				{"type": "message", "text": "ヴァルケシュ軍の第1波が橋を渡ってくる！", "at": [20, -20], "sound": "alert"},
+				{"type": "add_var", "name": "waves", "value": 1}
+			]
+		},
+		{
+			"id": "warn2",
+			"when": {"type": "time", "at": 118},
+			"do": [{"type": "message", "text": "敵の攻撃部隊が中央の橋に集結している！", "at": [40, -40]}]
+		},
+		{
+			"id": "wave2",
+			"when": {"type": "time", "at": 130},
+			"do": [
+				{
+					"type": "spawn",
+					"team": 1,
+					"units": {"aetherguard": 3, "mortar": 1},
+					"at": [78, -78],
+					"columns": 4,
+					"spacing": [5, 6],
+					"rotate": -45,
+					"facing": -135,
+					"difficulty_scale": true,
+					"tag": "wave",
+					"order": "attack_move",
+					"target": [-54, 54],
+					"spread": 6
+				},
+				{"type": "message", "text": "ヴァルケシュ軍の第2波が橋を渡ってくる！", "at": [20, -20], "sound": "alert"},
+				{"type": "add_var", "name": "waves", "value": 1}
+			]
+		},
+		{
+			"id": "warn3",
+			"when": {"type": "time", "at": 198},
+			"do": [{"type": "message", "text": "敵の攻撃部隊が中央の橋に集結している！", "at": [40, -40]}]
+		},
+		{
+			"id": "wave3",
+			"when": {"type": "time", "at": 210},
+			"do": [
+				{
+					"type": "spawn",
+					"team": 1,
+					"units": {"aetherguard": 4, "walker": 1},
+					"at": [78, -78],
+					"columns": 4,
+					"spacing": [5, 6],
+					"rotate": -45,
+					"facing": -135,
+					"difficulty_scale": true,
+					"tag": "wave",
+					"order": "attack_move",
+					"target": [-54, 54],
+					"spread": 6
+				},
+				{"type": "message", "text": "ヴァルケシュ軍の第3波が橋を渡ってくる！", "at": [20, -20], "sound": "alert"},
+				{"type": "add_var", "name": "waves", "value": 1}
+			]
+		},
+		{
+			"id": "warn4",
+			"when": {"type": "time", "at": 278},
+			"do": [{"type": "message", "text": "敵の攻撃部隊が中央の橋に集結している！", "at": [40, -40]}]
+		},
+		{
+			"id": "wave4",
+			"when": {"type": "time", "at": 290},
+			"do": [
+				{
+					"type": "spawn",
+					"team": 1,
+					"units": {"aetherguard": 4, "walker": 2, "mortar": 1},
+					"at": [78, -78],
+					"columns": 4,
+					"spacing": [5, 6],
+					"rotate": -45,
+					"facing": -135,
+					"difficulty_scale": true,
+					"tag": "wave",
+					"order": "attack_move",
+					"target": [-54, 54],
+					"spread": 6
+				},
+				{"type": "message", "text": "ヴァルケシュ軍の第4波が橋を渡ってくる！", "at": [20, -20], "sound": "alert"},
+				{"type": "add_var", "name": "waves", "value": 1}
+			]
+		},
+		{
+			"id": "gate_falls",
+			"when": {
+				"type": "all",
+				"of": [
+					{"type": "buildings", "team": 0, "id": "gate", "cmp": "==", "value": 0},
+					{"type": "not", "of": {"type": "fired", "trigger": "reinforce"}}
+				]
+			},
+			"do": [
+				{"type": "set_var", "name": "gate_lost", "value": 1},
+				{"type": "message", "text": "アイアンスパイン門が陥落した！", "at": [-51.5, 51.5]}
+			]
+		},
+		{
+			"id": "reinforce",
+			"when": {"type": "time", "at": 330},
+			"do": [
+				{"type": "set_var", "name": "phase", "value": 1},
+				{
+					"type": "spawn",
+					"team": 0,
+					"units": {"walker": 2, "aetherguard": 3, "airship": 1, "mortar": 1},
+					"at": [-109.5, 128],
+					"columns": 4,
+					"spacing": [7, 7],
+					"rotate": 180,
+					"facing": 135,
+					"order": "move",
+					"target": [-70, 70],
+					"spread": 10
+				},
+				{"type": "resources", "team": 0, "material": 400, "aether": 200},
+				{"type": "ai", "aggression": 1},
+				{"type": "focus", "at": [0, 0]},
+				{
+					"type": "banner",
+					"title": "REINFORCEMENTS HAVE ARRIVED",
+					"text": "王冠の援軍が到着。中央ネクサスを奪取し、ヴァルケシュの本拠地を破壊せよ。",
+					"seconds": 7
+				},
+				{"type": "advisor", "text": "DISCIPLINE\nBUILDS WORLDS."},
+				{"type": "sound", "name": "objective"},
+				{"type": "message", "text": "援軍が到着した（資材+400 / エーテル+200）", "at": [-120, 128]},
+				{
+					"type": "objectives",
+					"title": "Claim the Aether",
+					"subtitle": "Break the Varkesh Citadel.",
+					"list": [
+						{
+							"id": "gate",
+							"text": "アイアンスパイン門を守る",
+							"failed_when": {"type": "var", "name": "gate_lost", "cmp": ">=", "value": 1},
+							"done_when": {"type": "var", "name": "gate_lost", "cmp": "==", "value": 0}
+						},
+						{"id": "nexus", "text": "中央ネクサスを占領する", "done_when": {"type": "fired", "trigger": "nexus"}},
+						{
+							"id": "cities",
+							"text": "都市を4つ支配する（{sites:0} / 4）",
+							"done_when": {"type": "sites", "team": 0, "cmp": ">=", "value": 4}
+						},
+						{"id": "citadel", "text": "ヴァルケシュ本拠地を破壊する"}
+					]
+				}
+			]
+		},
+		{
+			"id": "nexus",
+			"when": {"type": "sites", "team": 0, "id": "central_nexus"},
+			"do": [
+				{"type": "focus", "at": [150, -150]},
+				{"type": "banner", "title": "THE NEXUS IS OURS", "text": "エーテルの流れは王冠のものだ。", "seconds": 5},
+				{"type": "sound", "name": "objective"}
+			]
+		}
+	]
+}

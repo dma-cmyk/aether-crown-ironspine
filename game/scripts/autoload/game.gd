@@ -13,6 +13,7 @@ var music_volume := 0.55
 var sfx_volume := 0.85
 var edge_scroll := true
 var difficulty := 1
+var scenario_path := "res://scenarios/hold_the_gate.json"
 var show_fps := false
 
 ## Command line: godot --path game -- --capture=overview --out=/tmp/a.png --frames=90
@@ -99,7 +100,9 @@ func goto_title() -> void:
 	get_tree().change_scene_to_file("res://scenes/title.tscn")
 
 
-func start_match() -> void:
+func start_match(path: String = "") -> void:
+	if path != "":
+		scenario_path = path
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://scenes/match.tscn")
 

@@ -40,6 +40,8 @@ func _ready() -> void:
 	if Game.is_capture():
 		var cap := preload("res://scripts/dev/capture.gd").new()
 		add_child(cap)
+		if Game.arg("show") == "scenarios":
+			_show_scenarios()
 
 
 func _stage_scene() -> void:
@@ -110,6 +112,7 @@ func _build_ui() -> void:
 	menu.size = Vector2(520, 380)
 	ui.add_child(menu)
 	_menu_button(menu, "キャンペーン ― アイアンスパインの門", _start)
+	_menu_button(menu, "シナリオ", _show_scenarios)
 	diff_button = _menu_button(menu, "", _cycle_difficulty)
 	_update_diff()
 	_menu_button(menu, "操作説明", _show_help)
@@ -154,7 +157,7 @@ func _cycle_difficulty() -> void:
 
 
 func _start() -> void:
-	Game.start_match()
+	Game.start_match(Scenario.DEFAULT)
 
 
 func _show_modal(p: Control) -> void:
@@ -178,6 +181,10 @@ func _close_modal() -> void:
 
 func _show_help() -> void:
 	_show_modal(HelpPanel.make(_close_modal))
+
+
+func _show_scenarios() -> void:
+	_show_modal(ScenarioPanel.make(_close_modal))
 
 
 func _show_settings() -> void:

@@ -44,11 +44,18 @@ godot --path game
 
 ゲーム内の「操作説明」にも同じ内容があります。
 
+## 自作シナリオ
+
+タイトルの「シナリオ」から、内蔵のシナリオと自作のシナリオを選んで遊べます。
+シナリオは JSON ファイル1つで、マップ・初期部隊・目標・試合中のイベント（「5分たったら援軍」など）を書きます。
+書き方は [docs/scenarios.md](docs/scenarios.md)、実例は内蔵の `game/scenarios/hold_the_gate.json` です。
+
 ## 構成
 
 ```
 game/                  Godot プロジェクト（Mobile レンダラー、GDScript）
   data/map_ironspine.json   マップ設計（地形・道・橋・都市・初期配置）の唯一の元データ
+  scenarios/           内蔵シナリオ（ミッションの進行・目標・イベント）
   scripts/core|units|buildings|combat|ai|ui|world   ゲームロジックと UI
   shaders/             地形・水・滝・空・粒子・霧・歩兵の頂点アニメ
   assets/              生成済みアセット（terrain / models / textures / fx / ui / audio）
@@ -84,6 +91,8 @@ godot --path game -- --capture=x --out=/tmp/x.png --frames=400 [--cam=x,z,yaw,di
 godot --headless --path game -- --match --autoplay --timescale=10
 # 全モデルの確認用ギャラリー
 godot --path game -- --gallery=all --out=/tmp/gallery.png
+# シナリオファイルの検証（誤りがあると終了コード 1）
+godot --headless --path game -- --check-scenarios
 ```
 
 設計の詳細は [docs/design.md](docs/design.md) を参照。
