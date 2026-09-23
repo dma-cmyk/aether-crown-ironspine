@@ -23,6 +23,15 @@ var focus_point := Vector3(-51.5, 0, 51.5)
 var _tick := 0.0
 var _nexus_taken := false
 var _warned := false
+var _hint_i := 0
+
+const HINTS := [
+	[3.0, "ヒント：左ドラッグで部隊を選び、右クリックで移動・攻撃。F で構えると被ダメージが半減する。"],
+	[18.0, "ヒント：本拠地（Home キー）を選んで B で建設メニュー。工廠（W）を建てると歩行機と臼砲が作れる。"],
+	[36.0, "ヒント：工兵で近くの West Foundry / South Works を占領すると収入と人口上限が増える。"],
+	[150.0, "ヒント：臼砲は D で展開すると射程が 72m まで伸びる。橋の手前に並べよう。"],
+	[240.0, "ヒント：S で特殊能力。歩兵のエーテル弾は装甲にも効く。"],
+]
 
 
 func setup(w: World, a: EnemyAI, h: HUD) -> void:
@@ -49,6 +58,9 @@ func _process(delta: float) -> void:
 	_tick = 0.5
 	var t := world.match_time
 	_check_end()
+	if _hint_i < HINTS.size() and t >= float(HINTS[_hint_i][0]):
+		world.raise_alert(Vector3.ZERO, HINTS[_hint_i][1], Defs.TEAM_PLAYER)
+		_hint_i += 1
 	if phase == 0:
 		if waves_sent < WAVES.size() and t >= float(WAVES[waves_sent]["t"]):
 			_send_wave(WAVES[waves_sent])

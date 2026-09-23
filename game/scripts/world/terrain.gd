@@ -192,6 +192,21 @@ func _spawn_scatter() -> void:
 		_multimesh_group("props_" + key.replace("|", "_"), [key.get_slice("|", 0)], by_model[key], false, int(key.get_slice("|", 1)))
 
 
+## Smoke sources on scattered industrial props (local chimney tops rotated by the prop yaw).
+const CHIMNEY_TOPS := {"smokestack": [Vector3(0, 24.4, 0)], "workshop": [Vector3(2.2, 13.2, -4.0)]}
+const CHIMNEY_SIZE := {"smokestack": 3.6, "workshop": 2.4}
+
+
+func register_chimneys(fx: FX) -> void:
+	for p in placements["props"]:
+		var tops: Array = CHIMNEY_TOPS.get(p["model"], [])
+		for local: Vector3 in tops:
+			var b := Basis(Vector3.UP, float(p["rot"]))
+			var pos := Vector3(p["pos"][0], p["pos"][1], p["pos"][2]) + b * (local * float(p["scale"]))
+			var big: float = CHIMNEY_SIZE.get(p["model"], 2.4)
+			fx.add_chimney(pos, 1.2 + big * 0.6, big, 0.24)
+
+
 func _multimesh_group(group_name: String, models: Array, items: Array, tint: bool, team: int = -1) -> void:
 	var meshes: Array[Mesh] = []
 	for m in models:

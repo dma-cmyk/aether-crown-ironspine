@@ -7,9 +7,9 @@ const TEX_DIR := "res://assets/textures/"
 
 ## name -> spec. "tex" refers to <tex>_albedo/_normal/_orm.png in TEX_DIR.
 const SPECS := {
-	"stone": {"tex": "stone", "tint": Color(0.80, 0.80, 0.83), "scale": 0.42, "rough": 0.9},
+	"stone": {"tex": "stone", "tint": Color(0.60, 0.62, 0.68), "scale": 0.42, "rough": 0.9},
 	"stone_dark": {"tex": "stone", "tint": Color(0.42, 0.43, 0.48), "scale": 0.42, "rough": 0.9},
-	"stone_trim": {"tex": "stone", "tint": Color(1.0, 0.97, 0.92), "scale": 0.55, "rough": 0.85},
+	"stone_trim": {"tex": "stone", "tint": Color(0.82, 0.8, 0.78), "scale": 0.55, "rough": 0.85},
 	"paving": {"tex": "terrain_rock", "tint": Color(1.35, 1.3, 1.24), "scale": 0.3, "rough": 0.9},
 	"roof": {"tex": "roof", "tint": Color(0.42, 0.47, 0.58), "scale": 0.55, "rough": 0.6},
 	"roof_copper": {"tex": "roof", "tint": Color(0.40, 0.66, 0.60), "scale": 0.55, "rough": 0.5, "metal": 0.45},

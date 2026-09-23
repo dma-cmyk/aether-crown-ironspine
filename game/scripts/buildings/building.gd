@@ -4,6 +4,7 @@ extends Entity
 
 const MAX_QUEUE := 6
 const MUZZLE := {"citadel": Vector3(0, 1.7, 3.8), "gate": Vector3(0, 1.7, 4.8), "bastion": Vector3(0, 1.7, 5.2)}
+const STACKS := {"citadel": [Vector3(-4.5, 20.5, -11.0), Vector3(4.5, 18.5, -11.0)], "foundry": [Vector3(-5.5, 25.2, -9.8), Vector3(5.5, 22.2, -9.8)]}
 
 var built := true
 var progress := 1.0
@@ -57,6 +58,8 @@ func setup(id: String, t: int, pos: Vector3, face: float, is_built: bool) -> voi
 		World.inst.nav.set_blocked_circle(global_position, footprint, true)
 	rally = global_position + Basis(Vector3.UP, facing) * Vector3(0, 0, radius + 9.0)
 	_update_construction()
+	for local: Vector3 in STACKS.get(def_id, []):
+		World.inst.fx.add_chimney(global_position + Basis(Vector3.UP, facing) * local, 3.0, 3.2, 0.22)
 
 
 func _measure_height() -> float:

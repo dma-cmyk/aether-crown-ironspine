@@ -19,22 +19,22 @@ func _init() -> void:
 func _ready() -> void:
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color(0.05, 0.065, 0.09)
+	env.background_color = Color(0.09, 0.11, 0.15)
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color(0.45, 0.5, 0.6)
-	env.ambient_light_energy = 0.8
+	env.ambient_light_color = Color(0.6, 0.65, 0.75)
+	env.ambient_light_energy = 1.4
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
 	var key := DirectionalLight3D.new()
 	key.rotation_degrees = Vector3(-35, -40, 0)
-	key.light_energy = 1.4
+	key.light_energy = 2.2
 	key.light_color = Color(1.0, 0.92, 0.8)
 	add_child(key)
 	var rim := DirectionalLight3D.new()
 	rim.rotation_degrees = Vector3(-15, 150, 0)
-	rim.light_energy = 0.9
+	rim.light_energy = 1.6
 	rim.light_color = Color(0.5, 0.75, 1.0)
 	add_child(rim)
 	pivot = Node3D.new()
@@ -65,8 +65,8 @@ func show_entity(kind: String, id: String, team: int) -> void:
 				look_y = 1.55
 			"walker":
 				height = 10.0
-				dist = 16.0
-				look_y = 7.0
+				dist = 21.0
+				look_y = 6.0
 			"vehicle":
 				height = 3.4
 				dist = 9.5

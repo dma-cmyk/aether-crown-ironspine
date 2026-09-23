@@ -76,6 +76,7 @@ func _process(delta: float) -> void:
 	var visible_now := unit.seen_by_player or unit.team == Defs.TEAM_PLAYER
 	var crouch := unit.fortified or unit.deployed
 	var terrain := World.inst.terrain
+	var nav := World.inst.nav
 	var aim_yaw := yaw
 	if unit.target and is_instance_valid(unit.target) and unit.firing_timer > 0.0:
 		var to := unit.target.global_position - origin
@@ -93,6 +94,8 @@ func _process(delta: float) -> void:
 			if crouch:
 				off = off * 0.8
 			var tgt := origin + basis * off
+			if not nav.walkable_at(tgt):
+				tgt = origin.lerp(tgt, 0.25)
 			tgt.y = terrain.ground_at(tgt.x, tgt.z)
 			var before := pos
 			var k := 1.0 - exp(-5.5 * delta)

@@ -73,7 +73,7 @@ func _economy() -> void:
 			"barracks":
 				choice = "aetherguard" if world.count_units(team, "artificer") >= 2 or rng.randf() < 0.8 else "artificer"
 			"foundry":
-				choice = "walker" if rng.randf() < 0.55 else "mortar"
+				choice = "walker" if (p.aether >= 160.0 and rng.randf() < 0.7) else "mortar"
 			"skyport":
 				if rng.randf() < 0.5 * diff:
 					choice = "airship"

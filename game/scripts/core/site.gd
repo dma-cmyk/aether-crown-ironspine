@@ -52,14 +52,14 @@ func setup(d: Dictionary) -> void:
 	label = Label3D.new()
 	label.text = site_name.to_upper()
 	label.font = UITheme.title_font()
-	label.font_size = 64
-	label.pixel_size = 0.018
+	label.font_size = 40
+	label.pixel_size = 0.0005
 	label.outline_size = 14
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.no_depth_test = false
 	label.position = Vector3(0, 19.0, 0)
 	label.modulate = Color(0.95, 0.9, 0.78)
-	label.fixed_size = false
+	label.fixed_size = true
 	add_child(label)
 	_refresh_owner()
 

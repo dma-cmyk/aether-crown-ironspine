@@ -602,15 +602,15 @@ class MapGen:
 
         # canyon floor boulders
         cf_pts = []
-        for _ in range(900):
+        for _ in range(500):
             x = rng.uniform(-200, 200)
             z = rng.uniform(-200, 200)
             h = float(self.height_at(x, z))
             if h < -6.0:
                 cf_pts.append((x, h, z))
-        for (x, h, z) in cf_pts[:260]:
-            placements["rocks"].append([round(x, 2), round(h - 0.4, 2), round(z, 2),
-                                        round(float(rng.uniform(0.8, 2.8)), 2),
+        for (x, h, z) in cf_pts[:70]:
+            placements["rocks"].append([round(x, 2), round(h - 0.6, 2), round(z, 2),
+                                        round(float(rng.uniform(0.6, 1.6)), 2),
                                         round(float(rng.uniform(0, math.tau)), 3),
                                         int(rng.integers(0, 3))])
 

@@ -130,6 +130,7 @@ var debris_l: Layer
 var _tracers: Array[Dictionary] = []
 var _debris: Array[Dictionary] = []
 var _emitters: Array[Dictionary] = []
+var _chimneys: Array[Dictionary] = []
 var _pending: Array[Dictionary] = []
 var _lights: Array[OmniLight3D] = []
 var _light_t := PackedFloat32Array()
@@ -213,6 +214,7 @@ func _process(delta: float) -> void:
 			if randf() < 0.3:
 				fire_l.emit(p2, Vector3(0, 2.0, 0), 0.8, 1.2, 2.6, Color(1.0, 0.45, 0.12, 0.9))
 		i += 1
+	_update_chimneys(delta)
 	_update_tracers(delta)
 	_update_debris(delta)
 	_update_rings(delta)
@@ -297,6 +299,32 @@ func dust(p: Vector3, size: float = 1.5) -> void:
 
 func impact_dust(p: Vector3, size: float = 0.6) -> void:
 	dust_l.emit(p, Vector3(0, 1.0, 0), 0.6, size * 0.5, size * 1.5, Color(0.45, 0.4, 0.33, 0.4))
+
+
+## Persistent chimney smoke (emitted only near the camera).
+func add_chimney(p: Vector3, rate: float = 2.5, size: float = 2.2, dark: float = 0.3) -> void:
+	_chimneys.append({"p": p, "rate": rate, "size": size, "dark": dark, "acc": randf()})
+
+
+func _update_chimneys(dt: float) -> void:
+	var cam := World.inst.camera if World.inst else null
+	var focus := cam.focus if cam and cam.cam else Vector3.ZERO
+	var far := 170.0
+	if cam and cam.cam and not cam.input_enabled:
+		focus = cam.cam.global_position
+		far = 320.0
+	for c in _chimneys:
+		var p: Vector3 = c["p"]
+		if Vector2(p.x - focus.x, p.z - focus.z).length() > far:
+			continue
+		c["acc"] += dt * float(c["rate"])
+		while c["acc"] >= 1.0:
+			c["acc"] -= 1.0
+			var s: float = c["size"]
+			var d: float = c["dark"]
+			smoke_l.emit(p + Vector3(randf_range(-0.4, 0.4), 0, randf_range(-0.4, 0.4)),
+					Vector3(randf_range(0.6, 1.4), randf_range(2.2, 3.4), randf_range(-0.3, 0.3)), randf_range(5.0, 7.5),
+					s * 0.6, s * 3.2, Color(d, d * 0.97, d * 0.95, 0.42), randf_range(-0.3, 0.3))
 
 
 func smoke_column(p: Vector3, r: float) -> void:

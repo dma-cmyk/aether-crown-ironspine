@@ -33,10 +33,10 @@ func build() -> void:
 	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SCREEN
 	env.fog_enabled = true
 	env.fog_mode = Environment.FOG_MODE_EXPONENTIAL
-	env.fog_light_color = Color(0.63, 0.69, 0.77)
+	env.fog_light_color = Color(0.66, 0.70, 0.76)
 	env.fog_light_energy = 1.0
-	env.fog_sun_scatter = 0.12
-	env.fog_density = 0.0007
+	env.fog_sun_scatter = 0.25
+	env.fog_density = 0.0012
 	env.fog_sky_affect = 0.2
 	env.fog_aerial_perspective = 0.15
 	env.fog_height = -15.0
@@ -78,8 +78,8 @@ func apply_quality() -> void:
 	RenderingServer.directional_shadow_atlas_set_size([2048, 2048, 4096][q], true)
 	RenderingServer.directional_soft_shadow_filter_set_quality([RenderingServer.SHADOW_QUALITY_SOFT_VERY_LOW, RenderingServer.SHADOW_QUALITY_SOFT_LOW, RenderingServer.SHADOW_QUALITY_SOFT_MEDIUM][q])
 	if vp:
-		vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if q < 2 else Viewport.SCALING_3D_MODE_BILINEAR
+		var forward_plus := RenderingServer.get_current_rendering_method() == "forward_plus"
+		vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if (q < 2 and forward_plus) else Viewport.SCALING_3D_MODE_BILINEAR
 		vp.scaling_3d_scale = [0.67, 0.8, 1.0][q]
-		vp.fsr_sharpness = 0.35
 		vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if q < 2 else Viewport.SCREEN_SPACE_AA_SMAA
 		vp.msaa_3d = Viewport.MSAA_DISABLED

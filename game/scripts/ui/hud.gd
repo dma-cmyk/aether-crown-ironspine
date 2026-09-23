@@ -375,8 +375,8 @@ func _build_selection() -> void:
 	sel_status.custom_minimum_size = Vector2(560, 0)
 	sel_info_box.add_child(sel_status)
 	sel_grid = GridContainer.new()
-	sel_grid.columns = 12
-	sel_grid.position = Vector2(180, 44)
+	sel_grid.columns = 15
+	sel_grid.position = Vector2(16, 16)
 	sel_grid.add_theme_constant_override("h_separation", 4)
 	sel_grid.add_theme_constant_override("v_separation", 4)
 	p.add_child(sel_grid)

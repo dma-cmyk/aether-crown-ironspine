@@ -116,7 +116,7 @@ func recompute() -> void:
 		elif b.team != Defs.TEAM_PLAYER and b.seen_by_player == false:
 			pass
 	for i in _pixels.size():
-		_pixels[i] = 255 if vis[i] else (150 if explored[i] else 60)
+		_pixels[i] = 255 if vis[i] else (185 if explored[i] else 105)
 	img.set_data(CELLS, CELLS, false, Image.FORMAT_L8, _pixels)
 	tex.update(img)
 	overlay.visible = enabled

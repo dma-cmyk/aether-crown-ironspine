@@ -29,7 +29,16 @@ func _ready() -> void:
 	load_settings()
 	if args.has("quality"):
 		quality = clampi(int(args["quality"]), 0, 2)
+	if args.has("difficulty"):
+		difficulty = clampi(int(args["difficulty"]), 0, 2)
 	apply_audio()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	var k := event as InputEventKey
+	if k and k.pressed and not k.echo and (k.physical_keycode == KEY_F11 or (k.physical_keycode == KEY_ENTER and k.alt_pressed)):
+		var fs := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MAXIMIZED if fs else DisplayServer.WINDOW_MODE_FULLSCREEN)
 
 
 func arg(name: String, default: String = "") -> String:

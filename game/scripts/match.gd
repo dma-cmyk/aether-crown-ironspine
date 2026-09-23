@@ -35,6 +35,7 @@ func _ready() -> void:
 	world.name = "World"
 	add_child(world)
 	world.setup(terrain, camera)
+	terrain.register_chimneys(world.fx)
 	_spawn_start()
 	commander = Commander.new()
 	commander.name = "Commander"
@@ -58,10 +59,14 @@ func _ready() -> void:
 	mission.setup(world, ai, hud)
 	world.fog.hide_enemy_buildings()
 	world.fog.recompute()
-	camera.set_view(Vector3(-46, 0, 46), -45.0, 96.0)
+	camera.set_view(Vector3(-40, 0, 40), -45.0, 104.0)
 	_start_audio()
 	if Game.is_capture():
 		_setup_capture()
+	if Game.args.has("autoplay"):
+		var bot: Node = load("res://scripts/dev/autoplayer.gd").new()
+		add_child(bot)
+		bot.setup(world, commander, mission)
 	if Game.args.has("nohud"):
 		hud_layer.visible = false
 		hud.studio.render_target_update_mode = SubViewport.UPDATE_DISABLED
@@ -139,7 +144,7 @@ func _setup_capture() -> void:
 		camera.set_view(Vector3(float(p[0]), 0, float(p[1])), float(p[2]), float(p[3]), float(p[4]) if p.size() > 4 else -1.0)
 	var scenario := Game.arg("scenario", "")
 	if scenario != "":
-		DevScenarios.run(scenario, world, commander, camera)
+		DevScenarios.run(scenario, world, commander, camera, self)
 	if Game.args.has("select"):
 		var sel := []
 		for u in world.units:

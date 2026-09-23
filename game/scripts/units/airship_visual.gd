@@ -12,11 +12,13 @@ var smoke_t := 0.0
 var shadow: MeshInstance3D
 
 const GUNS := [Vector3(1.8, -5.1, -2.5), Vector3(1.8, -5.1, -0.1), Vector3(1.8, -5.1, 2.3)]
+const SCALE := 0.62
 
 
 func setup(u: Unit) -> void:
 	super.setup(u)
 	model = load_model("airship", u.team)
+	model.scale = Vector3.ONE * SCALE
 	add_child(model)
 	for n in ["prop_l", "prop_r"]:
 		var p := find_node3d(model, n)
@@ -26,7 +28,7 @@ func setup(u: Unit) -> void:
 	bob = randf() * TAU
 	shadow = MeshInstance3D.new()
 	var q := QuadMesh.new()
-	q.size = Vector2(9, 26)
+	q.size = Vector2(6, 16)
 	q.orientation = PlaneMesh.FACE_Y
 	shadow.mesh = q
 	var m := ShaderMaterial.new()
@@ -44,10 +46,10 @@ func muzzle_points(w: Dictionary, target: Entity) -> Array[Vector3]:
 		var local := global_transform.affine_inverse() * target.global_position
 		side = 1.0 if local.x >= 0.0 else -1.0
 	if w["id"] == "flak":
-		out.append(global_transform * Vector3(0, 2.8, 4.0))
+		out.append(global_transform * (Vector3(0, 2.8, 4.0) * SCALE))
 		return out
 	for g in GUNS:
-		out.append(global_transform * Vector3(g.x * side, g.y, g.z))
+		out.append(global_transform * (Vector3(g.x * side, g.y, g.z) * SCALE))
 	return out
 
 

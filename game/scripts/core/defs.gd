@@ -62,7 +62,7 @@ const UNITS := {
 		"desc": ["The ground shakes where the Crown marches.", "A furnace on legs."],
 		"jp": "重装歩行機。大砲と機関砲を持つ主力。建物と装甲に強い。",
 		"type": "walker", "hp": 950.0, "armor": "heavy",
-		"cost": {"material": 320, "aether": 120}, "pop": 8, "build_time": 38.0,
+		"cost": {"material": 260, "aether": 160}, "pop": 8, "build_time": 38.0,
 		"speed": 3.6, "radius": 4.5, "vision": 40.0, "weapons": ["walker_cannon", "walker_gatling"],
 		"model": "walker", "commands": ["move", "hold", "attack", "patrol", "fortify", "special"],
 		"special": "overcharge", "capture": 0.6, "hotkey": "E",
@@ -72,7 +72,7 @@ const UNITS := {
 		"desc": ["Patience, then thunder.", "Walls are only a suggestion."],
 		"jp": "自走臼砲。展開すると射程が大きく伸びる。近距離は撃てない。",
 		"type": "vehicle", "hp": 340.0, "armor": "heavy",
-		"cost": {"material": 220, "aether": 60}, "pop": 5, "build_time": 26.0,
+		"cost": {"material": 170, "aether": 90}, "pop": 5, "build_time": 26.0,
 		"speed": 4.0, "radius": 3.0, "vision": 30.0, "weapons": ["mortar_shell"],
 		"model": "mortar", "commands": ["move", "hold", "attack", "patrol", "deploy"],
 		"special": "", "capture": 0.5, "hotkey": "R",
@@ -82,10 +82,10 @@ const UNITS := {
 		"desc": ["Above the smoke, the Crown sees all.", "Its shadow arrives first."],
 		"jp": "飛行艦。地形を無視して移動し、舷側砲で地上を砲撃する。",
 		"type": "air", "hp": 760.0, "armor": "air",
-		"cost": {"material": 380, "aether": 200}, "pop": 10, "build_time": 45.0,
-		"speed": 6.2, "radius": 6.0, "vision": 56.0, "weapons": ["broadside", "flak"],
+		"cost": {"material": 300, "aether": 240}, "pop": 10, "build_time": 45.0,
+		"speed": 6.2, "radius": 4.6, "vision": 56.0, "weapons": ["broadside", "flak"],
 		"model": "airship", "commands": ["move", "hold", "attack", "patrol", "special"],
-		"special": "aether_bombard", "capture": 0.0, "altitude": 26.0, "hotkey": "T",
+		"special": "aether_bombard", "capture": 0.0, "altitude": 17.0, "hotkey": "T",
 	},
 }
 
@@ -94,7 +94,7 @@ const BUILDINGS := {
 		"name": ["Crown Citadel", "Varkesh Citadel"], "desc": ["Heart of the Crown.", "Seat of the Dominion."],
 		"jp": "本拠地。工兵を生産し、収入と人口上限を与える。破壊されると敗北。",
 		"hp": 5200.0, "radius": 13.0, "footprint": 12.0, "cost": {"material": 0, "aether": 0}, "build_time": 1.0,
-		"produces": ["artificer"], "pop": 20, "income": {"material": 150, "aether": 45},
+		"produces": ["artificer"], "pop": 20, "income": {"material": 185, "aether": 40},
 		"model": "citadel", "weapons": ["aether_lance"], "buildable": false, "vision": 50.0,
 	},
 	"barracks": {
@@ -106,20 +106,20 @@ const BUILDINGS := {
 	"foundry": {
 		"name": ["Gearworks Foundry", "Varkesh Forge"], "desc": ["Steel, steam and faith.", "Fire that never sleeps."],
 		"jp": "工廠。歩行機と臼砲を生産する。",
-		"hp": 1900.0, "radius": 9.5, "footprint": 9.0, "cost": {"material": 250, "aether": 60}, "build_time": 34.0,
+		"hp": 1900.0, "radius": 9.5, "footprint": 9.0, "cost": {"material": 220, "aether": 80}, "build_time": 34.0,
 		"produces": ["walker", "mortar"], "pop": 0, "model": "foundry", "buildable": true, "hotkey": "W", "vision": 30.0,
 	},
 	"skyport": {
 		"name": ["Aerodrome Spire", "Varkesh Skydock"], "desc": ["The sky is Crown territory.", "Chains for the clouds."],
 		"jp": "飛行場。飛行艦を生産する。",
-		"hp": 1600.0, "radius": 8.5, "footprint": 8.0, "cost": {"material": 300, "aether": 150}, "build_time": 40.0,
+		"hp": 1600.0, "radius": 8.5, "footprint": 8.0, "cost": {"material": 240, "aether": 180}, "build_time": 40.0,
 		"produces": ["airship"], "pop": 0, "model": "skyport", "buildable": true, "hotkey": "E", "vision": 40.0,
 	},
 	"refinery": {
 		"name": ["Aether Refinery", "Varkesh Siphon"], "desc": ["Light, distilled.", "Drink the sky dry."],
 		"jp": "精製所。エーテル収入を増やす。",
 		"hp": 950.0, "radius": 6.0, "footprint": 6.0, "cost": {"material": 120, "aether": 0}, "build_time": 20.0,
-		"produces": [], "pop": 0, "income": {"material": 0, "aether": 60}, "model": "refinery", "buildable": true, "hotkey": "R", "vision": 24.0,
+		"produces": [], "pop": 0, "income": {"material": 0, "aether": 50}, "model": "refinery", "buildable": true, "hotkey": "R", "vision": 24.0,
 	},
 	"habitat": {
 		"name": ["Habitation Block", "Varkesh Barracks-Pit"], "desc": ["Every hearth a soldier.", "Crowded and loyal."],
@@ -130,7 +130,7 @@ const BUILDINGS := {
 	"bastion": {
 		"name": ["Bastion Tower", "Varkesh Spike"], "desc": ["Hold the line.", "Nothing passes."],
 		"jp": "防衛塔。近づく敵を砲撃する。",
-		"hp": 1300.0, "radius": 4.5, "footprint": 4.5, "cost": {"material": 180, "aether": 40}, "build_time": 24.0,
+		"hp": 1300.0, "radius": 4.5, "footprint": 4.5, "cost": {"material": 150, "aether": 70}, "build_time": 24.0,
 		"produces": [], "pop": 0, "model": "bastion", "weapons": ["tower_cannon"], "buildable": true, "hotkey": "Y", "vision": 42.0,
 	},
 	"gate": {
