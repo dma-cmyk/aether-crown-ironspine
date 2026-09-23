@@ -33,6 +33,7 @@ godot --path game
 | 自由戦 | 台本なしの通常対戦（敵 AI は最初から攻めてくる） |
 
 勝利すると「次のミッションへ」で続きに進めます。タイトルの「シナリオ」からはどのミッションも選べます。
+試合中は Esc のメニューから「セーブ」「ロード」（3枠）ができ、タイトルの「続きから」でも再開できます。
 
 **第1ミッション「アイアンスパインの門」の流れ**
 
@@ -104,6 +105,9 @@ godot --headless --path game -- --match --autoplay --timescale=10
 godot --path game -- --gallery=all --out=/tmp/gallery.png
 # シナリオファイルの検証（誤りがあると終了コード 1）
 godot --headless --path game -- --check-scenarios
+# 試合中の自動セーブと、セーブからの再開
+godot --headless --path game -- --match --autoplay --save-at=150 --save-to=/tmp/s.json
+godot --path game -- --load=/tmp/s.json
 ```
 
 設計の詳細は [docs/design.md](docs/design.md) を参照。

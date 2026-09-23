@@ -13,9 +13,13 @@ var scenario: Scenario
 var ai: EnemyAI
 var music: AudioStreamPlayer
 var ambience: Array[AudioStreamPlayer] = []
+var _save_at := -1.0
 
 
 func _ready() -> void:
+	var save := Game.pending_save
+	Game.pending_save = {}
+	var loading := not save.is_empty()
 	scenario = _load_scenario()
 	env_rig = EnvRig.new()
 	env_rig.name = "Environment"
@@ -38,7 +42,9 @@ func _ready() -> void:
 	add_child(world)
 	world.setup(terrain, camera)
 	terrain.register_chimneys(world.fx)
-	_spawn_start()
+	_spawn_start(loading)
+	if loading:
+		SaveGame.restore_world(self, save)
 	commander = Commander.new()
 	commander.name = "Commander"
 	add_child(commander)
@@ -58,13 +64,17 @@ func _ready() -> void:
 	mission = Mission.new()
 	mission.name = "Mission"
 	add_child(mission)
-	mission.setup(world, ai, hud, scenario)
-	var diff: float = [0.85, 1.0, 1.2][Game.difficulty]
-	world.player(Defs.TEAM_ENEMY).income_mult = diff
-	world.player(Defs.TEAM_ENEMY).material *= diff
+	mission.setup(world, ai, hud, scenario, loading)
+	if loading:
+		mission.restore(save["mission"])
+		ai.restore(save["ai"])
+	else:
+		var diff: float = [0.85, 1.0, 1.2][Game.difficulty]
+		world.player(Defs.TEAM_ENEMY).income_mult = diff
+		world.player(Defs.TEAM_ENEMY).material *= diff
+		camera.set_view(Vector3(-40, 0, 40), -45.0, 104.0)
 	world.fog.hide_enemy_buildings()
 	world.fog.recompute()
-	camera.set_view(Vector3(-40, 0, 40), -45.0, 104.0)
 	_start_audio()
 	if Game.is_capture():
 		_setup_capture()
@@ -77,9 +87,19 @@ func _ready() -> void:
 		hud.studio.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	if Game.args.has("nofogwar"):
 		world.fog.enabled = false
+	_save_at = float(Game.arg("save-at", "-1"))
 
 
-func _spawn_start() -> void:
+## Dev: --save-at=<seconds> [--save-to=<path>] writes a save during the match.
+func _process(_delta: float) -> void:
+	if _save_at >= 0.0 and world.match_time >= _save_at:
+		_save_at = -1.0
+		var path := Game.arg("save-to", SaveGame.slot_path(1))
+		print("[save] %s ok=%s" % [path, SaveGame.write(path, SaveGame.capture(self))])
+
+
+## Cities always come from the map; a loaded save brings its own gates, buildings and units.
+func _spawn_start(sites_only: bool) -> void:
 	var L := terrain.layout
 	for s in L["sites"]:
 		var site := Site.new()
@@ -87,6 +107,8 @@ func _spawn_start() -> void:
 		world.add_child(site)
 		site.setup(s)
 		world.sites.append(site)
+	if sites_only:
+		return
 	for g in L["gates"]:
 		var f: Array = g["facing"]
 		world.spawn_building("gate", int(g["team"]), Vector3(g["pos"][0], 0, g["pos"][1]), atan2(f[0], f[1]), true)
@@ -96,6 +118,10 @@ func _spawn_start() -> void:
 		world.spawn_building(b["id"], int(b["team"]), Vector3(b["pos"][0], 0, b["pos"][1]), deg_to_rad(float(b["rot"])), true)
 	for u in L["start_units"]:
 		world.spawn_unit(u["id"], int(u["team"]), Vector3(u["pos"][0], 0, u["pos"][1]), deg_to_rad(float(u["rot"])))
+
+
+func save_game(slot: int) -> bool:
+	return SaveGame.write(SaveGame.slot_path(slot), SaveGame.capture(self))
 
 
 ## The scenario chosen on the title screen (or --mission=<path>); falls back to the campaign.

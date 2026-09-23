@@ -234,6 +234,13 @@ func _process(delta: float) -> void:
 	_update_bar_visibility()
 
 
+## Save/load: construction progress and health straight from a save file.
+func restore_progress(p: float, h: float) -> void:
+	progress = p
+	hp = h
+	_update_construction()
+
+
 func _update_construction() -> void:
 	if model == null:
 		return

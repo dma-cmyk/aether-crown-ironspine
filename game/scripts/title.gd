@@ -42,6 +42,8 @@ func _ready() -> void:
 		add_child(cap)
 		if Game.arg("show") == "scenarios":
 			_show_scenarios()
+		elif Game.arg("show") == "saves":
+			_show_saves()
 
 
 func _stage_scene() -> void:
@@ -107,10 +109,11 @@ func _build_ui() -> void:
 	jp.position = Vector2(122, 398)
 	ui.add_child(jp)
 	var menu := VBoxContainer.new()
-	menu.add_theme_constant_override("separation", 12)
-	menu.position = Vector2(120, 500)
-	menu.size = Vector2(520, 380)
+	menu.add_theme_constant_override("separation", 8)
+	menu.position = Vector2(120, 448)
+	menu.size = Vector2(520, 400)
 	ui.add_child(menu)
+	_menu_button(menu, "続きから", _show_saves).disabled = not SaveGame.has_any()
 	_menu_button(menu, "キャンペーン ― アイアンスパインの門", _start)
 	_menu_button(menu, "シナリオ", _show_scenarios)
 	diff_button = _menu_button(menu, "", _cycle_difficulty)
@@ -135,7 +138,7 @@ func _build_ui() -> void:
 func _menu_button(parent: Control, text: String, cb: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
-	b.custom_minimum_size = Vector2(520, 58)
+	b.custom_minimum_size = Vector2(520, 50)
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.add_theme_font_override("font", UITheme.body_font())
 	b.add_theme_font_size_override("font_size", 22)
@@ -181,6 +184,10 @@ func _close_modal() -> void:
 
 func _show_help() -> void:
 	_show_modal(HelpPanel.make(_close_modal))
+
+
+func _show_saves() -> void:
+	_show_modal(SavePanel.make(false, func(slot: int) -> void: Game.load_game(SaveGame.slot_path(slot)), _close_modal))
 
 
 func _show_scenarios() -> void:

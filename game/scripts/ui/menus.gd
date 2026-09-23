@@ -11,6 +11,7 @@ var end_title: Label
 var end_sub: Label
 var end_stats: Label
 var next_button: Button
+var save_box: PanelContainer
 
 
 func setup(h: HUD) -> void:
@@ -23,7 +24,7 @@ func setup(h: HUD) -> void:
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	dim.visible = false
 	add_child(dim)
-	pause_box = _box("PAUSED", [["再開", _resume], ["設定", _open_settings], ["最初からやり直す", _restart], ["タイトルへ戻る", _title], ["ゲームを終了", _quit]])
+	pause_box = _box("PAUSED", [["再開", _resume], ["セーブ", _open_save.bind(true)], ["ロード", _open_save.bind(false)], ["設定", _open_settings], ["最初からやり直す", _restart], ["タイトルへ戻る", _title], ["ゲームを終了", _quit]])
 	settings_box = SettingsPanel.make(func(): settings_box.visible = false; pause_box.visible = true)
 	add_child(settings_box)
 	settings_box.visible = false
@@ -75,6 +76,9 @@ func _center(p: Control) -> void:
 func toggle_pause() -> void:
 	if end_box.visible:
 		return
+	if save_box:
+		_close_save()
+		return
 	var show := not pause_box.visible and not settings_box.visible
 	pause_box.visible = show
 	settings_box.visible = false
@@ -104,6 +108,32 @@ func show_end(victory: bool) -> void:
 
 func _resume() -> void:
 	toggle_pause()
+
+
+func _open_save(saving: bool) -> void:
+	save_box = SavePanel.make(saving, _on_slot.bind(saving), _close_save)
+	add_child(save_box)
+	pause_box.visible = false
+	_center(save_box)
+
+
+func _on_slot(slot: int, saving: bool) -> void:
+	if not saving:
+		get_tree().paused = false
+		Game.load_game(SaveGame.slot_path(slot))
+		return
+	var ok: bool = hud.match_node.save_game(slot)
+	hud.world.raise_alert(Vector3.ZERO, ("スロット %d にセーブしました" % slot) if ok else "セーブできませんでした", Defs.TEAM_PLAYER)
+	hud.world.sfx.play_ui("confirm" if ok else "error")
+	_close_save()
+
+
+func _close_save() -> void:
+	if save_box:
+		save_box.queue_free()
+		save_box = null
+	pause_box.visible = true
+	_center(pause_box)
 
 
 func _open_settings() -> void:

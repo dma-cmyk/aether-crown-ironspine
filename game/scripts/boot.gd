@@ -6,6 +6,9 @@ func _ready() -> void:
 	await get_tree().process_frame
 	if Game.args.has("check-scenarios"):
 		_check_scenarios()
+	elif Game.args.has("load"):
+		if not Game.load_game(Game.arg("load")):
+			Game.goto_title()
 	elif Game.args.has("gallery"):
 		get_tree().change_scene_to_file("res://scenes/gallery.tscn")
 	elif Game.args.has("title"):

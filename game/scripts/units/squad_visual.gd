@@ -26,6 +26,13 @@ func setup(u: Unit) -> void:
 		members.append(m)
 
 
+## Save/load: a squad restored below full strength starts without its fallen members.
+func drop_fallen() -> void:
+	for i in range(members.size() - 1, unit.members_alive() - 1, -1):
+		renderer.release(members[i])
+		members.remove_at(i)
+
+
 func _exit_tree() -> void:
 	for m in members:
 		renderer.release(m)

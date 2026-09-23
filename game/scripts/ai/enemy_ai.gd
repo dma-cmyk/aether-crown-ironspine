@@ -31,6 +31,16 @@ func setup(w: World, t: int) -> void:
 	rng.seed = 4242
 
 
+func snapshot() -> Dictionary:
+	return {"aggression": aggression, "build_i": _build_i, "next_attack": _next_attack}
+
+
+func restore(d: Dictionary) -> void:
+	aggression = float(d["aggression"])
+	_build_i = int(d["build_i"])
+	_next_attack = float(d["next_attack"])
+
+
 func _physics_process(delta: float) -> void:
 	if world == null or world.game_over:
 		return

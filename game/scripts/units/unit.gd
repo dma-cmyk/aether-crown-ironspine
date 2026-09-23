@@ -251,6 +251,18 @@ func toggle_deploy() -> void:
 		visual.on_mode_changed()
 
 
+## Save/load: re-enter fortify / deploy without the setup delay.
+func restore_modes(fort: bool, dep: bool) -> void:
+	fortified = fort
+	deployed = dep
+	if fort or dep:
+		order = Order.HOLD
+		path.clear()
+		guard_pos = global_position
+	if visual:
+		visual.on_mode_changed()
+
+
 func _clear_modes() -> void:
 	if fortified or deployed:
 		fortified = false

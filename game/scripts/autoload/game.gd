@@ -14,6 +14,8 @@ var sfx_volume := 0.85
 var edge_scroll := true
 var difficulty := 1
 var scenario_path := "res://scenarios/hold_the_gate.json"
+## Set by load_game(); the next match rebuilds itself from it.
+var pending_save := {}
 var show_fps := false
 
 ## Command line: godot --path game -- --capture=overview --out=/tmp/a.png --frames=90
@@ -98,6 +100,16 @@ func _set_bus(bus_name: String, v: float) -> void:
 func goto_title() -> void:
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://scenes/title.tscn")
+
+
+func load_game(path: String) -> bool:
+	var d := SaveGame.read(path)
+	if d.is_empty():
+		return false
+	pending_save = d
+	difficulty = int(d["difficulty"])
+	start_match(str(d["scenario"]))
+	return true
 
 
 func start_match(path: String = "") -> void:

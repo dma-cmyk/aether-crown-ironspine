@@ -26,12 +26,31 @@ var _tick := 0.0
 var _tags := RegEx.create_from_string("\\{(var|countdown|timer|sites|units):([^}]*)\\}")
 
 
-func setup(w: World, a: EnemyAI, h: HUD, s: Scenario) -> void:
+## `restoring`: the battlefield came from a save, so skip the starting setup; restore() follows.
+func setup(w: World, a: EnemyAI, h: HUD, s: Scenario, restoring: bool = false) -> void:
 	world = w
 	ai = a
 	hud = h
 	scenario = s
 	var d := s.data
+	var list: Array = d.get("triggers", [])
+	for i in list.size():
+		var t: Dictionary = list[i]
+		_triggers.append({"id": str(t.get("id", "trigger_%d" % i)), "when": t["when"], "do": t["do"],
+				"repeat": bool(t.get("repeat", false)), "cooldown": float(t.get("cooldown", 0.0)), "next": 0.0, "done": false})
+	if not restoring:
+		_start(d)
+	# after the starting forces exist, so a citadel placed by the scenario counts
+	_victory = d.get("victory", _citadel_lost(Defs.TEAM_ENEMY))
+	_defeat = d.get("defeat", _citadel_lost(Defs.TEAM_PLAYER))
+	world.entity_died.connect(func(_e: Entity) -> void: _check_end())
+	if not restoring:
+		if d.has("objectives"):
+			_set_objectives(d["objectives"])
+		_step()
+
+
+func _start(d: Dictionary) -> void:
 	vars = (d.get("vars", {}) as Dictionary).duplicate()
 	var teams: Dictionary = d.get("teams", {})
 	for key: String in teams:
@@ -47,17 +66,29 @@ func setup(w: World, a: EnemyAI, h: HUD, s: Scenario) -> void:
 	for u: Dictionary in start.get("units", []):
 		var unit := world.spawn_unit(u["id"], int(u["team"]), _ground(u["at"]), deg_to_rad(float(u.get("facing", 0.0))))
 		unit.tag = str(u.get("tag", ""))
-	var list: Array = d.get("triggers", [])
-	for i in list.size():
-		var t: Dictionary = list[i]
-		_triggers.append({"id": str(t.get("id", "trigger_%d" % i)), "when": t["when"], "do": t["do"],
-				"repeat": bool(t.get("repeat", false)), "cooldown": float(t.get("cooldown", 0.0)), "next": 0.0, "done": false})
-	_victory = d.get("victory", _citadel_lost(Defs.TEAM_ENEMY))
-	_defeat = d.get("defeat", _citadel_lost(Defs.TEAM_PLAYER))
-	if d.has("objectives"):
-		_set_objectives(d["objectives"])
-	world.entity_died.connect(func(_e: Entity) -> void: _check_end())
-	_step()
+
+
+func snapshot() -> Dictionary:
+	var trig := {}
+	for t in _triggers:
+		trig[t["id"]] = {"done": t["done"], "next": t["next"]}
+	return {"vars": vars, "fired": fired, "triggers": trig, "title": objective_title, "subtitle": objective_sub,
+			"objectives": objectives, "focus": [focus_point.x, focus_point.z] if focus_point != Vector3.INF else []}
+
+
+func restore(d: Dictionary) -> void:
+	vars = d["vars"]
+	fired = d["fired"]
+	for t in _triggers:
+		if d["triggers"].has(t["id"]):
+			t["done"] = bool(d["triggers"][t["id"]]["done"])
+			t["next"] = float(d["triggers"][t["id"]]["next"])
+	objective_title = str(d["title"])
+	objective_sub = str(d["subtitle"])
+	objectives.assign(d["objectives"])
+	var f: Array = d["focus"]
+	focus_point = _flat(f) if f.size() == 2 else Vector3.INF
+	_refresh()
 
 
 func get_var(var_name: String) -> float:

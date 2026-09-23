@@ -13,6 +13,9 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 			Input.warp_mouse(Vector2(900, 480))
 		"ui_pause":
 			match_node.hud.toggle_pause()
+		"ui_save":
+			match_node.hud.toggle_pause()
+			match_node.hud.menus._open_save(true)
 		"ui_help":
 			match_node.hud.menus.add_child(HelpPanel.make(func(): pass))
 		"ui_end":
