@@ -82,6 +82,16 @@ def palette():
         "rock": mat("rock", (0.40, 0.39, 0.38), 0.0, 0.9),
         "crystal": mat("crystal", (0.4, 0.9, 1.0), 0.1, 0.15, (0.35, 0.85, 1.0), 4.0),
         "canvas": mat("canvas", (0.62, 0.58, 0.50), 0.0, 0.85),
+        # creatures (colour comes from vertex paint)
+        "hide": mat("hide", (0.55, 0.50, 0.42), 0.0, 0.8),
+        "scales": mat("scales", (0.30, 0.30, 0.32), 0.1, 0.45),
+        "fur": mat("fur", (0.22, 0.20, 0.19), 0.0, 0.9),
+        "feather": mat("feather", (0.70, 0.60, 0.45), 0.0, 0.75),
+        "membrane": mat("membrane", (0.35, 0.12, 0.10), 0.0, 0.6),
+        "horn": mat("horn", (0.75, 0.68, 0.55), 0.0, 0.45),
+        "claw": mat("claw", (0.10, 0.09, 0.08), 0.0, 0.4),
+        "eye_white": mat("eye_white", (0.85, 0.80, 0.70), 0.0, 0.25),
+        "mouth": mat("mouth", (0.35, 0.08, 0.07), 0.0, 0.6),
     }
 
 

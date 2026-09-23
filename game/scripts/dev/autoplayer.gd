@@ -23,6 +23,7 @@ func setup(w: World, c: Commander, m: Mission) -> void:
 	world.site_captured.connect(func(s, team): _log("captured %s by %d" % [s.site_name, team]))
 	world.game_ended.connect(_on_end)
 	world.entity_died.connect(func(e): if e is Building: _log("building destroyed: %s (team %d)" % [e.def_id, e.team]))
+	world.entity_spawned.connect(func(e): if e is Building and e.team == 1 and not e.built: _log("enemy builds %s" % e.def_id))
 
 
 func _log(s: String) -> void:
@@ -53,8 +54,13 @@ func _process(delta: float) -> void:
 		_log_t = 60.0
 		var p := world.player(0)
 		var e := world.player(1)
-		_log("status: M=%d A=%d pop=%d/%d units=%d | enemy M=%d units=%d bld=%d | phase=%d stage=%s" % [p.material, p.aether,
-				p.pop_used, p.pop_cap, world.count_units(0), e.material, world.count_units(1), world.count_buildings(1), int(mission.get_var("phase")), _stage])
+		_log("status: M=%d A=%d pop=%d/%d units=%d beasts=%d | enemy M=%d units=%d beasts=%d bld=%d | phase=%d stage=%s" % [p.material, p.aether,
+				p.pop_used, p.pop_cap, world.count_units(0), _beasts(0), e.material, world.count_units(1), _beasts(1), world.count_buildings(1),
+				int(mission.get_var("phase")), _stage])
+
+
+func _beasts(team: int) -> int:
+	return world.units.filter(func(u: Unit) -> bool: return u.alive and u.team == team and u.is_creature).size()
 
 
 func _economy() -> void:
@@ -63,7 +69,8 @@ func _economy() -> void:
 	if cit == null:
 		return
 	# construction plan
-	for plan in [["foundry", 60.0], ["refinery", 100.0], ["habitat", 130.0], ["habitat", 240.0], ["skyport", 400.0], ["refinery", 460.0]]:
+	for plan in [["foundry", 60.0], ["refinery", 100.0], ["habitat", 130.0], ["habitat", 240.0], ["sanctum", 330.0], ["skyport", 400.0],
+			["refinery", 460.0]]:
 		var key := "%s@%d" % plan
 		if _built.has(key) or world.match_time < float(plan[1]):
 			continue
@@ -92,6 +99,8 @@ func _economy() -> void:
 				b.queue_unit("walker" if randf() < 0.6 else "mortar")
 			"skyport":
 				b.queue_unit("airship")
+			"sanctum":
+				b.queue_unit(["cyclops", "cerberus", "griffin", "dragon"][randi() % 4])
 
 
 func _army() -> void:

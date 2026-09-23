@@ -19,6 +19,7 @@ const BUILD_PLAN := [
 	{"id": "refinery", "t": 160.0},
 	{"id": "skyport", "t": 230.0},
 	{"id": "habitat", "t": 280.0},
+	{"id": "sanctum", "t": 310.0},
 	{"id": "barracks", "t": 340.0},
 	{"id": "habitat", "t": 420.0},
 	{"id": "bastion", "t": 480.0},
@@ -70,6 +71,7 @@ func _my_units() -> Array[Unit]:
 func _economy() -> void:
 	var p := _me()
 	var diff: float = [0.8, 1.0, 1.25][Game.difficulty]
+	var picks: Array = []
 	for b in world.buildings:
 		if b.team != team or not b.alive or not b.built:
 			continue
@@ -87,11 +89,53 @@ func _economy() -> void:
 			"skyport":
 				if rng.randf() < 0.5 * diff:
 					choice = "airship"
-		if choice != "" and b.can_queue(choice) == "":
-			# keep a small reserve for construction
-			var cost: Dictionary = Defs.UNITS[choice]["cost"]
-			if p.material - float(cost["material"]) > 60.0 or b.def_id == "barracks":
-				b.queue_unit(choice)
+			"sanctum":
+				choice = _beast_choice(p, diff)
+		if choice != "" and b.can_queue(choice) in ["", "資源不足"]:
+			picks.append([b, choice])
+	# the dearest units get first call on the treasury and are saved for; infantry spend what
+	# is left, unless the army is nearly gone
+	picks.sort_custom(func(a: Array, c: Array) -> bool: return _price(a[1]) > _price(c[1]))
+	var few_troops := world.count_units(team) - world.count_units(team, "artificer") < 4
+	var build := _reserve()
+	var held := build
+	for pk: Array in picks:
+		var b: Building = pk[0]
+		var cost: Dictionary = Defs.UNITS[pk[1]]["cost"]
+		var need := build if b.def_id in ["citadel", "barracks"] and few_troops else held
+		if p.material - float(cost["material"]) >= 60.0 + need.x and p.aether - float(cost["aether"]) >= need.y and b.can_queue(pk[1]) == "":
+			b.queue_unit(pk[1])
+		elif not b.def_id in ["citadel", "barracks"] and held.x < 400.0:
+			held += Vector2(float(cost["material"]), float(cost["aether"]))
+
+
+static func _price(uid: String) -> float:
+	var c: Dictionary = Defs.UNITS[uid]["cost"]
+	return float(c["material"]) + float(c["aether"])
+
+
+## Material and aether held back for the next construction step once its time has come.
+func _reserve() -> Vector2:
+	if _build_i >= BUILD_PLAN.size() or world.match_time < float(BUILD_PLAN[_build_i]["t"]):
+		return Vector2.ZERO
+	var cost: Dictionary = Defs.BUILDINGS[BUILD_PLAN[_build_i]["id"]]["cost"]
+	return Vector2(float(cost["material"]), float(cost["aether"]))
+
+
+## Griffins answer enemy fliers; otherwise giants and hounds, and a dragon when aether allows.
+func _beast_choice(p: PlayerState, diff: float) -> String:
+	if rng.randf() > 0.6 * diff:
+		return ""
+	var fliers := 0
+	for u in world.units:
+		if u.alive and u.team != team and u.is_air:
+			fliers += 1
+	var roll := rng.randf()
+	if fliers >= 2 and roll < 0.45:
+		return "griffin"
+	if p.aether >= 320.0 and roll < 0.3:
+		return "dragon"
+	return "cyclops" if roll < 0.65 else "cerberus"
 
 
 func _construction() -> void:
@@ -107,18 +151,52 @@ func _construction() -> void:
 	var c := world.citadel(team)
 	if c == null:
 		return
-	for attempt in 30:
-		var ang := rng.randf() * TAU
-		var r := rng.randf_range(20.0, 46.0)
-		var p := c.global_position + Vector3(cos(ang), 0, sin(ang)) * r
-		if id == "bastion":
-			p = c.global_position.lerp(Vector3(0, 0, 0), rng.randf_range(0.18, 0.3)) + Vector3(rng.randf_range(-12, 12), 0, rng.randf_range(-12, 12))
-		if _valid(id, p):
-			_me().spend(d["cost"])
-			var to_center := -p
-			world.spawn_building(id, team, p, atan2(to_center.x, to_center.z), false)
-			_build_i += 1
-			return
+	var p := _site_for(id, c.global_position)
+	_build_i += 1
+	if p == Vector3.INF:
+		return  # no room anywhere: drop this step so the plan keeps moving
+	_me().spend(d["cost"])
+	var to_center := -p
+	world.spawn_building(id, team, p, atan2(to_center.x, to_center.z), false)
+
+
+## Towers go out toward the map centre; everything else takes the free spot nearest the citadel,
+## then around the gate and the cities we hold, the same ground the player may build on.
+## Candidates are scanned on a 4 m grid, so large buildings find the few flat places that fit.
+func _site_for(id: String, home: Vector3) -> Vector3:
+	if id == "bastion":
+		for attempt in 40:
+			var q := home.lerp(Vector3.ZERO, rng.randf_range(0.18, 0.3)) + Vector3(rng.randf_range(-12, 12), 0, rng.randf_range(-12, 12))
+			if _valid(id, q):
+				return q
+	var anchors := [[home, 18.0, 62.0]]
+	for b in world.buildings:
+		if b.alive and b.team == team and b.def_id == "gate":
+			anchors.append([b.global_position, 12.0, 26.0])
+	for site in world.sites:
+		if site.owner_team == team:
+			anchors.append([site.global_position, site.radius + 4.0, site.radius + 20.0])
+	for a: Array in anchors:
+		var q := _nearest_free(id, a[0], a[1], a[2])
+		if q != Vector3.INF:
+			return q
+	return Vector3.INF
+
+
+func _nearest_free(id: String, at: Vector3, r0: float, r1: float) -> Vector3:
+	var n := int(ceil(r1 / 4.0))
+	var spots: Array[Vector3] = []
+	for gx in range(-n, n + 1):
+		for gz in range(-n, n + 1):
+			var r := Vector2(gx, gz).length() * 4.0
+			var q := at + Vector3(gx * 4.0, 0, gz * 4.0)
+			if r >= r0 and r <= r1 and absf(q.x) < 185.0 and absf(q.z) < 185.0:
+				spots.append(q)
+	spots.sort_custom(func(a: Vector3, b: Vector3) -> bool: return a.distance_squared_to(at) < b.distance_squared_to(at))
+	for q in spots:
+		if _valid(id, q):
+			return q
+	return Vector3.INF
 
 
 func _valid(id: String, p: Vector3) -> bool:
@@ -133,13 +211,13 @@ func _valid(id: String, p: Vector3) -> bool:
 		if absf(world.terrain.height_at(q.x, q.z) - h0) > 1.6:
 			return false
 	for b in world.buildings:
-		if b.alive and Vector2(b.global_position.x - p.x, b.global_position.z - p.z).length() < b.radius + d["radius"] + 3.0:
+		if b.alive and Vector2(b.global_position.x - p.x, b.global_position.z - p.z).length() < b.radius + d["radius"] + 2.0:
 			return false
 	# keep ramps clear
 	for pl in world.terrain.layout["plateaus"]:
 		for rp in pl["ramps"]:
 			var top := Vector3(rp["top"][0], 0, rp["top"][1])
-			if Vector2(top.x - p.x, top.z - p.z).length() < 16.0 + d["radius"]:
+			if Vector2(top.x - p.x, top.z - p.z).length() < 12.0 + d["radius"]:
 				return false
 	return true
 

@@ -86,6 +86,21 @@ ICONS = {
     + path("M30 34 L46 12", GOLD, sw=6) + circle(18, 54, 3) + circle(32, 54, 3) + circle(46, 54, 3),
     "unit_airship": path("M8 26 C8 14 52 12 56 24 C52 36 8 36 8 26 Z", IVORY, "#3a3a34")
     + path("M20 36 L22 44 L42 44 L44 36") + path("M18 20 L18 32 M30 17 L30 35 M42 18 L42 33", GOLD, sw=2) + path("M4 18 L10 26 L4 34", GOLD),
+    "unit_cerberus": path("M24 36 L25 16 L30 23 L34 23 L39 16 L40 36 L36 44 L28 44 Z", IVORY, "#2a3345")
+    + path("M5 46 L7 30 L12 36 L16 36 L20 30 L22 46 L18 52 L10 52 Z", IVORY, "#2a3345")
+    + path("M42 46 L44 30 L48 36 L52 36 L57 30 L59 46 L54 52 L46 52 Z", IVORY, "#2a3345")
+    + circle(29, 30, 1.6, AETHER, AETHER, 1) + circle(35, 30, 1.6, AETHER, AETHER, 1)
+    + circle(11, 41, 1.4, AETHER, AETHER, 1) + circle(53, 41, 1.4, AETHER, AETHER, 1) + path("M10 58 L54 58", GOLD),
+    "unit_cyclops": path("M18 52 C12 38 16 16 32 14 C48 16 52 38 46 52 Z", IVORY, "#2a3345")
+    + circle(32, 30, 7.5, AETHER, "#1d5b73") + circle(32, 30, 2.6, IVORY, IVORY, 1)
+    + path("M21 21 L43 21", IVORY, sw=3.6) + path("M22 18 L15 5 M42 18 L49 5", GOLD)
+    + path("M25 46 L27 41 M39 46 L37 41", IVORY, sw=2.4),
+    "unit_griffin": path("M12 52 C8 34 22 20 38 21 C47 22 53 27 55 33 L47 36 C48 41 44 44 38 42 C34 50 24 54 12 52 Z", IVORY, "#2a3345")
+    + path("M46 27 L59 33 L48 40 Z", GOLD, "#4a3a18") + circle(39, 29, 2.6, AETHER, AETHER, 1)
+    + path("M20 46 L28 38 M16 38 L24 30 M26 22 L20 10 M32 21 L30 8", GOLD, sw=2.4),
+    "unit_dragon": path("M8 52 C8 36 18 24 32 21 L42 9 L41 21 C49 22 55 28 57 34 L45 36 L50 43 L37 41 C31 48 20 53 8 52 Z", IVORY, "#3a2a2a")
+    + circle(40, 28, 2.4, AETHER, AETHER, 1) + path("M28 22 L22 10", GOLD)
+    + path("M52 41 C57 45 58 50 56 56 C54 51 50 48 47 47", RED, sw=2.6),
     # buildings
     "bld_citadel": path("M10 56 L10 30 L16 30 L16 24 L22 24 L22 30 L42 30 L42 24 L48 24 L48 30 L54 30 L54 56 Z", IVORY, "#2a3040")
     + path("M26 30 L26 16 L32 6 L38 16 L38 30", GOLD, "#4a3a18") + circle(32, 21, 3, AETHER, AETHER, 1) + path("M28 56 L28 46 A4 4 0 0 1 36 46 L36 56"),
@@ -101,6 +116,9 @@ ICONS = {
     + path("M14 44 L22 44 M40 38 L48 38 M40 46 L48 46", GOLD),
     "bld_bastion": path("M16 58 L18 26 L46 26 L48 58 Z", IVORY, "#2a3040") + path("M16 26 L16 18 L22 18 L22 24 L28 24 L28 18 L36 18 L36 24 L42 24 L42 18 L48 18 L48 26")
     + path("M32 18 L32 10 L54 6", GOLD, sw=5),
+    "bld_sanctum": rect(8, 26, 11, 30, IVORY, "#2a3040", rx=2) + rect(45, 26, 11, 30, IVORY, "#2a3040", rx=2)
+    + path("M6 24 L21 24 M43 24 L58 24", GOLD) + poly("32,6 41,24 32,44 23,24", AETHER, "#1d5b73")
+    + path("M4 58 L60 58", GOLD) + path("M13 36 L13 44 M50 36 L50 44", AETHER, sw=2.4),
     # misc
     "crest": gear(32, 36, 22, 12, 4, GOLD, "#20232b", 2.6) + path("M18 30 L22 16 L28 24 L32 12 L36 24 L42 16 L46 30 Z", GOLD, "#6b5226", 2.4)
     + circle(32, 38, 6, AETHER, "#1d5b73", 2),

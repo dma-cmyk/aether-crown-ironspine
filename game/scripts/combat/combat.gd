@@ -69,12 +69,23 @@ static func fire(shooter: Entity, w: Dictionary, target: Entity) -> void:
 			world.fx.sparks(aim, 10, glow)
 			world.fx.light_flash(aim, glow, 7.0)
 			world.sfx.play_at("beam", muzzles[0])
+		"smash", "talon", "flame":
+			# the blow lands when the animation gets there
+			world.projectiles.strike(shooter, target, float(w.get("delay", 0.3)), dmg, float(w.get("splash", 0.0)), wclass, w["fx"])
+			if w["fx"] == "flame":
+				world.sfx.play_at("flame", muzzles[0])
+		"bite":
+			target.take_damage(dmg, wclass, shooter)
+			world.fx.impact_dust(aim, 0.7)
+			if target.is_mechanical or target.is_building:
+				world.fx.sparks(aim, 4)
+			world.sfx.play_at("bite", muzzles[0])
 
 
 ## Area damage (friendly fire off). Falloff to 30% at the edge.
-static func splash(pos: Vector3, radius: float, dmg: float, wclass: String, team: int, source: Entity, hit_air: bool = false) -> void:
+static func splash(pos: Vector3, radius: float, dmg: float, wclass: String, team: int, source: Entity, hit_air: bool = false, only_air: bool = false) -> void:
 	for e: Entity in World.inst.query(pos, radius):
-		if e.team == team or (e.is_air and not hit_air):
+		if e.team == team or (e.is_air and not hit_air) or (only_air and not e.is_air):
 			continue
 		var d := Vector2(e.global_position.x - pos.x, e.global_position.z - pos.z).length() - e.radius * 0.5
 		var k := clampf(1.0 - d / radius, 0.3, 1.0)

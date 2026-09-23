@@ -35,6 +35,16 @@ const SPECS := {
 	"window_glow": {"emit_color": Color(1.0, 0.63, 0.32), "emit": 2.4},
 	"lamp_glow": {"emit_color": Color(1.0, 0.72, 0.42), "emit": 5.0},
 	"fire_glow": {"emit_color": Color(1.0, 0.42, 0.12), "emit": 7.0},
+	# creatures: pale textures on box-projected UVs, coloured by vertex paint
+	"hide": {"tex": "creature_hide", "tint": Color(1, 1, 1), "rough": 0.78, "uv": true, "vcol": true},
+	"scales": {"tex": "creature_scales", "tint": Color(1, 1, 1), "rough": 0.42, "metal": 0.1, "uv": true, "vcol": true},
+	"fur": {"tex": "creature_fur", "tint": Color(1, 1, 1), "rough": 0.9, "uv": true, "vcol": true},
+	"feather": {"tex": "creature_feather", "tint": Color(1, 1, 1), "rough": 0.72, "uv": true, "vcol": true},
+	"membrane": {"tex": "creature_hide", "team_tint": 0.88, "rough": 0.62, "uv": true, "vcol": true},
+	"horn": {"color": Color(0.78, 0.72, 0.6), "rough": 0.45},
+	"claw": {"color": Color(0.1, 0.09, 0.085), "rough": 0.35},
+	"eye_white": {"color": Color(0.88, 0.84, 0.74), "rough": 0.2},
+	"mouth": {"color": Color(0.3, 0.06, 0.06), "rough": 0.55},
 }
 
 static var _cache := {}
@@ -48,19 +58,21 @@ static func tex(name: String) -> Texture2D:
 	return _tex_cache[name]
 
 
-static func get_mat(name: String, team: int = -1, world_space: bool = true) -> Material:
+## `uv` samples textures through the mesh UVs instead of triplanar projection: skinned
+## meshes need it, or the texture would slide over the surface as the bones move.
+static func get_mat(name: String, team: int = -1, world_space: bool = true, uv: bool = false) -> Material:
 	var base := name.get_slice(".", 0)
 	if base == "infantry":
 		return infantry_material(team)
 	if not SPECS.has(base):
 		return null
-	var key := "%s|%d|%s" % [base, team, world_space]
+	var key := "%s|%d|%s|%s" % [base, team, world_space, uv]
 	if not _cache.has(key):
-		_cache[key] = _build(base, team, world_space)
+		_cache[key] = _build(base, team, world_space, uv)
 	return _cache[key]
 
 
-static func _build(name: String, team: int, world_space: bool) -> Material:
+static func _build(name: String, team: int, world_space: bool, uv: bool = false) -> Material:
 	var s: Dictionary = SPECS[name]
 	var m := StandardMaterial3D.new()
 	m.resource_name = name
@@ -68,7 +80,10 @@ static func _build(name: String, team: int, world_space: bool) -> Material:
 	m.metallic = s.get("metal", 0.0)
 	if s.has("tex"):
 		var albedo := tex(s["tex"] + "_albedo")
-		m.albedo_color = s["tint"]
+		m.albedo_color = s.get("tint", Color.WHITE)
+		if s.has("team_tint"):
+			var cloth: Color = Defs.FACTIONS.get(team, Defs.FACTIONS[-1])["cloth"]
+			m.albedo_color = Color.WHITE.lerp(cloth * 1.25, s["team_tint"])
 		if albedo:
 			m.albedo_texture = albedo
 			var nrm := tex(s["tex"] + "_normal")
@@ -85,11 +100,16 @@ static func _build(name: String, team: int, world_space: bool) -> Material:
 				m.ao_texture = orm
 				m.ao_texture_channel = BaseMaterial3D.TEXTURE_CHANNEL_RED
 				m.ao_light_affect = 0.35
-			m.uv1_triplanar = true
-			m.uv1_world_triplanar = world_space
 			var sc: float = s.get("scale", 0.5)
-			m.uv1_scale = Vector3(sc, sc, sc)
-			m.uv1_triplanar_sharpness = 4.0
+			if s.get("uv", false):
+				m.uv1_scale = Vector3.ONE
+			elif uv:
+				m.uv1_scale = Vector3(sc, sc, sc)
+			else:
+				m.uv1_triplanar = true
+				m.uv1_world_triplanar = world_space
+				m.uv1_scale = Vector3(sc, sc, sc)
+				m.uv1_triplanar_sharpness = 4.0
 			m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
 	elif s.has("team"):
 		var f: Dictionary = Defs.FACTIONS.get(team, Defs.FACTIONS[-1])
@@ -110,7 +130,7 @@ static func _build(name: String, team: int, world_space: bool) -> Material:
 		m.emission_energy_multiplier = s.get("emit", 3.0)
 	else:
 		m.albedo_color = s.get("color", Color(0.7, 0.7, 0.7))
-	if s.get("instance_tint", false):
+	if s.get("instance_tint", false) or s.get("vcol", false):
 		m.vertex_color_use_as_albedo = true
 	return m
 
@@ -124,11 +144,12 @@ static func remap(root: Node, team: int = -1, world_space: bool = true) -> void:
 		var mesh := mi.mesh
 		if mesh == null:
 			continue
+		var skinned := mi.skin != null
 		for i in mesh.get_surface_count():
 			var src := mesh.surface_get_material(i)
 			if src == null:
 				continue
-			var m := get_mat(src.resource_name, team, world_space)
+			var m := get_mat(src.resource_name, team, world_space, skinned)
 			if m:
 				mi.set_surface_override_material(i, m)
 

@@ -21,8 +21,16 @@ const SOUNDS := {
 	"error": ["ui_error"],
 	"alert": ["ui_alert"],
 	"objective": ["objective"],
+	"smash": ["smash_1", "smash_2"],
+	"bite": ["bite_1", "bite_2"],
+	"flame": ["flame_1"],
+	"thud_big": ["thud_big_1"],
+	"roar": ["roar_1"],
+	"roar_death": ["roar_death_1"],
+	"screech": ["screech_1"],
+	"howl": ["howl_1"],
 }
-const LIMIT := {"rifle": 5, "gatling": 3, "explosion_small": 4, "explosion": 4, "cannon": 4, "beam": 3}
+const LIMIT := {"rifle": 5, "gatling": 3, "explosion_small": 4, "explosion": 4, "cannon": 4, "beam": 3, "bite": 3, "flame": 3, "smash": 3}
 
 var streams := {}
 var pool: Array[AudioStreamPlayer3D] = []

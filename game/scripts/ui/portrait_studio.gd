@@ -75,6 +75,9 @@ func show_entity(kind: String, id: String, team: int) -> void:
 				height = 8.0
 				dist = 30.0
 				look_y = -1.0
+		if d.has("portrait"):
+			dist = d["portrait"][0]
+			look_y = d["portrait"][1]
 	else:
 		model_name = Defs.BUILDINGS[id]["model"]
 		dist = 58.0 if id == "citadel" else (46.0 if id == "gate" else 34.0)

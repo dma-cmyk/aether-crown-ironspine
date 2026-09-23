@@ -214,6 +214,14 @@ func _process(delta: float) -> void:
 		while e["acc"] >= 1.0:
 			e["acc"] -= 1.0
 			var r: float = e["r"]
+			if e.has("fire"):
+				var fc: Color = e["fire"]
+				var q: Vector3 = e["pos"] + Vector3(randf_range(-r, r), 0.2, randf_range(-r, r))
+				fire_l.emit(q, Vector3(randf_range(-0.3, 0.3), randf_range(2.0, 3.5), randf_range(-0.3, 0.3)), randf_range(0.5, 0.9),
+						0.8, 1.8, Color(fc.r, fc.g, fc.b, 0.6), randf_range(-1, 1))
+				if randf() < 0.25:
+					smoke_l.emit(q + Vector3(0, 1.5, 0), Vector3(0, 2.0, 0), randf_range(2.0, 3.0), 1.0, 3.0, Color(0.12, 0.11, 0.1, 0.45), randf_range(-0.3, 0.3))
+				continue
 			var p2: Vector3 = e["pos"] + Vector3(randf_range(-r, r), randf() * 2.0, randf_range(-r, r)) * 0.6
 			smoke_l.emit(p2, Vector3(randf_range(-0.5, 0.5), randf_range(2.5, 4.5), randf_range(-0.5, 0.5)), randf_range(4.0, 7.0),
 					r * 0.35, r * 1.2, Color(0.16, 0.15, 0.14, 0.55), randf_range(-0.3, 0.3))
@@ -394,6 +402,11 @@ func _upload_ambient() -> void:
 
 func smoke_column(p: Vector3, r: float) -> void:
 	_emitters.append({"pos": p, "r": r, "t": 9.0, "rate": 7.0, "acc": 0.0})
+
+
+## Burning ground left by dragon fire.
+func burn(p: Vector3, r: float, seconds: float, c: Color) -> void:
+	_emitters.append({"pos": p, "r": r, "t": seconds, "rate": 14.0, "acc": 0.0, "fire": c})
 
 
 func ring_burst(p: Vector3, radius: float, c: Color) -> void:

@@ -41,6 +41,10 @@ var _corpse_t := -1.0
 var _bombard_target := Vector3.INF
 var _bombard_drops := 0
 var _bombard_t := 0.0
+var _hurl_target := Vector3.INF
+var _hurl_t := -1.0
+## Living creatures heal themselves instead of being repaired.
+var is_creature := false
 
 
 func setup(id: String, t: int, pos: Vector3, face: float) -> void:
@@ -53,15 +57,16 @@ func setup(id: String, t: int, pos: Vector3, face: float) -> void:
 	radius = def["radius"]
 	vision = def["vision"]
 	capture_power = def.get("capture", 1.0)
-	is_air = type == "air"
+	is_air = type in ["air", "flyer"]
 	is_mechanical = type in ["walker", "vehicle", "air"]
+	is_creature = type in ["giant", "beast", "flyer"]
 	altitude = def.get("altitude", 0.0)
 	if type == "squad":
 		max_hp = def["members"] * def["member_hp"]
 		height = 2.0
 	else:
 		max_hp = def["hp"]
-		height = {"walker": 10.0, "vehicle": 3.5, "air": 5.0}.get(type, 3.0)
+		height = def.get("height", {"walker": 10.0, "vehicle": 3.5, "air": 5.0}.get(type, 3.0))
 	hp = max_hp
 	for wid in def["weapons"]:
 		var w: Dictionary = Defs.WEAPONS[wid].duplicate()
@@ -74,7 +79,7 @@ func setup(id: String, t: int, pos: Vector3, face: float) -> void:
 	rotation.y = facing
 	guard_pos = global_position
 	_last_pos = global_position
-	match type:
+	match def.get("visual", type):
 		"squad":
 			visual = SquadVisual.new()
 		"walker":
@@ -83,6 +88,14 @@ func setup(id: String, t: int, pos: Vector3, face: float) -> void:
 			visual = VehicleVisual.new()
 		"air":
 			visual = AirshipVisual.new()
+		"cyclops":
+			visual = CyclopsVisual.new()
+		"cerberus":
+			visual = CerberusVisual.new()
+		"dragon":
+			visual = DragonVisual.new()
+		"griffin":
+			visual = GriffinVisual.new()
 	visual.name = "Visual"
 	add_child(visual)
 	visual.setup(self)
@@ -111,18 +124,25 @@ func range_mult() -> float:
 
 func rate_mult() -> float:
 	var m := 1.0
-	if special_time > 0.0 and def.get("special", "") in ["aether_volley", "overcharge"]:
+	if special_time > 0.0 and def.get("special", "") in ["aether_volley", "overcharge", "frenzy"]:
 		m *= 2.0 if def["special"] == "aether_volley" else 1.6
 	return m
 
 
 func speed_mult() -> float:
 	var m := 1.0
-	if special_time > 0.0 and def.get("special", "") == "overcharge":
-		m *= 1.4
+	if special_time > 0.0 and def.get("special", "") in ["overcharge", "frenzy"]:
+		m *= 1.4 if def["special"] == "overcharge" else 1.5
 	if type == "squad" and hp_ratio() < 0.3:
 		m *= 0.9
 	return m
+
+
+## Sight radius right now (the griffin's Keen Sight doubles it).
+func vision_now() -> float:
+	if special_time > 0.0 and def.get("special", "") == "keen_sight":
+		return vision * 2.0
+	return vision
 
 
 func max_range() -> float:
@@ -283,8 +303,23 @@ func use_special(at: Vector3 = Vector3.INF) -> bool:
 		return false
 	var sp: Dictionary = Defs.SPECIALS[sid]
 	match sid:
-		"aether_volley", "overcharge":
+		"aether_volley", "overcharge", "frenzy", "keen_sight":
 			special_time = sp["duration"]
+		"boulder_hurl":
+			if at == Vector3.INF:
+				return false
+			_hurl_target = at
+			_hurl_t = -1.0
+			if flat_distance_to(at) > float(sp["range"]):
+				order_move(at)
+		"inferno":
+			if at == Vector3.INF:
+				return false
+			if flat_distance_to(at) > 12.0:
+				order_move(at)
+			_bombard_target = at
+			_bombard_drops = 6
+			_bombard_t = 0.0
 		"field_repair":
 			for e: Entity in World.inst.query(global_position, 16.0):
 				if e.team == team and (e.is_mechanical or e.is_building):
@@ -301,6 +336,8 @@ func use_special(at: Vector3 = Vector3.INF) -> bool:
 			_bombard_t = 0.0
 	special_cd = sp["cooldown"]
 	World.inst.sfx.play_at("special", global_position)
+	if visual and sp.get("duration", 0.0) > 0.0:
+		visual.on_special(sid)
 	return true
 
 
@@ -345,6 +382,11 @@ func tick(dt: float) -> void:
 		_acquire()
 	if _bombard_drops > 0:
 		_tick_bombard(dt)
+	if _hurl_target != Vector3.INF:
+		_tick_hurl(dt)
+	var regen: float = def.get("regen", 0.0)
+	if regen > 0.0 and hp < max_hp and World.inst.match_time - last_damage_time > 6.0:
+		heal(regen * dt)
 	moving = false
 	match order:
 		Order.IDLE, Order.HOLD:
@@ -479,16 +521,41 @@ func _auto_repair(dt: float) -> void:
 
 
 func _tick_bombard(dt: float) -> void:
-	if flat_distance_to(_bombard_target) > 18.0:
+	var dragon: bool = def.get("special", "") == "inferno"
+	if flat_distance_to(_bombard_target) > (16.0 if dragon else 18.0):
 		return
 	_bombard_t -= dt
 	if _bombard_t <= 0.0:
-		_bombard_t = 0.28
+		_bombard_t = 0.38 if dragon else 0.28
 		_bombard_drops -= 1
 		var p := _bombard_target + Vector3(randf_range(-7, 7), 0, randf_range(-7, 7))
-		World.inst.projectiles.drop_bomb(self, global_position + Vector3(0, -4, 0), p)
+		if dragon:
+			World.inst.projectiles.firestorm(self, visual.special_point(), p)
+			visual.on_special_at("inferno", p)
+		else:
+			World.inst.projectiles.drop_bomb(self, global_position + Vector3(0, -4, 0), p)
 		if _bombard_drops <= 0:
 			_bombard_target = Vector3.INF
+
+
+## Boulder Hurl: walk into range, stop, wind up, and let go when the arm comes over.
+func _tick_hurl(dt: float) -> void:
+	if _hurl_t < 0.0:
+		if flat_distance_to(_hurl_target) > float(Defs.SPECIALS["boulder_hurl"]["range"]):
+			return
+		order_hold()
+		_hurl_t = 0.0
+		setup_timer = 1.4
+		setup_goal = ""
+		visual.on_special("boulder_hurl")
+		return
+	_face_towards(_hurl_target, dt)
+	var before := _hurl_t
+	_hurl_t += dt
+	if before < 1.0 and _hurl_t >= 1.0:
+		World.inst.projectiles.boulder(self, visual.special_point(), _hurl_target)
+		_hurl_target = Vector3.INF
+		_hurl_t = -1.0
 
 
 func _best_range_vs(e: Entity) -> float:
@@ -518,9 +585,11 @@ func _try_fire() -> void:
 			continue
 		if d < float(w.get("min_range", 0.0)):
 			continue
-		if moving and type in ["squad", "vehicle"]:
+		if moving and type in ["squad", "vehicle", "giant"]:
 			continue
 		if type == "squad" and not _facing_ok(target.global_position, 0.6):
+			continue
+		if def.has("aim") and not _facing_ok(target.global_position, float(def["aim"])):
 			continue
 		if type == "vehicle" and not deployed and w.has("deployed_range") and d > float(w["range"]) * range_mult():
 			continue
@@ -563,7 +632,7 @@ func _steer_towards(p: Vector3, dt: float) -> void:
 		return
 	var dir := to / dist
 	var target_yaw := atan2(dir.x, dir.z)
-	var turn_rate: float = {"squad": 7.0, "walker": 2.2, "vehicle": 2.6, "air": 1.1}.get(type, 4.0)
+	var turn_rate: float = def.get("turn", {"squad": 7.0, "walker": 2.2, "vehicle": 2.6, "air": 1.1}.get(type, 4.0))
 	facing = rotate_toward(facing, target_yaw, turn_rate * dt)
 	var align := cos(angle_difference(facing, target_yaw))
 	var sp := speed * speed_mult()
@@ -609,6 +678,19 @@ func _integrate(dt: float) -> void:
 				var k := 6.0 if e.is_building else (3.0 if (e is Unit and (e as Unit).moving) else 4.5)
 				push += off / dl * strength * k
 		velocity += push * dt * 4.0
+	else:
+		# fliers keep their own airspace instead of stacking over a target
+		var push := Vector3.ZERO
+		for e: Entity in World.inst.query(global_position, radius + 6.0):
+			if e == self or not e.is_air:
+				continue
+			var off := global_position - e.global_position
+			off.y = 0
+			var dl := off.length()
+			var min_d := (radius + e.radius) * 0.8
+			if dl < min_d:
+				push += (off / dl if dl > 0.001 else Vector3(randf_range(-1, 1), 0, randf_range(-1, 1))) * (min_d - dl) / min_d * 3.0
+		velocity += push * dt * 4.0
 	var p := global_position + velocity * dt
 	if not is_air:
 		var nav := World.inst.nav
@@ -653,3 +735,5 @@ func die() -> void:
 		"air":
 			fx.explosion(global_position, 3.0)
 			World.inst.sfx.play_at("explosion_big", global_position)
+		"giant", "beast", "flyer":
+			World.inst.sfx.play_at("roar_death", global_position)

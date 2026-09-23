@@ -58,6 +58,18 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 			world.spawn_unit("walker", 1, Vector3(20, 0, -30), deg_to_rad(-45)).order_attack_move(Vector3(-50, 0, 50))
 			world.spawn_unit("walker", 1, Vector3(32, 0, -24), deg_to_rad(-45)).order_attack_move(Vector3(-50, 0, 50))
 			world.fog.enabled = false
+		"creatures":
+			world.fog.enabled = false
+			var crown := [["cyclops", -104, 100], ["cyclops", -94, 98], ["cerberus", -98, 92], ["cerberus", -90, 90],
+					["griffin", -108, 92], ["griffin", -100, 108], ["dragon", -112, 112]]
+			for c: Array in crown:
+				world.spawn_unit(c[0], 0, Vector3(c[1], 0, c[2]), deg_to_rad(135)).order_attack_move(Vector3(-70, 0, 66))
+			for i in 6:
+				var e := world.spawn_unit("aetherguard", 1, Vector3(-86 + (i % 3) * 6.0, 0, 80 - (i / 3) * 6.0), deg_to_rad(-45))
+				e.order_attack_move(Vector3(-110, 0, 105))
+			world.spawn_unit("walker", 1, Vector3(-76, 0, 70), deg_to_rad(-45)).order_attack_move(Vector3(-110, 0, 105))
+			world.spawn_unit("mortar", 1, Vector3(-68, 0, 64), deg_to_rad(-45)).order_attack_move(Vector3(-110, 0, 105))
+			world.spawn_unit("airship", 1, Vector3(-70, 0, 74), deg_to_rad(-45)).order_attack_move(Vector3(-110, 0, 105))
 		"base":
 			world.fog.enabled = false
 		"nofog":

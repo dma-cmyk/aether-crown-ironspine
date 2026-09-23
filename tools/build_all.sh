@@ -7,13 +7,14 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
 stage() { [ -z "$1" ] || [ "$1" = "$2" ]; }
 BL="blender --background --factory-startup --python"
-if stage "$1" textures; then tools/textures/build_textures.sh; fi
+if stage "$1" textures; then tools/textures/build_textures.sh; uv run tools/textures/creature_textures.py; fi
 if stage "$1" fx; then tools/textures/build_fx.sh; fi
 if stage "$1" terrain; then $BL tools/blender/terrain/build_terrain.py; fi
 if stage "$1" models; then
   $BL tools/blender/models/env_props.py
   $BL tools/blender/models/buildings.py
   $BL tools/blender/models/units.py
+  $BL tools/blender/models/creatures.py
 fi
 if stage "$1" icons; then python3 tools/ui/make_icons.py; fi
 if stage "$1" audio; then uv run tools/audio/gen_audio.py; fi

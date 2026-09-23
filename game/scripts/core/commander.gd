@@ -331,7 +331,7 @@ func _key(ev: InputEventKey) -> void:
 
 
 func _building_key(b: Building, ev: InputEventKey) -> void:
-	var keys := [KEY_Q, KEY_W, KEY_E, KEY_R, KEY_T, KEY_Y]
+	var keys := [KEY_Q, KEY_W, KEY_E, KEY_R, KEY_T, KEY_Y, KEY_U]
 	var i := keys.find(ev.physical_keycode)
 	if i < 0:
 		return

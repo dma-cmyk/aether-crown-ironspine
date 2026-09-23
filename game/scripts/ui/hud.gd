@@ -3,7 +3,7 @@ extends Control
 ## In-match interface modelled on a classic RTS layout.
 
 const CMD_ORDER := ["move", "hold", "attack", "patrol", "fortify", "repair", "deploy", "special"]
-const PROD_KEYS := ["Q", "W", "E", "R", "T", "Y"]
+const PROD_KEYS := ["Q", "W", "E", "R", "T", "Y", "U"]
 
 var world: World
 var commander: Commander
@@ -519,7 +519,8 @@ func _card_entries() -> Array[String]:
 		if b.def_id == "citadel" and build_mode:
 			for id in Defs.BUILD_ORDER:
 				out.append("bld:" + id)
-			out.append("")
+			while out.size() < 7:
+				out.append("")
 			out.append("toggle:back")
 			return out
 		for id in b.produces():
@@ -810,6 +811,8 @@ func _unit_status(u: Unit) -> String:
 			Unit.Order.PATROL: "巡回中", Unit.Order.HOLD: "陣地保持", Unit.Order.REPAIR: "修理中"}
 	if u.team == Defs.TEAM_PLAYER:
 		parts.push_front(order_names.get(u.order, ""))
+	if u.is_creature and u.hp < u.max_hp and world.match_time - u.last_damage_time > 6.0:
+		parts.append("自然回復中")
 	if u.kills > 0:
 		parts.append("撃破 %d" % u.kills)
 	return "  ・  ".join(parts)

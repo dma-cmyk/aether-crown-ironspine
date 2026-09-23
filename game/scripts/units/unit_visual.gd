@@ -21,6 +21,20 @@ func on_fire(_w: Dictionary, _target: Entity) -> void:
 	pass
 
 
+func on_special(_sid: String) -> void:
+	pass
+
+
+## A targeted special acting on a point this frame (the dragon's Inferno bursts).
+func on_special_at(_sid: String, _at: Vector3) -> void:
+	pass
+
+
+## Where a special ability's projectile or effect leaves the unit.
+func special_point() -> Vector3:
+	return unit.aim_point()
+
+
 ## World-space points projectiles/tracers start from.
 func muzzle_points(_w: Dictionary, _target: Entity) -> Array[Vector3]:
 	return [unit.aim_point()]

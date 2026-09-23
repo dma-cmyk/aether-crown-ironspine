@@ -1,6 +1,6 @@
 extends Node3D
 ## Dev: lays out models for inspection and captures a screenshot.
-## godot --path game -- --gallery=house_a,house_b --team=0 --out=/tmp/g.png [--spacing=18] [--yaw=-35]
+## godot --path game -- --gallery=house_a,house_b --team=0 --out=/tmp/g.png [--spacing=18] [--yaw=-35] [--model_y=3]
 
 var capture: Node
 
@@ -41,7 +41,7 @@ func _ready() -> void:
 		MatLib.remap(inst, team, true)
 		var c := i % cols
 		var r := i / cols
-		inst.position = Vector3((c - (cols - 1) * 0.5) * spacing, 0, (r - (rows - 1) * 0.5) * spacing)
+		inst.position = Vector3((c - (cols - 1) * 0.5) * spacing, float(Game.arg("model_y", "0")), (r - (rows - 1) * 0.5) * spacing)
 		inst.rotation.y = deg_to_rad(float(Game.arg("model_yaw", "0")))
 		add_child(inst)
 		var lab := Label3D.new()

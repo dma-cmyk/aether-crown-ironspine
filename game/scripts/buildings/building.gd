@@ -256,6 +256,8 @@ func _spawn(uid: String) -> void:
 	if rally != Vector3.INF:
 		var spread := Vector3(randf_range(-4, 4), 0, randf_range(-4, 4))
 		u.order_move(rally + spread)
+	if u.is_creature:
+		World.inst.sfx.play_at(u.def.get("call", "roar"), global_position)
 	if team == Defs.TEAM_PLAYER:
 		World.inst.sfx.play_at("unit_ready", global_position)
 		World.inst.raise_alert(global_position, "%s 出撃準備完了" % u.display_name(), team, "ready_" + uid, 4.0)

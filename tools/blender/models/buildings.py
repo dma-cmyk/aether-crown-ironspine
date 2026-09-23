@@ -331,6 +331,70 @@ def relay(name):
     return b.to_object()
 
 
+def sanctum(name):
+    """Beast sanctum: a henge of runed standing stones around a floating aether crystal, a crag
+    for the fliers at the back and a skull-crowned gate for the giants at the front (+Z)."""
+    P = mk.palette()
+    b = mk.Builder(name)
+    b.lathe([(9.2, -0.5), (9.2, 0.4), (8.5, 0.5), (8.5, 0.9), (7.7, 1.0), (0.0, 1.05)], 16, (0, 0, 0), P["stone_dark"], smooth=False)
+    b.cylinder(5.4, 0.1, 16, (0, 1.0, 0), P["paving"])
+    b.torus(5.4, 0.14, 24, 4, (0, 1.12, 0), P["brass"])
+    y0 = 1.05
+    tops = {}
+    for i, deg in enumerate((36, 72, 108, 144, -36, -72, -108, -144)):
+        a = math.radians(deg)
+        r = 6.7
+        x, z = math.sin(a) * r, math.cos(a) * r
+        h = 7.4 if abs(deg) in (108, 144) else 6.0
+        stone = b.box((1.5, h, 1.0), (x, y0 + h / 2 - 0.2, z), P["rock"], rot=(-4, deg, 0), taper=(0.72, 0.8), bevel=0.1)
+        parts.jitter_verts(stone, 0.12, seed=30 + i)
+        b.box((1.42, 0.32, 1.02), (x, y0 + h * 0.66, z), P["brass"], rot=(-4, deg, 0))
+        ix, iz = math.sin(a) * (r - 0.52), math.cos(a) * (r - 0.52)
+        b.box((0.5, 0.5, 0.1), (ix, y0 + h * 0.46, iz), P["team_glow"], rot=(0, deg, 45))
+        b.box((0.16, 0.9, 0.1), (ix, y0 + h * 0.46 - 0.75, iz), P["team_glow"], rot=(0, deg, 0))
+        tops[deg] = (x, y0 + h, z)
+    for d1, d2 in ((108, 144), (-108, -144)):
+        (x1, y1, z1), (x2, y2, z2) = tops[d1], tops[d2]
+        ln = math.hypot(x2 - x1, z2 - z1) + 1.8
+        yaw = math.degrees(math.atan2(x2 - x1, z2 - z1)) + 90
+        lintel = b.box((ln, 0.9, 1.1), ((x1 + x2) / 2, min(y1, y2) + 0.1, (z1 + z2) / 2), P["rock"], rot=(0, yaw, 0), bevel=0.08)
+        parts.jitter_verts(lintel, 0.08, seed=50 + int(d1))
+    # altar and the floating crystal
+    b.lathe([(2.4, y0), (2.4, y0 + 0.4), (1.7, y0 + 0.6), (1.5, y0 + 1.4), (2.0, y0 + 1.6), (2.0, y0 + 1.9), (0.0, y0 + 1.9)], 8,
+            (0, 0, 0), P["stone_trim"], smooth=False)
+    b.torus(1.95, 0.12, 12, 4, (0, y0 + 1.75, 0), P["brass"])
+    b.lathe([(0.0, y0 + 3.2), (1.6, y0 + 6.4), (0.0, y0 + 11.0)], 6, (0, 0, 0), P["team_glow"], smooth=False)
+    for k in range(3):
+        a = k / 3 * math.tau + 0.4
+        b.lathe([(0.0, -1.0), (0.45, 0.0), (0.0, 1.3)], 5, (math.cos(a) * 2.8, y0 + 4.6 + k * 0.8, math.sin(a) * 2.8),
+                P["team_glow"], rot=(18, math.degrees(a), 0), smooth=False)
+    b.torus(3.2, 0.12, 20, 4, (0, y0 + 6.0, 0), P["brass"], rot=(14, 0, 0))
+    b.torus(2.6, 0.1, 20, 4, (0, y0 + 7.4, 0), P["brass"], rot=(-10, 30, 0))
+    # crag at the back where the fliers perch
+    crag = b.lathe([(3.2, -0.3), (2.9, 3.0), (2.5, 6.0), (2.0, 9.0), (1.4, 11.4), (0.8, 12.8), (0.0, 13.6)], 7,
+                   (0.3, 0, -7.4), P["rock"], smooth=False)
+    parts.jitter_verts(crag, 0.45, seed=11)
+    b.torus(1.2, 0.16, 12, 4, (0.3, 11.9, -7.4), P["brass"])
+    parts.banner(b, P, 0.3, 11.0, -5.95, 1.2, 3.6)
+    # front gate: two pillars, a beam and a horned skull
+    for sx in (-1, 1):
+        pil = b.box((1.5, 7.0, 1.5), (sx * 3.7, y0 + 3.5, 7.6), P["rock"], bevel=0.08, taper=(0.88, 0.88))
+        parts.jitter_verts(pil, 0.08, seed=70 + sx)
+        b.box((1.9, 0.5, 1.9), (sx * 3.7, y0 + 0.25, 7.6), P["stone_trim"])
+        b.box((1.62, 0.3, 1.62), (sx * 3.7, y0 + 5.0, 7.6), P["brass"])
+        parts.banner(b, P, sx * 3.7, y0 + 4.6, 8.42, 1.0, 3.0, pole=False)
+    beam = b.box((9.6, 1.0, 1.4), (0, y0 + 7.4, 7.6), P["rock"], bevel=0.1)
+    parts.jitter_verts(beam, 0.06, seed=77)
+    b.sphere(0.95, 12, 8, (0, y0 + 8.3, 8.3), P["horn"], scale=(1.0, 0.85, 1.15))
+    b.sphere(0.5, 10, 6, (0, y0 + 7.75, 8.95), P["horn"], scale=(0.9, 0.6, 1.0))
+    for sx in (-1, 1):
+        b.sphere(0.2, 8, 6, (sx * 0.38, y0 + 8.45, 9.25), P["team_glow"])
+        b.cylinder(0.32, 2.4, 8, (sx * 0.75, y0 + 8.7, 8.1), P["horn"], rot=(-25, 0, -sx * 55), r2=0.0)
+        for k in range(4):
+            b.torus(0.2, 0.05, 8, 4, (sx * 2.2, y0 + 6.6 - k * 0.32, 8.35), P["iron_dark"], rot=(0, 90 * (k % 2), 90))
+    return b.to_object()
+
+
 ASSETS = {
     "citadel": citadel,
     "barracks": barracks,
@@ -341,6 +405,7 @@ ASSETS = {
     "bastion": bastion,
     "gate": gate,
     "relay": relay,
+    "sanctum": sanctum,
 }
 
 

@@ -9,6 +9,7 @@ Output: game/assets/audio/*.wav (44.1 kHz, 16-bit)
 """
 import math
 import pathlib
+import sys
 import wave
 
 import numpy as np
@@ -347,7 +348,103 @@ def music():
     write("music_battle", None, 0.8, stereo=(L[:body_n], R[:body_n]))
 
 
+# ---------------------------------------------------------------- creatures
+# Each creature sound seeds its own generator, so `gen_audio.py creatures` alone reproduces
+# the same files as a full run.
+def rnoise(r, sec):
+    return r.standard_normal(n_of(sec))
+
+
+def voice(r, f0, sec, contour, formants, rough=0.35, breath=0.3):
+    """Growling voice: jittery sawtooth through vocal-tract band-passes, plus breath noise."""
+    t = secs(n_of(sec))
+    jitter = filt(r.standard_normal(len(t)), None, 18) * 6.0
+    f = f0 * np.interp(t / sec, np.linspace(0, 1, len(contour)), contour) * (1 + 0.012 * jitter)
+    ph = np.cumsum(f) / SR
+    src = 2 * (ph % 1.0) - 1
+    am = 1.0 + rough * np.sin(2 * np.pi * 27 * t + 2 * np.sin(2 * np.pi * 3 * t))
+    out = np.zeros_like(t)
+    for (fc, bw, g) in formants:
+        out += filt(src, fc - bw / 2, fc + bw / 2) * g
+    out = out * am + filt(rnoise(r, sec), 250, 3200) * breath
+    return out
+
+
+def creature_sounds():
+    r = np.random.default_rng(900)
+    sec = 1.7
+    env = np.clip(secs(n_of(sec)) / 0.12, 0, 1) * np.clip((sec - secs(n_of(sec))) / 0.6, 0, 1)
+    roar = voice(r, 78, sec, [0.8, 1.15, 1.25, 1.1, 0.8], [(420, 300, 1.0), (900, 500, 0.6), (2300, 900, 0.25)], 0.45, 0.45) * env
+    write("roar_1", reverb(roar, 1.6, 0.3), 0.8)
+
+    r = np.random.default_rng(901)
+    sec = 2.0
+    t = secs(n_of(sec))
+    env = np.clip(t / 0.08, 0, 1) * np.exp(-t / 0.9)
+    groan = voice(r, 95, sec, [1.2, 1.0, 0.7, 0.5], [(380, 260, 1.0), (820, 400, 0.5)], 0.6, 0.35) * env
+    write("roar_death_1", reverb(groan, 1.8, 0.3), 0.75)
+
+    for k in range(2):
+        r = np.random.default_rng(910 + k)
+        sec = 1.6
+        thump = sweep(95 + k * 10, 30, sec) * env_exp(sec, 0.22, 0.003)
+        crunch = filt(rnoise(r, sec), 200, 3200) * env_exp(sec, 0.06, 0.002) * 0.8
+        rumble = filt(rnoise(r, sec), 30, 220) * env_exp(sec, 0.5) * 0.6
+        debris = np.zeros(n_of(sec))
+        for _ in range(26):
+            mix_at(debris, filt(rnoise(r, 0.05), 1500, 6000) * env_exp(0.05, 0.01) * r.uniform(0.05, 0.25), r.uniform(0.08, 1.0))
+        write("smash_%d" % (k + 1), reverb(thump + crunch + rumble + debris, 1.3, 0.22), 0.85)
+
+    for k in range(2):
+        r = np.random.default_rng(920 + k)
+        sec = 0.4
+        snap = filt(rnoise(r, sec), 900, 6000) * env_exp(sec, 0.012, 0.001)
+        growl = voice(r, 120 + k * 25, sec, [1.0, 1.1, 0.9], [(500, 300, 1.0), (1100, 500, 0.5)], 0.5, 0.3)
+        growl *= np.clip(secs(n_of(sec)) / 0.03, 0, 1) * np.exp(-secs(n_of(sec)) / 0.15)
+        write("bite_%d" % (k + 1), reverb(snap + growl * 0.6, 0.5, 0.15), 0.6)
+
+    r = np.random.default_rng(930)
+    sec = 1.3
+    t = secs(n_of(sec))
+    flicker = 1.0 + 0.35 * filt(r.standard_normal(len(t)), None, 12) * 4.0
+    body = filt(rnoise(r, sec), 140, 2600) * flicker
+    rumble = filt(rnoise(r, sec), 35, 180) * 0.8
+    crackle = filt((r.random(len(t)) < 0.003) * r.standard_normal(len(t)) * 2.0, 1500, 8000)
+    env = np.clip(t / 0.12, 0, 1) * np.clip((sec - t) / 0.4, 0, 1)
+    write("flame_1", reverb((body + rumble + crackle) * env, 1.0, 0.2), 0.7)
+
+    r = np.random.default_rng(940)
+    sec = 1.6
+    thud = sweep(62, 24, sec) * env_exp(sec, 0.35, 0.004)
+    dust = filt(rnoise(r, sec), 80, 900) * env_exp(sec, 0.25, 0.01) * 0.7
+    write("thud_big_1", reverb(thud + dust, 1.4, 0.2), 0.85)
+
+    r = np.random.default_rng(950)
+    sec = 0.9
+    t = secs(n_of(sec))
+    f = np.interp(t / sec, [0, 0.15, 1], [1700, 2300, 1350]) * (1 + 0.03 * np.sin(2 * np.pi * 23 * t))
+    ph = np.cumsum(f) / SR
+    cry = np.sin(2 * np.pi * ph) + 0.5 * np.sin(4 * np.pi * ph) + 0.25 * np.sin(6 * np.pi * ph)
+    rasp = 1.0 + 0.5 * filt(r.standard_normal(len(t)), 40, 400) * 3.0
+    env = np.clip(t / 0.03, 0, 1) * np.clip((sec - t) / 0.35, 0, 1)
+    write("screech_1", reverb(cry * rasp * env, 1.2, 0.3, 600, 9000), 0.55)
+
+    r = np.random.default_rng(960)
+    sec = 2.0
+    t = secs(n_of(sec))
+    howl = np.zeros_like(t)
+    for k, (f0, d) in enumerate(((310, 0.0), (365, 0.08), (275, 0.15))):
+        f = f0 * np.interp(np.clip((t - d) / (sec - d), 0, 1), [0, 0.25, 0.7, 1], [0.85, 1.25, 1.2, 0.9]) * (1 + 0.012 * np.sin(2 * np.pi * 5.5 * t + k))
+        ph = np.cumsum(f) / SR
+        v = np.sin(2 * np.pi * ph) + 0.35 * np.sin(4 * np.pi * ph) + 0.12 * np.sin(6 * np.pi * ph)
+        howl += v * np.clip((t - d) / 0.25, 0, 1) * np.clip((sec - t) / 0.5, 0, 1)
+    write("howl_1", reverb(filt(howl, 150, 3000), 1.6, 0.35), 0.6)
+
+
 def main():
+    if "creatures" in sys.argv[1:]:
+        creature_sounds()
+        return
     for i in range(3):
         write("rifle_%d" % (i + 1), rifle_volley(10 + i), 0.55)
     for i in range(2):
@@ -361,6 +458,7 @@ def main():
     ui_sounds()
     ambience()
     music()
+    creature_sounds()
 
 
 if __name__ == "__main__":

@@ -97,7 +97,7 @@ func recompute() -> void:
 	vis.fill(0)
 	for u in world.units:
 		if u.team == Defs.TEAM_PLAYER and u.alive:
-			_stamp(u.global_position, u.vision)
+			_stamp(u.global_position, u.vision_now())
 	for b in world.buildings:
 		if b.team == Defs.TEAM_PLAYER and b.alive:
 			_stamp(b.global_position, b.vision)
