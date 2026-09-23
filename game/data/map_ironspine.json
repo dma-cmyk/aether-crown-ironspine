@@ -1,0 +1,126 @@
+{
+  "id": "ironspine",
+  "name": "Ironspine Crossing",
+  "seed": 7031,
+  "size": 400.0,
+  "height_grid": 321,
+  "splat_size": 1024,
+  "nav_cell": 2.0,
+  "playable_radius": 174.0,
+  "levels": {
+    "plains": 0.0,
+    "plateau": 12.0,
+    "mesa": 0.8,
+    "mountain": 52.0,
+    "bridge_deck": 0.6
+  },
+  "canyon": {
+    "comment": "control points run NW -> SE; water flows the same way",
+    "points": [
+      [-254.6, -254.6], [-176.8, -190.9], [-128.7, -111.7], [-65.1, -76.4], [-31.8, -31.8],
+      [0.0, 0.0],
+      [31.8, 31.8], [65.1, 76.4], [128.7, 111.7], [176.8, 190.9], [254.6, 254.6]
+    ],
+    "half_width_floor": 8.0,
+    "half_width_top": 20.0,
+    "bulge_sigma": 58.0,
+    "bulge_floor": 38.0,
+    "bulge_top": 40.0,
+    "water_depth": 2.4,
+    "water_steps": [
+      {"until": -215.0, "level": -8.0},
+      {"until": -72.0, "level": -14.0},
+      {"until": 72.0, "level": -19.0, "lake": true},
+      {"until": 215.0, "level": -24.0},
+      {"until": 9999.0, "level": -28.0}
+    ]
+  },
+  "mesa": {"center": [0.0, 0.0], "radius": 31.0},
+  "plateaus": [
+    {
+      "team": 0, "center": [-148.0, 148.0], "radius": 62.0,
+      "ramps": [
+        {"top": [-150.0, 97.0], "bottom": [-150.0, 56.0], "width": 15.0},
+        {"top": [-113.0, 113.0], "bottom": [-85.0, 85.0], "width": 17.0},
+        {"top": [-97.0, 150.0], "bottom": [-56.0, 150.0], "width": 15.0}
+      ]
+    },
+    {
+      "team": 1, "center": [148.0, -148.0], "radius": 62.0,
+      "ramps": [
+        {"top": [150.0, -97.0], "bottom": [150.0, -56.0], "width": 15.0},
+        {"top": [113.0, -113.0], "bottom": [85.0, -85.0], "width": 17.0},
+        {"top": [97.0, -150.0], "bottom": [56.0, -150.0], "width": 15.0}
+      ]
+    }
+  ],
+  "hills": [
+    {"center": [-106.0, -2.0], "radius": 26.0, "height": 15.0},
+    {"center": [2.0, 106.0], "radius": 26.0, "height": 13.0},
+    {"center": [106.0, 2.0], "radius": 26.0, "height": 15.0},
+    {"center": [-2.0, -106.0], "radius": 26.0, "height": 13.0}
+  ],
+  "roads": [
+    [[-148.0, 148.0], [-150.0, 100.0], [-150.0, 56.0], [-150.0, 5.0], [-152.0, -52.0], [-148.0, -92.9]],
+    [[-109.4, -130.5], [-72.0, -148.0], [5.0, -152.0], [56.0, -150.0], [97.0, -150.0], [148.0, -148.0]],
+    [[-148.0, 148.0], [-113.0, 113.0], [-85.0, 85.0], [-66.0, 66.0], [-45.3, 45.3]],
+    [[-19.8, 19.8], [0.0, 0.0], [19.8, -19.8]],
+    [[45.3, -45.3], [66.0, -66.0], [85.0, -85.0], [113.0, -113.0], [148.0, -148.0]],
+    [[-148.0, 148.0], [-97.0, 150.0], [-56.0, 150.0], [-5.0, 152.0], [72.0, 148.0], [109.4, 130.5]],
+    [[148.0, 92.9], [152.0, 52.0], [150.0, -5.0], [150.0, -56.0], [150.0, -100.0], [148.0, -148.0]],
+    [[-150.0, 5.0], [-118.0, 42.0], [-66.0, 66.0]],
+    [[-5.0, 152.0], [-42.0, 118.0], [-66.0, 66.0]],
+    [[150.0, -5.0], [118.0, -42.0], [66.0, -66.0]],
+    [[5.0, -152.0], [42.0, -118.0], [66.0, -66.0]]
+  ],
+  "bridges": [
+    {"id": "nw_bridge", "a": [-148.0, -92.9], "b": [-109.4, -130.5], "width": 11.0},
+    {"id": "ironspine_bridge", "a": [-45.3, 45.3], "b": [-19.8, 19.8], "width": 13.0},
+    {"id": "varkesh_bridge", "a": [19.8, -19.8], "b": [45.3, -45.3], "width": 13.0},
+    {"id": "se_bridge", "a": [109.4, 130.5], "b": [148.0, 92.9], "width": 11.0}
+  ],
+  "sites": [
+    {"id": "central_nexus", "name": "Central Nexus", "pos": [0.0, 0.0], "owner": -1, "kind": "aether", "material": 60, "aether": 120, "pop": 10, "radius": 24.0},
+    {"id": "brassholm", "name": "Brassholm", "pos": [-66.0, 66.0], "owner": 0, "kind": "industry", "material": 100, "aether": 20, "pop": 10, "radius": 20.0},
+    {"id": "west_foundry", "name": "West Foundry", "pos": [-150.0, 5.0], "owner": -1, "kind": "industry", "material": 120, "aether": 0, "pop": 10, "radius": 22.0},
+    {"id": "south_works", "name": "South Works", "pos": [-5.0, 152.0], "owner": -1, "kind": "aether", "material": 30, "aether": 90, "pop": 10, "radius": 22.0},
+    {"id": "aether_works", "name": "Aether Works", "pos": [66.0, -66.0], "owner": 1, "kind": "industry", "material": 100, "aether": 20, "pop": 10, "radius": 20.0},
+    {"id": "east_bastion", "name": "East Bastion", "pos": [150.0, -5.0], "owner": -1, "kind": "industry", "material": 120, "aether": 0, "pop": 10, "radius": 22.0},
+    {"id": "north_relay", "name": "North Relay", "pos": [5.0, -152.0], "owner": -1, "kind": "aether", "material": 30, "aether": 90, "pop": 10, "radius": 22.0}
+  ],
+  "bases": [
+    {"team": 0, "pos": [-150.0, 150.0], "facing": [1.0, -1.0]},
+    {"team": 1, "pos": [150.0, -150.0], "facing": [-1.0, 1.0]}
+  ],
+  "gates": [
+    {"id": "ironspine_gate", "team": 0, "pos": [-51.5, 51.5], "facing": [1.0, -1.0]},
+    {"id": "varkesh_gate", "team": 1, "pos": [51.5, -51.5], "facing": [-1.0, 1.0]}
+  ],
+  "start_buildings": [
+    {"team": 0, "id": "citadel", "pos": [-152.0, 152.0], "rot": 135},
+    {"team": 0, "id": "barracks", "pos": [-168.0, 116.0], "rot": 135},
+    {"team": 1, "id": "citadel", "pos": [152.0, -152.0], "rot": -45},
+    {"team": 1, "id": "barracks", "pos": [168.0, -116.0], "rot": -45},
+    {"team": 1, "id": "foundry", "pos": [116.0, -168.0], "rot": -45}
+  ],
+  "start_units": [
+    {"team": 0, "id": "aetherguard", "pos": [-58.0, 50.0], "rot": 135},
+    {"team": 0, "id": "aetherguard", "pos": [-50.0, 60.0], "rot": 135},
+    {"team": 0, "id": "aetherguard", "pos": [-64.0, 62.0], "rot": 135},
+    {"team": 0, "id": "walker", "pos": [-68.0, 50.0], "rot": 135},
+    {"team": 0, "id": "artificer", "pos": [-74.0, 72.0], "rot": 135},
+    {"team": 0, "id": "artificer", "pos": [-134.0, 136.0], "rot": 135},
+    {"team": 0, "id": "aetherguard", "pos": [-140.0, 126.0], "rot": 135},
+    {"team": 1, "id": "aetherguard", "pos": [58.0, -50.0], "rot": -45},
+    {"team": 1, "id": "aetherguard", "pos": [50.0, -60.0], "rot": -45},
+    {"team": 1, "id": "walker", "pos": [66.0, -62.0], "rot": -45},
+    {"team": 1, "id": "artificer", "pos": [134.0, -136.0], "rot": -45},
+    {"team": 1, "id": "aetherguard", "pos": [140.0, -126.0], "rot": -45}
+  ],
+  "cliff_falls": [
+    {"s": -128.0, "side": 1, "width": 5.0},
+    {"s": -40.0, "side": -1, "width": 7.0},
+    {"s": 36.0, "side": 1, "width": 7.0},
+    {"s": 140.0, "side": -1, "width": 5.0}
+  ]
+}

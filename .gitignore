@@ -1,0 +1,18 @@
+# Godot
+game/.godot/
+*.tmp
+# Blender backups
+*.blend1
+*.blend2
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+# Exports / builds
+build/
+*.pck
+# OS / editors
+.DS_Store
+*~
+.vscode/
+.idea/
