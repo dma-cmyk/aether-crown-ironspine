@@ -130,7 +130,12 @@ var debris_l: Layer
 var _tracers: Array[Dictionary] = []
 var _debris: Array[Dictionary] = []
 var _emitters: Array[Dictionary] = []
-var _chimneys: Array[Dictionary] = []
+var _amb: Layer
+var _amb_buf := PackedFloat32Array()
+var _amb_n := 0
+var _amb_blocks := {}
+var _amb_free: Array[Vector2i] = []
+var _amb_dirty := false
 var _pending: Array[Dictionary] = []
 var _lights: Array[OmniLight3D] = []
 var _light_t := PackedFloat32Array()
@@ -154,6 +159,7 @@ func _ready() -> void:
 	glow.drag = 0.4
 	glow.gravity = -2.0
 	beams = Layer.new(self, 600, load("res://shaders/fx_beam.gdshader"), null)
+	_amb = Layer.new(self, 1, load("res://shaders/fx_ambient.gdshader"), load("res://assets/fx/fx_smoke.png"))
 	var box := BoxMesh.new()
 	box.size = Vector3(0.45, 0.3, 0.55)
 	debris_l = Layer.new(self, 240, null, null, box)
@@ -214,7 +220,7 @@ func _process(delta: float) -> void:
 			if randf() < 0.3:
 				fire_l.emit(p2, Vector3(0, 2.0, 0), 0.8, 1.2, 2.6, Color(1.0, 0.45, 0.12, 0.9))
 		i += 1
-	_update_chimneys(delta)
+	_upload_ambient()
 	_update_tracers(delta)
 	_update_debris(delta)
 	_update_rings(delta)
@@ -301,30 +307,89 @@ func impact_dust(p: Vector3, size: float = 0.6) -> void:
 	dust_l.emit(p, Vector3(0, 1.0, 0), 0.6, size * 0.5, size * 1.5, Color(0.45, 0.4, 0.33, 0.4))
 
 
-## Persistent chimney smoke (emitted only near the camera).
-func add_chimney(p: Vector3, rate: float = 2.5, size: float = 2.2, dark: float = 0.3) -> void:
-	_chimneys.append({"p": p, "rate": rate, "size": size, "dark": dark, "acc": randf()})
+# ---------------------------------------------------------------- ambient smoke
+## Chimney smoke and waterfall spray loop forever at fixed spots. Each source owns a block of
+## instances animated entirely by fx_ambient.gdshader, so they cost no CPU per frame.
+## Returns a handle for remove_ambient().
+func add_ambient(p: Vector3, count: int, vel: Vector3, jitter: Vector3, spread: Vector3, life: Vector2, size: Vector2, c: Color) -> int:
+	if Game.quality == 0:
+		count = ceili(count * 0.6)
+	var start := -1
+	for i in _amb_free.size():
+		var blk := _amb_free[i]
+		if blk.y >= count:
+			start = blk.x
+			if blk.y > count:
+				_amb_free[i] = Vector2i(blk.x + count, blk.y - count)
+			else:
+				_amb_free.remove_at(i)
+			break
+	if start < 0:
+		start = _amb_n
+		_amb_n += count
+		if _amb_n * 20 > _amb_buf.size():
+			_amb_buf.resize(maxi(_amb_n, _amb_buf.size() / 20 * 2) * 20)
+	for k in count:
+		var b := (start + k) * 20
+		# rows of the 3x4 transform: the basis columns carry velocity, jitter and spread
+		_amb_buf[b] = vel.x
+		_amb_buf[b + 1] = jitter.x
+		_amb_buf[b + 2] = spread.x
+		_amb_buf[b + 3] = p.x
+		_amb_buf[b + 4] = vel.y
+		_amb_buf[b + 5] = jitter.y
+		_amb_buf[b + 6] = spread.y
+		_amb_buf[b + 7] = p.y
+		_amb_buf[b + 8] = vel.z
+		_amb_buf[b + 9] = jitter.z
+		_amb_buf[b + 10] = spread.z
+		_amb_buf[b + 11] = p.z
+		_amb_buf[b + 12] = c.r
+		_amb_buf[b + 13] = c.g
+		_amb_buf[b + 14] = c.b
+		_amb_buf[b + 15] = c.a
+		_amb_buf[b + 16] = (k + randf() * 0.6) / count
+		_amb_buf[b + 17] = randf_range(life.x, life.y)
+		_amb_buf[b + 18] = size.x
+		_amb_buf[b + 19] = size.y
+	_amb_blocks[start] = count
+	_amb_dirty = true
+	return start
 
 
-func _update_chimneys(dt: float) -> void:
-	var cam := World.inst.camera if World.inst else null
-	var focus := cam.focus if cam and cam.cam else Vector3.ZERO
-	var far := 170.0
-	if cam and cam.cam and not cam.input_enabled:
-		focus = cam.cam.global_position
-		far = 320.0
-	for c in _chimneys:
-		var p: Vector3 = c["p"]
-		if Vector2(p.x - focus.x, p.z - focus.z).length() > far:
-			continue
-		c["acc"] += dt * float(c["rate"])
-		while c["acc"] >= 1.0:
-			c["acc"] -= 1.0
-			var s: float = c["size"]
-			var d: float = c["dark"]
-			smoke_l.emit(p + Vector3(randf_range(-0.4, 0.4), 0, randf_range(-0.4, 0.4)),
-					Vector3(randf_range(0.6, 1.4), randf_range(2.2, 3.4), randf_range(-0.3, 0.3)), randf_range(5.0, 7.5),
-					s * 0.6, s * 3.2, Color(d, d * 0.97, d * 0.95, 0.42), randf_range(-0.3, 0.3))
+func remove_ambient(handle: int) -> void:
+	if not _amb_blocks.has(handle):
+		return
+	var count: int = _amb_blocks[handle]
+	_amb_blocks.erase(handle)
+	for k in count:
+		_amb_buf[(handle + k) * 20 + 18] = 0.0
+		_amb_buf[(handle + k) * 20 + 19] = 0.0
+	_amb_free.append(Vector2i(handle, count))
+	_amb_dirty = true
+
+
+## Waterfall spray: wide, pale, slow puffs at the base of a fall.
+func add_mist(p: Vector3, r: float) -> int:
+	var s := 3.0 + r * 0.2
+	return add_ambient(p, roundi((0.8 + r * 0.12) * 4.5), Vector3(0, 0.9, 0), Vector3(0.4, 0.4, 0.4), Vector3(r * 0.8, 0.8, 0.3),
+			Vector2(3.5, 5.5), Vector2(s * 0.5, s * 1.6), Color(0.92, 0.95, 1.0, 0.16))
+
+
+## Chimney smoke drifting downwind; `rate` is puffs per second.
+func add_chimney(p: Vector3, rate: float = 2.5, size: float = 2.2, dark: float = 0.3) -> int:
+	return add_ambient(p, roundi(rate * 6.25), Vector3(1.0, 2.8, 0), Vector3(0.4, 0.6, 0.3), Vector3(0.4, 0, 1.0),
+			Vector2(5.0, 7.5), Vector2(size * 0.6, size * 3.2), Color(dark, dark * 0.97, dark * 0.95, 0.42))
+
+
+func _upload_ambient() -> void:
+	if not _amb_dirty:
+		return
+	_amb_dirty = false
+	if _amb.mm.instance_count * 20 != _amb_buf.size():
+		_amb.mm.instance_count = _amb_buf.size() / 20
+	_amb.mm.buffer = _amb_buf
+	_amb.mm.visible_instance_count = _amb_n
 
 
 func smoke_column(p: Vector3, r: float) -> void:

@@ -23,6 +23,7 @@ var _rubble_t := -1.0
 var _fire_t := 0.0
 var _turret_i := 0
 var _collapse := 0.0
+var _stacks: Array[int] = []
 
 
 func setup(id: String, t: int, pos: Vector3, face: float, is_built: bool) -> void:
@@ -58,8 +59,13 @@ func setup(id: String, t: int, pos: Vector3, face: float, is_built: bool) -> voi
 		World.inst.nav.set_blocked_circle(global_position, footprint, true)
 	rally = global_position + Basis(Vector3.UP, facing) * Vector3(0, 0, radius + 9.0)
 	_update_construction()
+	if built:
+		_start_stacks()
+
+
+func _start_stacks() -> void:
 	for local: Vector3 in STACKS.get(def_id, []):
-		World.inst.fx.add_chimney(global_position + Basis(Vector3.UP, facing) * local, 3.0, 3.2, 0.22)
+		_stacks.append(World.inst.fx.add_chimney(global_position + Basis(Vector3.UP, facing) * local, 3.0, 3.2, 0.22))
 
 
 func _measure_height() -> float:
@@ -156,6 +162,7 @@ func tick(dt: float) -> void:
 		if progress >= 1.0:
 			built = true
 			_update_construction()
+			_start_stacks()
 			World.inst.sfx.play_at("build_done", global_position)
 			if team == Defs.TEAM_PLAYER:
 				World.inst.raise_alert(global_position, "%s 完成" % display_name(), team)
@@ -258,6 +265,9 @@ func die() -> void:
 	if footprint > 0.0:
 		World.inst.nav.set_blocked_circle(global_position, footprint, false)
 	var fx := World.inst.fx
+	for h in _stacks:
+		fx.remove_ambient(h)
+	_stacks.clear()
 	for i in 6:
 		var p := global_position + Vector3(randf_range(-radius, radius) * 0.7, randf_range(0.2, 0.9) * model_height, randf_range(-radius, radius) * 0.7)
 		fx.explosion(p, 2.0 + randf() * 1.5, i * 0.18)

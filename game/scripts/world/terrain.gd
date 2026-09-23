@@ -42,7 +42,6 @@ func build(with_scatter: bool = true) -> void:
 	add_child(scatter_root)
 	if with_scatter:
 		_spawn_scatter()
-		_spawn_mist()
 
 
 # ------------------------------------------------------------------ queries
@@ -198,6 +197,8 @@ const CHIMNEY_SIZE := {"smokestack": 3.6, "workshop": 2.4}
 
 
 func register_chimneys(fx: FX) -> void:
+	for m in placements["mist"]:
+		fx.add_mist(Vector3(m[0], m[1], m[2]), float(m[3]))
 	for p in placements["props"]:
 		var tops: Array = CHIMNEY_TOPS.get(p["model"], [])
 		for local: Vector3 in tops:
@@ -244,61 +245,3 @@ func _multimesh_group(group_name: String, models: Array, items: Array, tint: boo
 		mmi.name = "%s_%d" % [group_name, key]
 		mmi.multimesh = mm
 		scatter_root.add_child(mmi)
-
-
-func _spawn_mist() -> void:
-	var tex := _soft_particle_texture()
-	for m in placements["mist"]:
-		var p := GPUParticles3D.new()
-		p.amount = 14
-		p.lifetime = 6.0
-		p.preprocess = 6.0
-		p.visibility_aabb = AABB(Vector3(-25, -5, -25), Vector3(50, 25, 50))
-		var pm := ParticleProcessMaterial.new()
-		pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
-		var r := float(m[3])
-		pm.emission_box_extents = Vector3(r, 0.5, r * 0.4)
-		pm.direction = Vector3(0, 1, 0)
-		pm.spread = 25.0
-		pm.initial_velocity_min = 0.6
-		pm.initial_velocity_max = 1.4
-		pm.gravity = Vector3(0, 0.15, 0)
-		pm.scale_min = 3.5
-		pm.scale_max = 6.5
-		var curve := CurveTexture.new()
-		var c := Curve.new()
-		c.add_point(Vector2(0, 0.0))
-		c.add_point(Vector2(0.25, 1.0))
-		c.add_point(Vector2(1, 0.0))
-		curve.curve = c
-		pm.alpha_curve = curve
-		pm.color = Color(0.9, 0.95, 1.0, 0.28)
-		p.process_material = pm
-		var quad := QuadMesh.new()
-		quad.size = Vector2(1, 1)
-		var mat := StandardMaterial3D.new()
-		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
-		mat.vertex_color_use_as_albedo = true
-		mat.albedo_texture = tex
-		mat.proximity_fade_enabled = true
-		mat.proximity_fade_distance = 2.0
-		quad.material = mat
-		p.draw_pass_1 = quad
-		p.position = Vector3(m[0], m[1], m[2])
-		scatter_root.add_child(p)
-
-
-static func _soft_particle_texture() -> Texture2D:
-	var g := Gradient.new()
-	g.set_color(0, Color(1, 1, 1, 1))
-	g.set_color(1, Color(1, 1, 1, 0))
-	var t := GradientTexture2D.new()
-	t.gradient = g
-	t.fill = GradientTexture2D.FILL_RADIAL
-	t.fill_from = Vector2(0.5, 0.5)
-	t.fill_to = Vector2(0.5, 0.0)
-	t.width = 64
-	t.height = 64
-	return t

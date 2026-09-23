@@ -39,7 +39,7 @@ def log(*a):
     print("[terrain]", *a, flush=True)
 
 
-def mesh_from_arrays(name, verts_g, faces, normals_g=None, colors=None, uvs=None, material=None):
+def mesh_from_arrays(name, verts_g, faces, normals_g=None, colors=None, uvs=None, material=None, uvs2=None):
     """verts_g: (V,3) in Godot space. faces: (F,4|3) index array."""
     vb = np.stack([verts_g[:, 0], -verts_g[:, 2], verts_g[:, 1]], axis=-1)
     me = bpy.data.meshes.new(name)
@@ -50,6 +50,9 @@ def mesh_from_arrays(name, verts_g, faces, normals_g=None, colors=None, uvs=None
         loop_v = np.empty(len(me.loops), dtype=np.int64)
         me.loops.foreach_get("vertex_index", loop_v)
         uv.data.foreach_set("uv", uvs[loop_v].ravel().astype(np.float32))
+        if uvs2 is not None:
+            uv2 = me.uv_layers.new(name="UV2")
+            uv2.data.foreach_set("uv", uvs2[loop_v].ravel().astype(np.float32))
     if colors is not None:
         ca = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
         ca.data.foreach_set("color", colors.ravel().astype(np.float32))
@@ -152,18 +155,17 @@ def curtain(name, rows_pts, mat_fall, width_uv=6.0):
         mid = C // 2
         v_len.append(v_len[-1] + float(np.linalg.norm(np.array(rows_pts[r][mid]) - np.array(rows_pts[r - 1][mid]))))
     total_w = float(np.linalg.norm(np.array(rows_pts[0][-1]) - np.array(rows_pts[0][0])))
+    # UV = normalised (across, down); UV2 = texture tiling in metres / width_uv
     uvs = []
+    uvs2 = []
     for r in range(R):
         for c in range(C):
-            uvs.append((c / (C - 1) * total_w / width_uv, v_len[r] / width_uv))
-    uvs = np.array(uvs)
-    col = np.ones((len(verts), 4))
-    # alpha fades at the curtain edges and top
-    for r in range(R):
-        for c in range(C):
-            e = min(c, C - 1 - c) / max(1, (C - 1) / 2)
-            col[r * C + c, 3] = min(1.0, e * 2.5) * min(1.0, (r + 0.5) / 1.5)
-    ob = mesh_from_arrays(name, verts, faces, None, col, uvs * np.array([1.0, -1.0]) + np.array([0.0, 1.0]), mat_fall)
+            uvs.append((c / (C - 1), v_len[r] / max(v_len[-1], 1e-3)))
+            uvs2.append((c / (C - 1) * total_w / width_uv, v_len[r] / width_uv))
+    flip = np.array([1.0, -1.0]), np.array([0.0, 1.0])
+    uvs = np.array(uvs) * flip[0] + flip[1]
+    uvs2 = np.array(uvs2) * flip[0] + flip[1]
+    ob = mesh_from_arrays(name, verts, faces, None, None, uvs, mat_fall, uvs2)
     return ob
 
 
@@ -176,10 +178,18 @@ def build_waterfalls(g, mat_fall, placements):
         rows = []
         nv = 10
         nu = 16
-        for i in range(nv + 1):
+        # flat white-water lip lying on the upper surface (hides the stepped water edge)
+        for fwd, dy in ((-3.2, 0.07), (-1.4, 0.08), (0.4, 0.09), (1.6, 0.02)):
+            row = []
+            for j in range(nu + 1):
+                u = -hw * 1.06 + 2 * hw * 1.06 * j / nu
+                q = p + perp * u + d * fwd
+                row.append((q[0], wf["top"] + dy, q[1]))
+            rows.append(row)
+        for i in range(1, nv + 1):
             t = i / nv
-            y = wf["top"] + 0.05 - (wf["top"] - wf["bottom"] + 0.6) * (t ** 1.25)
-            fwd = 0.2 + 2.6 * math.sqrt(t)
+            y = wf["top"] + 0.02 - (wf["top"] - wf["bottom"] + 0.6) * (t ** 1.25)
+            fwd = 1.6 + 2.4 * math.sqrt(t)
             row = []
             for j in range(nu + 1):
                 u = -hw + 2 * hw * j / nu
