@@ -380,6 +380,9 @@ def main():
     log("splat %.1fs" % (time.time() - t0))
     placements = g.build_placements()
     log("placements trees=%d rocks=%d props=%d" % (len(placements["trees"]), len(placements["rocks"]), len(placements["props"])))
+    blocked = g.block_props(placements, mapgen.prop_extents(os.path.join(ROOT, "game", "assets", "models"), placements))
+    nav = g.nav
+    log("nav: %d cells blocked by props, walkable %.1f%%" % (blocked, nav.mean() * 100))
 
     os.makedirs(OUT, exist_ok=True)
     os.makedirs(PREV, exist_ok=True)

@@ -665,7 +665,7 @@ func _integrate(dt: float) -> void:
 	if not is_air:
 		var push := Vector3.ZERO
 		for e: Entity in World.inst.query(global_position, radius + 4.0):
-			if e == self or e.is_air:
+			if e == self or e.is_air or (e.is_building and e.def.has("walls")):
 				continue
 			var off := global_position - e.global_position
 			off.y = 0

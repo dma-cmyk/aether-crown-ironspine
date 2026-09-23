@@ -29,6 +29,19 @@ func load_from(path: String, size: float, cell_size: float) -> void:
 				astar.set_point_solid(Vector2i(ix, iz), true)
 
 
+## Block (or release) a rotated rectangle; counts overlaps like set_blocked_circle.
+func set_blocked_rect(center: Vector3, half_x: float, half_z: float, yaw: float, on: bool) -> void:
+	var r := sqrt(half_x * half_x + half_z * half_z)
+	var c0 := to_cell(center - Vector3(r, 0, r))
+	var c1 := to_cell(center + Vector3(r, 0, r))
+	var b := Basis(Vector3.UP, yaw).inverse()
+	for iz in range(c0.y, c1.y + 1):
+		for ix in range(c0.x, c1.x + 1):
+			var l := b * (to_world(Vector2i(ix, iz)) - Vector3(center.x, 0, center.z))
+			if absf(l.x) <= half_x and absf(l.z) <= half_z:
+				_block(Vector2i(ix, iz), on)
+
+
 func to_cell(p: Vector3) -> Vector2i:
 	return Vector2i(clampi(int((p.x + half) / cell), 0, n - 1), clampi(int((p.z + half) / cell), 0, n - 1))
 
@@ -155,9 +168,15 @@ func set_blocked_circle(center: Vector3, r: float, blocked: bool) -> void:
 			var w := to_world(q)
 			if Vector2(w.x - center.x, w.z - center.z).length() > r:
 				continue
-			var idx := q.y * n + q.x
-			blockers[idx] = maxi(0, blockers[idx] + (1 if blocked else -1))
-			astar.set_point_solid(q, base_walk[idx] == 0 or blockers[idx] > 0)
+			_block(q, blocked)
+
+
+func _block(q: Vector2i, on: bool) -> void:
+	if q.x < 0 or q.y < 0 or q.x >= n or q.y >= n:
+		return
+	var idx := q.y * n + q.x
+	blockers[idx] = maxi(0, blockers[idx] + (1 if on else -1))
+	astar.set_point_solid(q, base_walk[idx] == 0 or blockers[idx] > 0)
 
 
 func area_free(center: Vector3, r: float) -> bool:

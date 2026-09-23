@@ -6,6 +6,7 @@ indexed [iz, ix].
 """
 import json
 import math
+import os
 import struct
 import zlib
 
@@ -468,6 +469,48 @@ class MapGen:
         self.nav = keep
         return keep
 
+    def block_props(self, placements, extents, margin=0.6, skip=("lamp_post",)):
+        """Mark houses, walls and other props (and big rocks) as obstacles on the nav grid.
+
+        extents: model -> (half x, half z) in the model's own frame. Returns cells blocked."""
+        cell = self.L["nav_cell"]
+        n = self.nav.shape[0]
+        half = self.S / 2
+        before = int(self.nav.sum())
+
+        def stamp(x, z, hx, hz, rot):
+            r = math.hypot(hx, hz)
+            j0, j1 = max(0, int((x - r + half) / cell)), min(n - 1, int((x + r + half) / cell))
+            i0, i1 = max(0, int((z - r + half) / cell)), min(n - 1, int((z + r + half) / cell))
+            c, s = math.cos(rot), math.sin(rot)
+            for i in range(i0, i1 + 1):
+                cz = -half + (i + 0.5) * cell - z
+                for j in range(j0, j1 + 1):
+                    cx = -half + (j + 0.5) * cell - x
+                    if abs(cx * c - cz * s) <= hx and abs(cx * s + cz * c) <= hz:
+                        self.nav[i, j] = False
+
+        for p in placements["props"]:
+            if p["model"] in skip:
+                continue
+            hx, hz = extents[p["model"]]
+            stamp(p["pos"][0], p["pos"][2], hx * p["scale"] + margin, hz * p["scale"] + margin, p["rot"])
+        for (x, y, z, sc, rot, _v) in placements["rocks"]:
+            if sc >= 1.0:
+                stamp(x, z, 1.1 * sc, 1.1 * sc, rot)
+        # drop pockets the new obstacles cut off from the first base
+        bx, bz = self.L["bases"][0]["pos"]
+        keep = np.zeros_like(self.nav)
+        stack = [(int((bz + half) / cell), int((bx + half) / cell))]
+        while stack:
+            i, j = stack.pop()
+            if i < 0 or j < 0 or i >= n or j >= n or keep[i, j] or not self.nav[i, j]:
+                continue
+            keep[i, j] = True
+            stack.extend(((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)))
+        self.nav = keep
+        return before - int(keep.sum())
+
     # ---- splat ---------------------------------------------------------
     def build_splat(self, size):
         X, Z = self.pixel_grid(size)
@@ -652,6 +695,9 @@ class MapGen:
                     continue
                 if any(math.hypot(x - px, z - pz) < 8.0 for px, pz in placed):
                     continue
+                # the bridge gates stand here at runtime
+                if any(math.hypot(x - g["pos"][0], z - g["pos"][1]) < 24.0 for g in self.L.get("gates", [])):
+                    continue
                 h = [float(self.height_at(x + ox, z + oz)) for ox in (-3, 3) for oz in (-3, 3)]
                 if max(h) - min(h) > 1.6 or min(h) < -1.5:
                     continue
@@ -798,6 +844,25 @@ class MapGen:
         for i, k in enumerate(["dirt", "rock", "ash", "forest"]):
             out[k] = bilinear(splat[..., i], self.S, X, Z)
         return out
+
+
+def glb_extent(path):
+    """Half extents (x, z) of the meshes in a .glb, measured from its origin."""
+    with open(path, "rb") as f:
+        data = f.read()
+    ln = struct.unpack("<I", data[12:16])[0]
+    j = json.loads(data[20:20 + ln])
+    hx = hz = 0.0
+    for m in j["meshes"]:
+        for prim in m["primitives"]:
+            acc = j["accessors"][prim["attributes"]["POSITION"]]
+            hx = max(hx, abs(acc["min"][0]), abs(acc["max"][0]))
+            hz = max(hz, abs(acc["min"][2]), abs(acc["max"][2]))
+    return hx, hz
+
+
+def prop_extents(models_dir, placements):
+    return {m: glb_extent(os.path.join(models_dir, m + ".glb")) for m in {p["model"] for p in placements["props"]}}
 
 
 def load_layout(path):

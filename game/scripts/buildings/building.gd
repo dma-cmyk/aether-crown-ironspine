@@ -57,10 +57,18 @@ func setup(id: String, t: int, pos: Vector3, face: float, is_built: bool) -> voi
 	hp = max_hp if built else max_hp * 0.1
 	if footprint > 0.0:
 		World.inst.nav.set_blocked_circle(global_position, footprint, true)
+	_block_walls(true)
 	rally = global_position + Basis(Vector3.UP, facing) * Vector3(0, 0, radius + 9.0)
 	_update_construction()
 	if built:
 		_start_stacks()
+
+
+## Solid parts outside the footprint circle, as local [x, z, half x, half z] rectangles.
+func _block_walls(on: bool) -> void:
+	var basis := Basis(Vector3.UP, facing)
+	for r: Array in def.get("walls", []):
+		World.inst.nav.set_blocked_rect(global_position + basis * Vector3(r[0], 0, r[1]), r[2], r[3], facing, on)
 
 
 func _start_stacks() -> void:
@@ -273,6 +281,7 @@ func die() -> void:
 	_rubble_t = 12.0
 	if footprint > 0.0:
 		World.inst.nav.set_blocked_circle(global_position, footprint, false)
+	_block_walls(false)
 	var fx := World.inst.fx
 	for h in _stacks:
 		fx.remove_ambient(h)
