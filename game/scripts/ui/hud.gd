@@ -333,9 +333,9 @@ func _build_selection() -> void:
 	p.add_child(pf)
 	portrait = TextureRect.new()
 	portrait.texture = studio.get_texture()
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.position = Vector2(3, 3)
 	portrait.size = Vector2(148, 148)
-	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pf.add_child(portrait)
 	sel_info_box = VBoxContainer.new()
@@ -454,9 +454,9 @@ func _build_advisor() -> void:
 	shot.spin = false
 	advisor_img = TextureRect.new()
 	advisor_img.texture = shot.get_texture()
+	advisor_img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	advisor_img.position = Vector2(4, 4)
 	advisor_img.size = Vector2(224, 170)
-	advisor_img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	advisor_img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	advisor_img.modulate = Color(0.85, 0.85, 0.9)
 	advisor_img.mouse_filter = Control.MOUSE_FILTER_IGNORE
