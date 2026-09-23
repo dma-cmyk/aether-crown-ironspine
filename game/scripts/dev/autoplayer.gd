@@ -118,7 +118,8 @@ func _army() -> void:
 				commander.move_group(army, Vector3(0, 0, 0), false, true)
 		"nexus":
 			var nexus: Site = world.sites.filter(func(s): return s.site_id == "central_nexus")[0]
-			if nexus.owner_team == 0 and army.size() >= 14:
+			var p := world.player(0)
+			if nexus.owner_team == 0 and (army.size() >= 14 or p.pop_used + 8 > p.pop_cap):
 				_stage = "assault"
 				_log("army -> Varkesh Citadel (%d units)" % army.size())
 				commander.move_group(army, Vector3(140, 0, -140), false, true)
