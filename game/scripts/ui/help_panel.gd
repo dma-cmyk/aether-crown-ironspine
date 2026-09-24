@@ -45,7 +45,7 @@ const BUILD := """[color=#d0a85c]生産[/color]
   建設できるのは本拠地・城門・自軍の都市の周辺だけ（建てる場所を選んでいる間、地面に範囲の線が出る）。
 
 [color=#d0a85c]特別な部隊と施設[/color]
-  神獣・悪魔・天使は種類ごとの祠（建設メニューの「祠・塔」）で呼ぶ。機械ではないので修理はできないが、戦闘から離れると自然に回復する。
+  神獣（ケルベロス・サイクロプス・グリフォン・ドラゴン）は神獣の祠、悪魔は悪魔の祠、天使は天使の祠で呼ぶ（建設メニューの「祠・塔」）。機械ではないので修理はできないが、戦闘から離れると自然に回復する。
   天罰の塔（「祠・塔」、1基まで）は約4分ごとに「発射」でマップのどこへでも光の柱を落とせる。撃つと相手にも着弾地点が知らされる。
   本拠地では巨神も作れる（1体まで）。光線と特殊能力「巨神の光」が強いが、体が崩れていき約11分で倒れる。"""
 
@@ -59,7 +59,7 @@ const TOUCH_BUILD := """[color=#d0a85c]生産[/color]
   建設できるのは本拠地・城門・自軍の都市の周辺だけ（建てる場所を選んでいる間、地面に範囲の線が出る）。
 
 [color=#d0a85c]特別な部隊と施設[/color]
-  神獣・悪魔・天使は種類ごとの祠（建設メニューの「祠・塔」）で呼ぶ。機械ではないので修理はできないが、戦闘から離れると自然に回復する。
+  神獣（ケルベロス・サイクロプス・グリフォン・ドラゴン）は神獣の祠、悪魔は悪魔の祠、天使は天使の祠で呼ぶ（建設メニューの「祠・塔」）。機械ではないので修理はできないが、戦闘から離れると自然に回復する。
   天罰の塔（「祠・塔」、1基まで）は約4分ごとに「発射」でマップのどこへでも光の柱を落とせる。撃つと相手にも着弾地点が知らされる。
   本拠地では巨神も作れる（1体まで）。光線と特殊能力「巨神の光」が強いが、体が崩れていき約11分で倒れる。"""
 
@@ -75,8 +75,7 @@ const WINNING := """[color=#d0a85c]都市と資源[/color]
   本拠地を失うと敗北（ミッションによって勝敗の条件が加わる）。"""
 
 ## Where each unit comes from, in the order the list shows them.
-const SOURCES := ["barracks", "foundry", "skyport", "citadel", "sanctum_cerberus", "sanctum_cyclops", "sanctum_griffin",
-		"sanctum_dragon", "sanctum_demon", "sanctum_angel"]
+const SOURCES := ["barracks", "foundry", "skyport", "citadel", "sanctum", "sanctum_demon", "sanctum_angel"]
 
 
 ## Phones get the touch texts and a height that fits the screen.
@@ -167,7 +166,7 @@ static func _units(width: float) -> Control:
 		for uid: String in Defs.BUILDINGS[src]["produces"]:
 			if not made_at.has(uid):
 				made_at[uid] = []
-			made_at[uid].append("祠" if src.begins_with("sanctum") else Defs.building_short(src))
+			made_at[uid].append(Defs.building_name(src, 0) if src.begins_with("sanctum") else Defs.building_short(src))
 	for uid: String in made_at:
 		var d: Dictionary = Defs.UNITS[uid]
 		var row := HBoxContainer.new()

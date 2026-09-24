@@ -230,42 +230,43 @@ const BUILDINGS := {
 		# towers and wall stubs either side of the arch; the road runs through the middle
 		"walls": [[-9.0, 0.0, 4.9, 4.9], [9.0, 0.0, 4.9, 4.9], [-17.0, -1.0, 4.9, 2.0], [17.0, -1.0, 4.9, 2.0]], "wall_cover": 10.0,
 	},
-	# one shrine per kind of beast (all the same stones for now); "icon" is the card picture
+	# the one-beast shrines of an earlier version: out of the build menu, kept for saves and scenarios.
+	# "icon" is the card picture
 	"sanctum_cerberus": {
 		"name": ["ケルベロスの祠", "ヴァルケシュの猟犬穴"], "short": "ケルベロス",
 		"jp": "ケルベロスの祠。三つ首の猟犬ケルベロスを呼び出す。",
 		"hp": 1400.0, "radius": 9.5, "footprint": 9.0, "cost": {"material": 150, "aether": 60}, "build_time": 30.0,
-		"produces": ["cerberus"], "pop": 0, "model": "sanctum", "icon": "unit_cerberus", "buildable": true, "hotkey": "Q", "vision": 32.0,
+		"produces": ["cerberus"], "pop": 0, "model": "sanctum", "icon": "unit_cerberus", "buildable": false, "vision": 32.0,
 	},
 	"sanctum_cyclops": {
 		"name": ["サイクロプスの祠", "ヴァルケシュの巨人穴"], "short": "サイクロプス",
 		"jp": "サイクロプスの祠。一つ目の巨人サイクロプスを呼び出す。",
 		"hp": 1600.0, "radius": 9.5, "footprint": 9.0, "cost": {"material": 200, "aether": 120}, "build_time": 36.0,
-		"produces": ["cyclops"], "pop": 0, "model": "sanctum", "icon": "unit_cyclops", "buildable": true, "hotkey": "W", "vision": 32.0,
+		"produces": ["cyclops"], "pop": 0, "model": "sanctum", "icon": "unit_cyclops", "buildable": false, "vision": 32.0,
 	},
 	"sanctum_griffin": {
 		"name": ["グリフォンの祠", "ヴァルケシュのグリフォン巣"], "short": "グリフォン",
 		"jp": "グリフォンの祠。空の騎士グリフォンを呼び出す。",
 		"hp": 1400.0, "radius": 9.5, "footprint": 9.0, "cost": {"material": 200, "aether": 120}, "build_time": 36.0,
-		"produces": ["griffin"], "pop": 0, "model": "sanctum", "icon": "unit_griffin", "buildable": true, "hotkey": "E", "vision": 32.0,
+		"produces": ["griffin"], "pop": 0, "model": "sanctum", "icon": "unit_griffin", "buildable": false, "vision": 32.0,
 	},
 	"sanctum_dragon": {
 		"name": ["ドラゴンの祠", "ヴァルケシュの竜穴"], "short": "ドラゴン",
 		"jp": "ドラゴンの祠。炎の息を吐くドラゴンを呼び出す。",
 		"hp": 1800.0, "radius": 9.5, "footprint": 9.0, "cost": {"material": 240, "aether": 180}, "build_time": 44.0,
-		"produces": ["dragon"], "pop": 0, "model": "sanctum", "icon": "unit_dragon", "buildable": true, "hotkey": "R", "vision": 32.0,
+		"produces": ["dragon"], "pop": 0, "model": "sanctum", "icon": "unit_dragon", "buildable": false, "vision": 32.0,
 	},
 	"sanctum_demon": {
-		"name": ["悪魔の祠", "ヴァルケシュの魔窟"], "short": "悪魔",
+		"name": ["悪魔の祠", "ヴァルケシュの魔窟"], "short": "悪魔の祠",
 		"jp": "悪魔の祠。燃える爪の悪魔を呼び出す。",
 		"hp": 1600.0, "radius": 9.5, "footprint": 9.0, "cost": {"material": 240, "aether": 180}, "build_time": 42.0,
-		"produces": ["demon"], "pop": 0, "model": "sanctum", "icon": "unit_demon", "buildable": true, "hotkey": "T", "vision": 32.0,
+		"produces": ["demon"], "pop": 0, "model": "sanctum", "icon": "unit_demon", "buildable": true, "hotkey": "W", "vision": 32.0,
 	},
 	"sanctum_angel": {
-		"name": ["天使の祠", "ヴァルケシュの堕天の祭壇"], "short": "天使",
+		"name": ["天使の祠", "ヴァルケシュの堕天の祭壇"], "short": "天使の祠",
 		"jp": "天使の祠。光の槍と癒しの力を持つ天使を呼び出す。",
 		"hp": 1400.0, "radius": 9.5, "footprint": 9.0, "cost": {"material": 220, "aether": 200}, "build_time": 40.0,
-		"produces": ["angel"], "pop": 0, "model": "sanctum", "icon": "unit_angel", "buildable": true, "hotkey": "Y", "vision": 32.0,
+		"produces": ["angel"], "pop": 0, "model": "sanctum", "icon": "unit_angel", "buildable": true, "hotkey": "E", "vision": 32.0,
 	},
 	# the superweapon: one per side, charges for four minutes, then strikes anywhere on the map
 	# after a warning both sides can see. Citadels and gates lose at most "cap" of their health.
@@ -273,23 +274,23 @@ const BUILDINGS := {
 		"name": ["天罰の塔", "ヴァルケシュ滅びの塔"], "short": "天罰の塔",
 		"jp": "天罰の塔。約4分ごとに、マップのどこへでも巨大な光の柱を落とせる（1人1基まで）。発射すると相手にも着弾地点が知らされ、10秒後に着弾する。",
 		"hp": 3200.0, "radius": 8.0, "footprint": 7.5, "cost": {"material": 600, "aether": 600}, "build_time": 90.0,
-		"produces": [], "pop": 0, "model": "judgement", "buildable": true, "hotkey": "U", "vision": 40.0, "limit": 1,
+		"produces": [], "pop": 0, "model": "judgement", "buildable": true, "hotkey": "R", "vision": 40.0, "limit": 1,
 		"superweapon": {"charge": 240.0, "delay": 10.0, "radius": 22.0, "damage": 1400.0, "cap": 0.3},
 	},
-	# the old all-in-one shrine: no longer in the build menu, kept for saves and scenarios
+	# three shrines: the beasts share one, demons and angels have their own
 	"sanctum": {
 		"name": ["神獣の祠", "ヴァルケシュの獣穴"], "short": "神獣の祠",
 		"jp": "神獣の祠。ケルベロス・サイクロプス・グリフォン・ドラゴンを呼び出す。",
 		"hp": 1800.0, "radius": 9.5, "footprint": 9.0, "cost": {"material": 220, "aether": 150}, "build_time": 40.0,
-		"produces": ["cerberus", "cyclops", "griffin", "dragon"], "pop": 0, "model": "sanctum", "buildable": false, "vision": 32.0,
+		"produces": ["cerberus", "cyclops", "griffin", "dragon"], "pop": 0, "model": "sanctum", "buildable": true, "hotkey": "Q", "vision": 32.0,
 	},
 }
 
 ## The citadel's build menu; its seventh button opens the shrines.
 const BUILD_ORDER := ["barracks", "foundry", "skyport", "refinery", "habitat", "bastion"]
-const SHRINES := ["sanctum_cerberus", "sanctum_cyclops", "sanctum_griffin", "sanctum_dragon", "sanctum_demon", "sanctum_angel"]
+const SHRINES := ["sanctum", "sanctum_demon", "sanctum_angel"]
 ## The second page of the build menu: the shrines and the Tower of Judgement.
-const SPECIAL_BUILDS := ["sanctum_cerberus", "sanctum_cyclops", "sanctum_griffin", "sanctum_dragon", "sanctum_demon", "sanctum_angel", "judgement"]
+const SPECIAL_BUILDS := ["sanctum", "sanctum_demon", "sanctum_angel", "judgement"]
 
 const SPECIALS := {
 	"aether_volley": {"name": "Aether Volley", "jp": "エーテル弾：8秒間、射撃速度2倍・装甲貫通。", "cooldown": 40.0, "duration": 8.0},
