@@ -122,6 +122,7 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 				foes.append(world.spawn_unit("aetherguard", 1, rock + Vector3(-22.0, 0, dz), deg_to_rad(90)))
 				crown[lane].order_hold()
 				foes[lane].order_hold()
+			commander.set_selection([crown[0]])
 			world.get_tree().create_timer(0.5).timeout.connect(func() -> void:
 				for lane in 2:
 					print("[cover_test] lane %d: shots at the Crown meet cover %s, shots back meet %s" % [lane,
