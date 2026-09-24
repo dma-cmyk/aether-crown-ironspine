@@ -134,6 +134,16 @@ func _land(st: Dictionary) -> void:
 				fx.impact_dust(tgt.aim_point(), 0.8)
 				if tgt.is_mechanical:
 					fx.sparks(tgt.aim_point(), 5)
+		"rend":
+			# burning claws: tear through everything in reach and leave the ground smouldering
+			Combat.splash(p, st["splash"], st["dmg"], st["class"], st["team"], src)
+			var fc := DragonVisual.fire_of(st["team"])
+			p.y = World.inst.terrain.ground_at(p.x, p.z)
+			fx.burn(p, st["splash"] * 0.5, 1.5, fc)
+			fx.sparks(p + Vector3(0, 1.0, 0), 10, fc)
+			fx.flash(p + Vector3(0, 1.0, 0), fc, 2.0)
+			fx.impact_dust(p + Vector3(0, 0.4, 0), 1.2)
+			World.inst.sfx.play_at("bite", p)
 		"flame":
 			Combat.splash(p, st["splash"], st["dmg"], st["class"], st["team"], src, st["air"], st["air"])
 			var c := DragonVisual.fire_of(st["team"])

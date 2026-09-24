@@ -101,6 +101,15 @@ ICONS = {
     "unit_dragon": path("M8 52 C8 36 18 24 32 21 L42 9 L41 21 C49 22 55 28 57 34 L45 36 L50 43 L37 41 C31 48 20 53 8 52 Z", IVORY, "#3a2a2a")
     + circle(40, 28, 2.4, AETHER, AETHER, 1) + path("M28 22 L22 10", GOLD)
     + path("M52 41 C57 45 58 50 56 56 C54 51 50 48 47 47", RED, sw=2.6),
+    "unit_demon": path("M4 20 L20 36 L18 44 L3 40 L9 33 Z", IVORY, "#3a2a2a") + path("M60 20 L44 36 L46 44 L61 40 L55 33 Z", IVORY, "#3a2a2a")
+    + path("M19 58 L21 40 C24 35 40 35 43 40 L45 58 Z", IVORY, "#3a2a2a") + circle(32, 27, 9, IVORY, "#3a2a2a")
+    + path("M26 20 C19 17 17 10 20 4 C22 10 25 13 29 16", GOLD, "#4a3a18") + path("M38 20 C45 17 47 10 44 4 C42 10 39 13 35 16", GOLD, "#4a3a18")
+    + circle(28.5, 27, 1.8, RED, RED, 1) + circle(35.5, 27, 1.8, RED, RED, 1) + path("M28 33 L36 33", RED, sw=2),
+    "unit_angel": path("M27 32 C18 23 9 22 3 30 C10 31 13 37 11 44 C17 39 23 39 27 41", IVORY, "#2a3345")
+    + path("M37 32 C46 23 55 22 61 30 C54 31 51 37 53 44 C47 39 41 39 37 41", IVORY, "#2a3345")
+    + path("M27 28 L37 28 L43 58 L21 58 Z", IVORY, "#2a3345") + circle(32, 20, 6, IVORY, "#2a3345")
+    + path("M23 8 A9 3.2 0 1 0 41 8 A9 3.2 0 1 0 23 8", GOLD) + path("M50 12 L42 58", GOLD, sw=2.6)
+    + path("M50 12 L48 4 L54 10 Z", AETHER, AETHER, 1.5),
     # buildings
     "bld_citadel": path("M10 56 L10 30 L16 30 L16 24 L22 24 L22 30 L42 30 L42 24 L48 24 L48 30 L54 30 L54 56 Z", IVORY, "#2a3040")
     + path("M26 30 L26 16 L32 6 L38 16 L38 30", GOLD, "#4a3a18") + circle(32, 21, 3, AETHER, AETHER, 1) + path("M28 56 L28 46 A4 4 0 0 1 36 46 L36 56"),

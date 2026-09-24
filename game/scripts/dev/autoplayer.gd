@@ -70,7 +70,7 @@ func _economy() -> void:
 		return
 	# construction plan
 	for plan in [["foundry", 60.0], ["refinery", 100.0], ["habitat", 130.0], ["habitat", 240.0], ["sanctum_cyclops", 330.0], ["skyport", 400.0],
-			["refinery", 460.0], ["sanctum_griffin", 500.0], ["sanctum_dragon", 560.0], ["sanctum_cerberus", 620.0]]:
+			["refinery", 460.0], ["sanctum_griffin", 500.0], ["sanctum_dragon", 560.0], ["sanctum_cerberus", 620.0], ["sanctum_demon", 680.0], ["sanctum_angel", 740.0]]:
 		var key := "%s@%d" % plan
 		if _built.has(key) or world.match_time < float(plan[1]):
 			continue

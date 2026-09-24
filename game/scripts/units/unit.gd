@@ -100,6 +100,10 @@ func setup(id: String, t: int, pos: Vector3, face: float) -> void:
 			visual = DragonVisual.new()
 		"griffin":
 			visual = GriffinVisual.new()
+		"demon":
+			visual = DemonVisual.new()
+		"angel":
+			visual = AngelVisual.new()
 	visual.name = "Visual"
 	add_child(visual)
 	visual.setup(self)
@@ -326,6 +330,38 @@ func use_special(at: Vector3 = Vector3.INF) -> bool:
 			_bombard_target = at
 			_bombard_drops = 6
 			_bombard_t = 0.0
+		"hellfire":
+			# a ring of fire around the demon; it burns ground troops and buildings, not fliers
+			var r: float = sp["radius"]
+			Combat.splash(global_position, r, float(sp["damage"]), "flame", team, self)
+			var c := DragonVisual.fire_of(team)
+			var fx := World.inst.fx
+			for k in 10:
+				var a := k * TAU / 10.0
+				var p := global_position + Vector3(cos(a), 0, sin(a)) * r * 0.65
+				p.y = World.inst.terrain.ground_at(p.x, p.z)
+				fx.burn(p, 2.6, 3.0, c)
+			fx.ring_burst(global_position + Vector3(0, 0.5, 0), r, c)
+			fx.light_flash(global_position + Vector3(0, 3, 0), c, 9.0)
+			World.inst.sfx.play_at("flame", global_position)
+			if visual:
+				visual.on_special(sid)
+		"blessing":
+			# heals every friendly unit around, the angel included
+			for e: Entity in World.inst.query(global_position, float(sp["radius"])):
+				if e.team == team and e is Unit and e.alive:
+					var u := e as Unit
+					var amount := float(sp["heal"])
+					if u.type == "squad":
+						# wounds close, but the fallen stay fallen
+						amount = minf(amount, u.members_alive() * float(u.def["member_hp"]) - u.hp)
+					u.heal(amount)
+					World.inst.fx.sparkle(e.aim_point(), Color(1.0, 0.92, 0.65))
+			World.inst.fx.ring_burst(Vector3(global_position.x, World.inst.terrain.ground_at(global_position.x, global_position.z) + 0.5, global_position.z),
+					float(sp["radius"]), Color(1.0, 0.9, 0.6))
+			World.inst.fx.light_flash(global_position, Color(1.0, 0.9, 0.65), 8.0)
+			if visual:
+				visual.on_special(sid)
 		"field_repair":
 			for e: Entity in World.inst.query(global_position, 16.0):
 				if e.team == team and (e.is_mechanical or e.is_building):

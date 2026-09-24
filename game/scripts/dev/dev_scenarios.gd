@@ -106,7 +106,10 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 			var face := deg_to_rad(float(q[2]))
 			world.spawn_building("sanctum", 0, at, face)
 			var basis := Basis(Vector3.UP, face)
-			for c: Array in [["griffin", -10, 8, 25], ["cerberus", -5, 18.5, 18], ["cyclops", 7, 15, -20], ["dragon", 9, 1, 0]]:
+			var cast: Array = [["griffin", -10, 8, 25], ["cerberus", -5, 18.5, 18], ["cyclops", 7, 15, -20], ["dragon", 9, 1, 0]]
+			if Game.args.has("new_races"):
+				cast = [["demon", -6, 16, 20], ["angel", 7, 13, -20]]
+			for c: Array in cast:
 				var u := world.spawn_unit(c[0], 0, at + basis * Vector3(c[1], 0, c[2]), face + deg_to_rad(c[3]))
 				u.order_hold()
 				if c[0] == "cerberus":
@@ -136,6 +139,26 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 			var t: Node = load("res://scripts/dev/touch_test.gd").new()
 			match_node.add_child(t)
 			t.setup(world, commander, camera, match_node.hud)
+		"races_test":
+			# a demon and an angel against a Varkesh squad, walker and griffin; specials after 6 s
+			world.fog.enabled = false
+			var at := Vector3(-60, 0, 20)
+			var demon := world.spawn_unit("demon", 0, at, 0.0)
+			var angel := world.spawn_unit("angel", 0, at + Vector3(-6, 0, 0), 0.0)
+			var foes: Array[Unit] = [world.spawn_unit("aetherguard", 1, at + Vector3(0, 0, 18), PI),
+					world.spawn_unit("walker", 1, at + Vector3(8, 0, 22), PI), world.spawn_unit("griffin", 1, at + Vector3(-8, 0, 24), PI)]
+			camera.set_view(at + Vector3(0, 0, 10), -30.0, 55.0)
+			for f in foes:
+				f.order_attack_move(at)
+			demon.order_attack_move(at + Vector3(0, 0, 20))
+			angel.order_attack_move(at + Vector3(0, 0, 20))
+			world.get_tree().create_timer(6.0).timeout.connect(func() -> void:
+				demon.hp *= 0.6
+				print("[races_test] hellfire=%s blessing=%s (demon hp %.0f before blessing)" % [demon.use_special(), angel.use_special(), demon.hp])
+				print("[races_test] demon hp after blessing %.0f" % demon.hp))
+			world.get_tree().create_timer(20.0).timeout.connect(func() -> void:
+				print("[races_test] after 20 s: demon %.0f/%.0f angel %.0f/%.0f, kills %d / %d; foes alive %d" % [demon.hp, demon.max_hp, angel.hp,
+						angel.max_hp, demon.kills, angel.kills, foes.filter(func(f) -> bool: return is_instance_valid(f) and f.alive).size()]))
 		"flyover":
 			# flyers crossing the Ironspine gate and the Crown citadel; prints how close each hull came
 			world.fog.enabled = false

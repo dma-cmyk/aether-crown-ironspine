@@ -26,6 +26,8 @@ const BUILD_PLAN := [
 	{"id": "sanctum_griffin", "t": 450.0},
 	{"id": "bastion", "t": 480.0},
 	{"id": "sanctum_dragon", "t": 560.0},
+	{"id": "sanctum_demon", "t": 620.0},
+	{"id": "sanctum_angel", "t": 700.0},
 ]
 
 

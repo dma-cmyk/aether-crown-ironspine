@@ -97,7 +97,7 @@ static func fire(shooter: Entity, w: Dictionary, target: Entity) -> void:
 			world.fx.sparks(end, 10, glow)
 			world.fx.light_flash(end, glow, 7.0)
 			world.sfx.play_at("beam", muzzles[0])
-		"smash", "talon", "flame":
+		"smash", "talon", "flame", "rend":
 			# the blow lands when the animation gets there
 			world.projectiles.strike(shooter, target, float(w.get("delay", 0.3)), dmg, float(w.get("splash", 0.0)), wclass, w["fx"])
 			if w["fx"] == "flame":

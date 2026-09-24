@@ -616,11 +616,265 @@ def cerberus(name):
     return c
 
 
+def taper(b, pts, r0, r1, m, seg=8):
+    """Tapered tube through a polyline (horns): radius r0 at the root down to r1 at the tip."""
+    n = len(pts) - 1
+    for i in range(n):
+        ra = r0 + (r1 - r0) * i / n
+        rb = r0 + (r1 - r0) * (i + 1) / n
+        tube(b, pts[i], pts[i + 1], ra, m, seg, r2=rb)
+
+
+def demon_paint(p, n):
+    x, y, z = p
+    c = mix(lin((0.30, 0.09, 0.08)), lin((0.46, 0.17, 0.12)), smooth(0.0, 0.8, n[2]) * smooth(2.6, 3.4, y))
+    c = mix(c, lin((0.12, 0.05, 0.05)), max(smooth(1.2, 0.3, y), smooth(2.9, 2.3, y) * smooth(1.5, 1.8, abs(x))))
+    return mix(c, lin((0.2, 0.06, 0.06)), smooth(-0.3, -1.2, z) * 0.6)
+
+
+def demon(name):
+    """Demon: ram horns, bat wings with team-coloured membranes, a barbed tail, burning claws
+    and ember veins; hooved legs that bend backward."""
+    P = mk.palette()
+    rig = cr.Rig(name)
+    rig.bone("hips", (0, 3.0, 0), (0, 3.9, 0.05))
+    rig.bone("spine", (0, 3.9, 0.05), (0, 4.7, 0.1), "hips")
+    rig.bone("chest", (0, 4.7, 0.1), (0, 5.3, 0.15), "spine")
+    rig.bone("neck", (0, 5.3, 0.15), (0, 5.7, 0.35), "chest")
+    rig.bone("head", (0, 5.7, 0.35), (0, 6.5, 0.55), "neck")
+    rig.bone("jaw", (0, 5.8, 0.55), (0, 5.55, 0.95), "head")
+    rig.mirror("clav_l", (0.25, 5.1, 0.05), (1.15, 5.15, 0.0), "chest")
+    rig.mirror("uparm_l", (1.15, 5.15, 0.0), (1.6, 3.9, 0.1), "clav_l")
+    rig.mirror("forearm_l", (1.6, 3.9, 0.1), (1.8, 2.75, 0.5), "uparm_l")
+    rig.mirror("hand_l", (1.8, 2.75, 0.5), (1.85, 2.2, 0.75), "forearm_l")
+    rig.mirror("thigh_l", (0.5, 2.95, 0.0), (0.6, 1.7, 0.4), "hips")
+    rig.mirror("shin_l", (0.6, 1.7, 0.4), (0.6, 0.5, -0.2), "thigh_l")
+    rig.mirror("foot_l", (0.6, 0.5, -0.2), (0.6, 0.12, 0.35), "shin_l")
+    tail_pts = [(0, 3.0, -0.35), (0, 2.6, -1.2), (0, 2.0, -2.0), (0, 1.55, -2.8), (0, 1.35, -3.5)]
+    rig.chain("tail", tail_pts, "hips")
+    W = {"root": (0.35, 5.0, -0.4), "elbow": (1.3, 5.9, -0.85), "wrist": (2.5, 6.55, -1.15),
+         "f1": (3.6, 5.7, -1.45), "f2": (3.1, 4.55, -1.4), "f3": (2.05, 3.85, -1.2)}
+    rig.mirror("wing_l", W["root"], W["elbow"], "chest")
+    rig.mirror("wingfore_l", W["elbow"], W["wrist"], "wing_l")
+    for f in ("f1", "f2", "f3"):
+        rig.mirror(f + "_l", W["wrist"], W[f], "wingfore_l")
+
+    skin = cr.Body(name + "_skin", P["hide"], res=0.05)
+    skin.ellipsoid((0, 3.05, 0.0), (0.62, 0.45, 0.48))
+    skin.ellipsoid((0, 3.62, 0.08), (0.55, 0.55, 0.45))
+    skin.ellipsoid((0, 4.5, 0.1), (0.85, 0.68, 0.58))
+    skin.mirror_ellipsoid((0.38, 4.72, 0.42), (0.4, 0.3, 0.25), rot=(0, 0, -10))
+    skin.ellipsoid((0, 4.95, -0.12), (0.92, 0.42, 0.5))
+    skin.mirror_ball((1.1, 5.1, 0.0), 0.42)
+    skin.capsule((0, 5.2, 0.15), (0, 5.75, 0.38), 0.3)
+    skin.ellipsoid((0, 6.0, 0.5), (0.38, 0.45, 0.42))
+    skin.ellipsoid((0, 6.2, 0.8), (0.36, 0.1, 0.13))
+    skin.ellipsoid((0, 5.72, 0.72), (0.3, 0.18, 0.3))
+    skin.mirror_limb([(1.15, 5.15, 0.0), (1.38, 4.5, 0.05), (1.6, 3.9, 0.1)], [0.38, 0.32, 0.26])
+    skin.mirror_limb([(1.6, 3.9, 0.1), (1.7, 3.3, 0.3), (1.8, 2.75, 0.5)], [0.27, 0.31, 0.2])
+    skin.mirror_ellipsoid((1.84, 2.42, 0.64), (0.22, 0.28, 0.22))
+    skin.mirror_limb([(0.5, 2.95, 0.0), (0.55, 2.3, 0.22), (0.6, 1.7, 0.4)], [0.45, 0.4, 0.28])
+    skin.mirror_limb([(0.6, 1.7, 0.4), (0.6, 1.1, 0.1), (0.6, 0.5, -0.2)], [0.26, 0.22, 0.16])
+    skin.mirror_ellipsoid((0.6, 0.28, 0.1), (0.2, 0.22, 0.34))
+    skin.limb(tail_pts, [0.2, 0.15, 0.1, 0.07, 0.04])
+
+    c = cr.Creature(rig)
+    fingers = ["f1_l", "f2_l", "f3_l", "f1_r", "f2_r", "f3_r", "wing_l", "wing_r", "wingfore_l", "wingfore_r"]
+    c.skin(skin, faces=5200, paint_fn=demon_paint, uv_scale=0.9, exclude=fingers)
+
+    # ram horns, glowing eyes, an ember throat
+    head = mk.Builder("head_parts")
+    for sx in (-1, 1):
+        taper(head, [(sx * 0.24, 6.3, 0.55), (sx * 0.55, 6.62, 0.42), (sx * 0.8, 6.95, 0.1), (sx * 0.82, 7.3, -0.25), (sx * 0.62, 7.55, -0.42)],
+              0.17, 0.02, P["claw"])
+        head.sphere(0.075, 8, 6, (sx * 0.15, 6.05, 0.87), P["team_glow"], scale=(1.3, 0.7, 0.6))
+        for k in range(2):
+            tube(head, (sx * (0.1 + k * 0.1), 5.66, 0.95 - k * 0.05), (sx * (0.1 + k * 0.1), 5.52, 0.97 - k * 0.05), 0.035, P["horn"], 5, r2=0.0)
+    c.attach(head, bone="head", uv_scale=1.0)
+    jaw = mk.Builder("jaw_parts")
+    jaw.sphere(0.13, 8, 6, (0, 5.66, 0.86), P["fire_glow"], scale=(1.3, 0.45, 0.8))
+    c.attach(jaw, bone="jaw", uv_scale=1.0)
+
+    # wings: spars along the arm and fingers, team-coloured membranes between them
+    for sx, side in ((1, "l"), (-1, "r")):
+        m = lambda q: (sx * q[0], q[1], q[2])
+        for a, b, bone in (("root", "elbow", "wing_"), ("elbow", "wrist", "wingfore_")):
+            sp = mk.Builder("wing_arm")
+            tube(sp, m(W[a]), m(W[b]), 0.13 if a == "root" else 0.1, P["hide"], 6, r2=0.08)
+            c.attach(sp, bone=bone + side, uv_scale=0.9, paint_fn=lambda p, n: lin((0.22, 0.07, 0.06)))
+        for f in ("f1", "f2", "f3"):
+            sp = mk.Builder("spar")
+            tube(sp, m(W["wrist"]), m(W[f]), 0.07, P["claw"], 6, r2=0.02)
+            c.attach(sp, bone=f + "_" + side, uv_scale=0.9)
+        cl = mk.Builder("wing_claw")
+        tube(cl, m(W["wrist"]), m((W["wrist"][0] + 0.15, W["wrist"][1] + 0.45, W["wrist"][2] + 0.1)), 0.07, P["claw"], 5, r2=0.0)
+        c.attach(cl, bone="wingfore_" + side)
+
+    def scallop(a, b, depth, n=4):
+        a, b = Vector(a), Vector(b)
+        inner = Vector(W["wrist"])
+        return [tuple(a.lerp(b, k / n).lerp(inner, depth * math.sin(k / n * math.pi))) for k in range(1, n)]
+
+    outline = ([W["root"], (0.8, 5.5, -0.62), W["elbow"], (1.9, 6.25, -1.0), W["wrist"], (3.1, 6.2, -1.35), W["f1"]]
+               + scallop(W["f1"], W["f2"], 0.2) + [W["f2"]] + scallop(W["f2"], W["f3"], 0.22) + [W["f3"]]
+               + [(1.3, 3.95, -0.95), (0.6, 4.25, -0.62)])
+    for sx, side, pts in ((1, "l", outline), (-1, "r", mirror_pts(outline))):
+        mb = mk.Builder("membrane_" + side)
+        sheet(mb, pts, P["membrane"], cuts=2, thick=0.06)
+        bones = ["wing_" + side, "wingfore_" + side, "f1_" + side, "f2_" + side, "f3_" + side, "chest"]
+        c.attach(mb, weights=near_bones(c, bones), uv_scale=1.2,
+                 paint_fn=lambda p, n: mix(lin((0.5, 0.42, 0.42)), lin((0.95, 0.9, 0.88)), smooth(0.6, 2.2, abs(p[0]))))
+
+    # claws, barbed tail tip, hooves
+    for sx, side in ((1, "l"), (-1, "r")):
+        cl = mk.Builder("claws_" + side)
+        for k in range(4):
+            root = Vector((sx * (1.72 + k * 0.07), 2.22, 0.78 - k * 0.1))
+            tube(cl, tuple(root), tuple(root + Vector((sx * 0.04, -0.34, 0.2))), 0.05, P["claw"], 5, r2=0.0)
+        c.attach(cl, bone="hand_" + side, uv_scale=1.0)
+    tip = mk.Builder("tail_tip")
+    tip.sphere(0.24, 8, 6, (0, 1.32, -3.62), P["claw"], scale=(1.0, 0.25, 1.4))
+    tube(tip, (0, 1.32, -3.5), (0, 1.3, -4.05), 0.1, P["claw"], 6, r2=0.0)
+    c.attach(tip, bone="tail4", uv_scale=1.0)
+    hooves = mk.Builder("hooves")
+    for sx in (-1, 1):
+        hooves.cylinder(0.2, 0.16, 10, (sx * 0.6, 0.08, 0.18), P["claw"], r2=0.17)
+    c.attach(hooves, weights=lambda p: {"foot_l" if p[0] > 0 else "foot_r": 1.0})
+
+    # ember veins on chest and forearms
+    for sx in (-1, 1):
+        for pts in ([(sx * 0.55, 4.95, 0.55), (sx * 0.32, 4.5, 0.66), (sx * 0.12, 4.05, 0.58), (sx * 0.05, 3.62, 0.55)],
+                    [(sx * 1.68, 3.75, 0.32), (sx * 1.8, 3.3, 0.5), (sx * 1.9, 2.9, 0.66)]):
+            c.attach(strap(c, pts, 0.07, 0.02, P["fire_glow"], lift=0.01, n=10, name="vein"), uv_scale=1.0)
+    rune = mk.Builder("rune")
+    rune.sphere(0.13, 6, 4, (0, 4.72, 0.7), P["team_glow"], scale=(1.0, 1.4, 0.35))
+    c.attach(rune, uv_scale=1.0)
+
+    # belt, loincloth
+    waist = [(math.sin(a) * 0.66, 3.3, 0.04 + math.cos(a) * 0.54) for a in (i / 16 * math.tau for i in range(16))]
+    c.attach(strap(c, waist, 0.22, 0.06, P["leather"], closed=True, name="belt"), uv_scale=1.0)
+    cloth = mk.Builder("loincloth")
+    cloth.box((0.52, 0.95, 0.05), (0, 2.82, 0.58), P["team_cloth"], rot=(8, 0, 0))
+    cloth.box((0.7, 0.85, 0.05), (0, 2.86, -0.52), P["team_cloth"], rot=(-8, 0, 0))
+    cloth.box((0.56, 0.08, 0.07), (0, 2.38, 0.52), P["team_trim"])
+    buckle = mk.Builder("buckle")
+    buckle.cylinder(0.16, 0.08, 10, (0, 3.3, 0.62), P["brass"], rot=(80, 0, 0))
+    buckle.sphere(0.08, 6, 4, (0, 3.3, 0.68), P["team_glow"])
+    c.attach(cloth, bone="hips", uv_scale=1.0)
+    c.attach(buckle, bone="hips", uv_scale=1.0)
+    return c
+
+
+def angel_paint(p, n):
+    x, y, z = p
+    return mix(lin((0.93, 0.82, 0.72)), lin((0.78, 0.64, 0.56)), smooth(0.2, -0.8, n[1]) * 0.6)
+
+
+def angel(name):
+    """Angel: feathered wings with team-dyed primaries, a halo, a robe in team colours over
+    brass armour, and a lance with a glowing head. Origin at the body centre (a flyer)."""
+    P = mk.palette()
+    rig = cr.Rig(name)
+    rig.bone("pelvis", (0, -0.6, 0), (0, 0.0, 0.0))
+    rig.bone("spine", (0, 0.0, 0.0), (0, 0.7, 0.02), "pelvis")
+    rig.bone("chest", (0, 0.7, 0.02), (0, 1.2, 0.05), "spine")
+    rig.bone("neck", (0, 1.2, 0.05), (0, 1.55, 0.1), "chest")
+    rig.bone("head", (0, 1.55, 0.1), (0, 2.15, 0.12), "neck")
+    rig.mirror("clav_l", (0.15, 1.1, 0.0), (0.5, 1.12, 0.0), "chest")
+    rig.mirror("uparm_l", (0.5, 1.12, 0.0), (0.62, 0.35, 0.05), "clav_l")
+    rig.mirror("forearm_l", (0.62, 0.35, 0.05), (0.66, -0.35, 0.25), "uparm_l")
+    rig.mirror("hand_l", (0.66, -0.35, 0.25), (0.66, -0.6, 0.35), "forearm_l")
+    rig.mirror("thigh_l", (0.2, -0.6, 0.0), (0.24, -1.45, 0.1), "pelvis")
+    rig.mirror("shin_l", (0.24, -1.45, 0.1), (0.24, -2.25, -0.05), "thigh_l")
+    rig.mirror("foot_l", (0.24, -2.25, -0.05), (0.24, -2.4, 0.25), "shin_l")
+    lead = [(0.2, 1.0, -0.25), (0.9, 1.2, -0.3), (1.6, 1.38, -0.35), (2.4, 1.55, -0.35), (3.2, 1.7, -0.3), (3.9, 1.75, -0.45), (4.5, 1.7, -0.9)]
+    trail = [(4.3, 1.62, -1.35), (3.95, 1.6, -1.2), (3.8, 1.52, -1.75), (3.4, 1.5, -1.55), (3.2, 1.42, -2.05), (2.8, 1.38, -1.8),
+             (2.5, 1.3, -2.15), (2.0, 1.22, -1.85), (1.7, 1.12, -2.0), (1.2, 1.02, -1.6), (0.7, 0.92, -1.3), (0.25, 0.85, -0.7)]
+    rig.mirror("wing_l", lead[0], lead[2], "chest")
+    rig.mirror("wingfore_l", lead[2], lead[4], "wing_l")
+    rig.mirror("winghand_l", lead[4], lead[6], "wingfore_l")
+
+    skin = cr.Body(name + "_skin", P["hide"], res=0.03)
+    skin.ellipsoid((0, 1.85, 0.15), (0.2, 0.26, 0.22))
+    skin.capsule((0, 1.35, 0.06), (0, 1.62, 0.1), 0.1)
+    skin.ellipsoid((0, 0.9, 0.03), (0.36, 0.32, 0.22))
+    skin.ellipsoid((0, 0.4, 0.02), (0.3, 0.35, 0.2))
+    skin.ellipsoid((0, -0.3, 0.0), (0.3, 0.28, 0.2))
+    skin.mirror_ball((0.48, 1.1, 0.0), 0.15)
+    skin.mirror_limb([(0.5, 1.12, 0.0), (0.56, 0.74, 0.02), (0.62, 0.35, 0.05)], [0.13, 0.11, 0.09])
+    skin.mirror_limb([(0.62, 0.35, 0.05), (0.64, 0.0, 0.15), (0.66, -0.35, 0.25)], [0.09, 0.09, 0.07])
+    skin.mirror_ellipsoid((0.66, -0.45, 0.3), (0.07, 0.11, 0.08))
+    skin.mirror_limb([(0.2, -0.6, 0.0), (0.22, -1.0, 0.05), (0.24, -1.45, 0.1)], [0.16, 0.14, 0.11])
+    skin.mirror_limb([(0.24, -1.45, 0.1), (0.24, -1.85, 0.03), (0.24, -2.25, -0.05)], [0.1, 0.09, 0.07])
+    skin.mirror_ellipsoid((0.24, -2.33, 0.1), (0.07, 0.06, 0.16))
+
+    c = cr.Creature(rig)
+    c.skin(skin, faces=3200, paint_fn=angel_paint, uv_scale=1.6, exclude=["wing_l", "wing_r", "wingfore_l", "wingfore_r", "winghand_l", "winghand_r"])
+
+    # wings
+    outline = lead + trail
+
+    def wing_paint(p, n):
+        return mix(lin((0.97, 0.95, 0.9)), lin((0.84, 0.8, 0.72)), smooth(-0.8, -2.0, p[2]) * 0.6)
+
+    for sx, side, pts in ((1, "l", outline), (-1, "r", mirror_pts(outline))):
+        wb = mk.Builder("wing_" + side)
+        sheet(wb, pts, P["feather"], cuts=2, thick=0.07)
+        c.attach(wb, weights=near_bones(c, ["wing_" + side, "wingfore_" + side, "winghand_" + side, "chest"]), uv_scale=1.4, paint_fn=wing_paint)
+        tips = mk.Builder("tips_" + side)
+        for (x, y, z) in trail[:8:2]:
+            tube(tips, (sx * x, y, z + 0.4), (sx * x, y - 0.02, z - 0.05), 0.08, P["team_cloth"], 5, r2=0.02)
+        c.attach(tips, bone="winghand_" + side, uv_scale=1.0)
+
+    # head: golden hair, glowing eyes, halo
+    head = mk.Builder("head_parts")
+    head.sphere(0.24, 12, 8, (0, 1.97, -0.04), P["hide"], scale=(1.05, 0.85, 0.95))
+    head.sphere(0.2, 10, 6, (0, 1.72, -0.16), P["hide"], scale=(1.1, 1.2, 0.7))
+    c.attach(head, bone="head", uv_scale=1.8, paint_fn=lambda p, n: lin((0.86, 0.68, 0.32)))
+    glow = mk.Builder("head_glow")
+    for sx in (-1, 1):
+        glow.sphere(0.035, 6, 4, (sx * 0.08, 1.88, 0.35), P["team_glow"])
+    glow.torus(0.3, 0.035, 20, 6, (0, 2.32, -0.08), P["team_glow"], rot=(-18, 0, 0))
+    c.attach(glow, bone="head", uv_scale=1.0)
+
+    # brass cuirass and pauldrons, robe in team colours
+    armour = mk.Builder("cuirass")
+    armour.sphere(0.36, 16, 10, (0, 0.85, 0.05), P["brass"], scale=(1.12, 1.0, 0.78))
+    armour.torus(0.33, 0.05, 16, 4, (0, -0.02, 0.0), P["brass"])
+    armour.sphere(0.07, 6, 4, (0, 0.88, 0.33), P["team_glow"], scale=(1.0, 1.3, 0.5))
+    c.attach(armour, bone="chest", uv_scale=1.0)
+    for sx, side in ((1, "l"), (-1, "r")):
+        pd = mk.Builder("pauldron_" + side)
+        pd.sphere(0.17, 10, 6, (sx * 0.52, 1.14, 0.0), P["brass"], scale=(1.25, 0.7, 1.1))
+        c.attach(pd, bone="clav_" + side, uv_scale=1.0)
+        br = mk.Builder("bracer_" + side)
+        tube(br, (sx * 0.64, -0.02, 0.15), (sx * 0.66, -0.3, 0.24), 0.1, P["brass"], 8)
+        c.attach(br, bone="forearm_" + side, uv_scale=1.0)
+    robe = mk.Builder("robe")
+    robe.lathe([(0.31, 0.0), (0.36, 0.35), (0.44, 0.9), (0.52, 1.45), (0.58, 1.9), (0.54, 1.95)], 16, (0, -0.05, 0.0), P["team_cloth"], rot=(180, 0, 0))
+    robe.torus(0.575, 0.04, 16, 4, (0, -1.93, 0.0), P["team_trim"])
+    c.attach(robe, bone="pelvis", uv_scale=1.0)
+
+    # lance through the right fist
+    lance = mk.Builder("lance")
+    grip = Vector((-0.66, -0.5, 0.33))
+    d = Vector((0, -0.12, 1.0)).normalized()
+    base, tip = grip - d * 1.2, grip + d * 2.2
+    tube(lance, tuple(base), tuple(tip), 0.045, P["brass"], 8)
+    tube(lance, tuple(tip), tuple(tip + d * 0.5), 0.1, P["team_glow"], 6, r2=0.0)
+    lance.sphere(0.07, 6, 4, tuple(base), P["brass"])
+    tube(lance, tuple(tip - d * 0.05 + Vector((0.16, 0, 0))), tuple(tip - d * 0.05 - Vector((0.16, 0, 0))), 0.035, P["brass"], 6)
+    c.attach(lance, bone="hand_r", uv_scale=1.0)
+    return c
+
+
 ASSETS = {
     "cerberus": cerberus,
     "cyclops": cyclops,
     "griffin": griffin,
     "dragon": dragon,
+    "demon": demon,
+    "angel": angel,
 }
 
 

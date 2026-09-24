@@ -27,6 +27,8 @@ const ARMOR_TABLE := {
 	"fang": {"light": 1.2, "heavy": 0.7, "structure": 0.3, "air": 0.0, "beast": 1.0},
 	"flame": {"light": 1.35, "heavy": 0.6, "structure": 1.1, "air": 0.5, "beast": 1.0},
 	"talon": {"light": 0.8, "heavy": 0.5, "structure": 0.25, "air": 1.6, "beast": 0.9},
+	"hellclaw": {"light": 1.2, "heavy": 1.0, "structure": 1.3, "air": 0.0, "beast": 1.0},
+	"holy": {"light": 1.0, "heavy": 0.8, "structure": 0.5, "air": 1.2, "beast": 1.35},
 }
 
 const WEAPONS := {
@@ -44,6 +46,8 @@ const WEAPONS := {
 	"cerberus_bite": {"class": "fang", "range": 3.0, "damage": 11.0, "cooldown": 0.45, "fx": "bite", "air": false},
 	"dragon_breath": {"class": "flame", "range": 16.0, "damage": 60.0, "cooldown": 2.4, "fx": "flame", "splash": 5.0, "delay": 0.35, "air": true},
 	"griffin_talons": {"class": "talon", "range": 7.0, "damage": 24.0, "cooldown": 0.9, "fx": "talon", "delay": 0.25, "air": true},
+	"demon_claws": {"class": "hellclaw", "range": 5.5, "damage": 62.0, "cooldown": 1.5, "fx": "rend", "splash": 3.2, "delay": 0.32, "air": false},
+	"angel_lance": {"class": "holy", "range": 28.0, "damage": 30.0, "cooldown": 1.5, "fx": "beam", "air": true},
 }
 
 const UNITS := {
@@ -130,6 +134,24 @@ const UNITS := {
 		"model": "dragon", "visual": "dragon", "portrait": [27.0, 0.6], "commands": ["move", "hold", "attack", "patrol", "special"],
 		"special": "inferno", "capture": 0.0, "regen": 6.0, "altitude": 14.0, "height": 4.0, "turn": 1.8, "aim": 0.6, "hotkey": "R",
 	},
+	"demon": {
+		"name": ["契約の悪魔", "ヴァルケシュの悪魔"], "short": "悪魔",
+		"jp": "角と翼を持つ悪魔。燃える爪で周りの敵をまとめて引き裂き、建物にも強い。空は攻撃できない。特殊能力は周りを焼き払う業火。",
+		"type": "giant", "hp": 1250.0, "armor": "beast",
+		"cost": {"material": 250, "aether": 200}, "pop": 8, "build_time": 42.0,
+		"speed": 5.6, "radius": 3.0, "vision": 36.0, "weapons": ["demon_claws"],
+		"model": "demon", "visual": "demon", "portrait": [15.0, 4.0], "commands": ["move", "hold", "attack", "patrol", "special"],
+		"special": "hellfire", "capture": 1.0, "regen": 8.0, "height": 6.6, "turn": 2.8, "aim": 0.6, "hotkey": "Q",
+	},
+	"angel": {
+		"name": ["守護天使", "ヴァルケシュの堕天使"], "short": "天使",
+		"jp": "光の翼を持つ天使。空から光の槍を放ち、空の敵にも神獣にも強い。特殊能力で周りの味方を回復する。",
+		"type": "flyer", "hp": 560.0, "armor": "air",
+		"cost": {"material": 200, "aether": 220}, "pop": 6, "build_time": 36.0,
+		"speed": 8.4, "radius": 2.6, "vision": 44.0, "weapons": ["angel_lance"],
+		"model": "angel", "visual": "angel", "portrait": [11.0, 0.2], "commands": ["move", "hold", "attack", "patrol", "special"],
+		"special": "blessing", "capture": 0.0, "regen": 5.0, "altitude": 12.0, "height": 4.6, "turn": 3.0, "aim": 0.8, "hotkey": "Q",
+	},
 }
 
 const BUILDINGS := {
@@ -209,6 +231,18 @@ const BUILDINGS := {
 		"hp": 1800.0, "radius": 9.5, "footprint": 9.0, "cost": {"material": 240, "aether": 180}, "build_time": 44.0,
 		"produces": ["dragon"], "pop": 0, "model": "sanctum", "icon": "unit_dragon", "buildable": true, "hotkey": "R", "vision": 32.0,
 	},
+	"sanctum_demon": {
+		"name": ["悪魔の祠", "ヴァルケシュの魔窟"], "short": "悪魔",
+		"jp": "悪魔の祠。燃える爪の悪魔を呼び出す。",
+		"hp": 1600.0, "radius": 9.5, "footprint": 9.0, "cost": {"material": 240, "aether": 180}, "build_time": 42.0,
+		"produces": ["demon"], "pop": 0, "model": "sanctum", "icon": "unit_demon", "buildable": true, "hotkey": "T", "vision": 32.0,
+	},
+	"sanctum_angel": {
+		"name": ["天使の祠", "ヴァルケシュの堕天の祭壇"], "short": "天使",
+		"jp": "天使の祠。光の槍と癒しの力を持つ天使を呼び出す。",
+		"hp": 1400.0, "radius": 9.5, "footprint": 9.0, "cost": {"material": 220, "aether": 200}, "build_time": 40.0,
+		"produces": ["angel"], "pop": 0, "model": "sanctum", "icon": "unit_angel", "buildable": true, "hotkey": "Y", "vision": 32.0,
+	},
 	# the old all-in-one shrine: no longer in the build menu, kept for saves and scenarios
 	"sanctum": {
 		"name": ["神獣の祠", "ヴァルケシュの獣穴"], "short": "神獣の祠",
@@ -220,7 +254,7 @@ const BUILDINGS := {
 
 ## The citadel's build menu; its seventh button opens the shrines.
 const BUILD_ORDER := ["barracks", "foundry", "skyport", "refinery", "habitat", "bastion"]
-const SHRINES := ["sanctum_cerberus", "sanctum_cyclops", "sanctum_griffin", "sanctum_dragon"]
+const SHRINES := ["sanctum_cerberus", "sanctum_cyclops", "sanctum_griffin", "sanctum_dragon", "sanctum_demon", "sanctum_angel"]
 
 const SPECIALS := {
 	"aether_volley": {"name": "Aether Volley", "jp": "エーテル弾：8秒間、射撃速度2倍・装甲貫通。", "cooldown": 40.0, "duration": 8.0},
@@ -230,6 +264,8 @@ const SPECIALS := {
 	"boulder_hurl": {"name": "Boulder Hurl", "jp": "大岩投げ：指定地点へ大岩を投げつける（射程 48m、建物に強い）。", "cooldown": 30.0, "duration": 0.0, "targeted": true, "range": 48.0},
 	"frenzy": {"name": "Frenzy", "jp": "狂乱：8秒間、速度と攻撃速度が上昇。", "cooldown": 35.0, "duration": 8.0},
 	"keen_sight": {"name": "Keen Sight", "jp": "鷹の目：15秒間、視界が2倍に広がる。", "cooldown": 40.0, "duration": 15.0},
+	"hellfire": {"name": "Hellfire", "jp": "業火：自分の周りを炎で焼き払う（地上の敵に大ダメージ）。", "cooldown": 35.0, "duration": 0.0, "radius": 10.0, "damage": 130.0},
+	"blessing": {"name": "Blessing", "jp": "祝福：周りの味方ユニットの体力を回復する。", "cooldown": 30.0, "duration": 0.0, "radius": 18.0, "heal": 220.0},
 	"inferno": {"name": "Inferno", "jp": "火炎の嵐：指定地点へ飛び、辺り一帯を炎で焼き払う。", "cooldown": 45.0, "duration": 0.0, "targeted": true},
 }
 
