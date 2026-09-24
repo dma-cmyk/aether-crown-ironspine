@@ -13,7 +13,11 @@
 
 ## 起動
 
-[Releases](https://github.com/dma-cmyk/aether-crown-ironspine/releases/latest) から Linux 版（`.tar.gz`）か Windows 版（`.zip`）を落として展開し、
+**ブラウザで遊ぶ**：<https://dma-cmyk.github.io/aether-crown-ironspine/>（PC とスマホ・タブレット。スマホは横向きで）。
+初回は約 80MB を読み込みます。ブラウザ版は WebGL 2 の描画（Godot の Compatibility レンダラー）なので、配布版と少し見え方が違います。
+セーブと設定はブラウザの中に保存されます。スマホではメニューの「全画面の切り替え」で全画面になります（iPhone の Safari は非対応なので、ホーム画面に追加すると全画面で開けます）。
+
+**ダウンロードして遊ぶ**：[Releases](https://github.com/dma-cmyk/aether-crown-ironspine/releases/latest) から Linux 版（`.tar.gz`）か Windows 版（`.zip`）を落として展開し、
 `AetherCrownIronspine.x86_64` か `AetherCrownIronspine.exe` を起動します（Vulkan 対応の GPU が必要）。
 Windows で「PC が保護されました」と出たら、「詳細情報」→「実行」で起動できます（署名のない実行ファイルのため）。
 
@@ -67,7 +71,17 @@ godot --path game
 | 矢印・画面端・ホイール・中ドラッグ | カメラ移動・ズーム・回転 |
 | Home / Space / F1 / F2 / F3 / Esc | 本拠地 / 最新の警報 / 待機ユニット / 全戦闘部隊 / FPS 表示 / メニュー |
 
-ゲーム内の「操作説明」にも同じ内容があります。
+スマホ・タブレットでは指で操作します（タッチ端末では操作用の小さい画面配置になります）。
+
+| タッチ操作 | 内容 |
+|---|---|
+| タップ | 自軍を選択（すばやく2回で画面内の同種を全選択）。選択中なら地面へ移動・敵を攻撃・建物の集結地点 |
+| 長押しして指を動かす / 長押しして離す | 範囲選択 / 敵も含めて選択（何もない所なら解除） |
+| 1本指ドラッグ / 2本指 | カメラ移動 / 広げる・つまむでズーム、ひねって回転 |
+| 右下のボタン | コマンド・生産・建設（押すと説明が出る）。移動先などを選ぶ間は上の「取消」でやめられる |
+| 建設 | 建物を選ぶ → 地面をタップで仮置き → 仮置きした建物をもう一度タップで建設 |
+
+ゲーム内の「操作説明」にも同じ内容があります（タッチ端末ではタッチ用の説明）。
 
 ## 自作シナリオ
 
@@ -84,12 +98,14 @@ game/                  Godot プロジェクト（Mobile レンダラー、GDScr
   scripts/core|units|buildings|combat|ai|ui|world   ゲームロジックと UI
   shaders/             地形・水・滝・空・粒子・霧・歩兵の頂点アニメ
   assets/              生成済みアセット（terrain / models / textures / fx / ui / audio）
-tools/                 アセット生成スクリプト
+tools/                 アセット生成スクリプトと書き出し（export.sh = Linux / Windows、export_web.sh = ブラウザ版）
   blender/terrain/     地形パイプライン（mapgen.py = numpy で高さ場など、build_terrain.py = Blender で .blend/.glb 化）
   blender/models/      環境プロップ・建物・ユニットの手続きモデリング（神獣は骨付きのスキンメッシュ）
   textures/            Material Maker（CLI 書き出し）＋ ImageMagick、神獣の皮・鱗・毛・羽は numpy で生成
   ui/make_icons.py     HUD アイコン（SVG）
   audio/gen_audio.py   効果音・環境音・BGM の合成（numpy）
+  fonts/subset_fonts.py  同梱する Noto フォントのサブセット（ゲームの文字＋かな）
+  web/browser_check.py   ブラウザ版を Chrome で動かして確認（スマホの模擬・タッチ・撮影・FPS）
 art/blend/             生成された .blend（Blender で開いて確認・編集できる）
 docs/                  設計メモとスクリーンショット
 ```
@@ -123,6 +139,13 @@ godot --headless --path game -- --match --autoplay --timescale=10
 godot --path game -- --gallery=all --out=/tmp/gallery.png
 # シナリオファイルの検証（誤りがあると終了コード 1）
 godot --headless --path game -- --check-scenarios
+# スマホ相当の画面とタッチ操作（--touch で強制。ブラウザ版は ?touch=1 / ?touch=0）
+godot --path game --resolution 844x390 --rendering-method gl_compatibility -- --touch
+# 合成タッチで選択・命令・カメラ・建設・メニューを確かめる（ブラウザ版は ?scenario=touch_test&capture=x&frames=1000000&keep）
+godot --path game --resolution 844x390 -- --capture=x --frames=1000000 --keep --touch --scenario=touch_test
+# ブラウザ版の書き出しと確認（GitHub Pages には main への push で Actions が書き出して載せる）
+tools/export_web.sh && python3 -m http.server -d build/web 8060
+uv run tools/web/browser_check.py --phone --out /tmp/web '[["wait",3],["shot","title.png"]]'
 # 試合中の自動セーブと、セーブからの再開
 godot --headless --path game -- --match --autoplay --save-at=150 --save-to=/tmp/s.json
 godot --path game -- --load=/tmp/s.json
