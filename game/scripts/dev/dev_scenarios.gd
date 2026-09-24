@@ -131,6 +131,48 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 			world.get_tree().create_timer(12.0).timeout.connect(func() -> void:
 				print("[cover_test] after 12 s: behind the rock %.0f hp, in the open %.0f hp (Varkesh %.0f / %.0f)" % [
 						crown[0].hp, crown[1].hp, foes[0].hp, foes[1].hp]))
+		"flyover":
+			# flyers crossing the Ironspine gate and the Crown citadel; prints how close each hull came
+			world.fog.enabled = false
+			var along := Vector3(1, 0, 1).normalized()
+			var gate := Vector3(-51.5, 0, 51.5)
+			var runs := [["airship", gate + Vector3(-30, 0, 30), gate + Vector3(30, 0, -30)],
+					["dragon", gate + along * 15.0 + Vector3(-30, 0, 30), gate + along * 15.0 + Vector3(30, 0, -30)],
+					["griffin", gate - along * 15.0 + Vector3(-30, 0, 30), gate - along * 15.0 + Vector3(30, 0, -30)],
+					["airship", Vector3(-200, 0, 152), Vector3(-100, 0, 152)]]
+			for u in world.units.duplicate():
+				if u.team == 1:
+					u.die()
+			var flyers: Array[Unit] = []
+			var low := {}
+			for r: Array in runs:
+				var u := world.spawn_unit(r[0], 0, r[1], 0.0)
+				u.order_move(r[2])
+				flyers.append(u)
+				low[u] = [INF, Vector3.ZERO]
+			# from 3 s on, once they have left their spawn height
+			var probe := func() -> void:
+				for u in flyers:
+					if not is_instance_valid(u) or not u.alive or world.match_time < 3.0:
+						continue
+					var b := Basis(Vector3.UP, u.facing)
+					var top := -INF
+					for fx: float in [-1.0, -0.5, 0.0, 0.5, 1.0]:
+						for fz: float in [-1.0, -0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75, 1.0]:
+							var q := u.global_position + b.x * (u._air_box.x * fx) + b.z * (u._air_box.z * fz)
+							top = maxf(top, world.nav.top_at(q, world.terrain.height_at(q.x, q.z)))
+					var gap := u.global_position.y - u._air_box.y - top
+					if gap < low[u][0]:
+						low[u] = [gap, u.global_position]
+			var t := Timer.new()
+			t.wait_time = 0.1
+			t.timeout.connect(probe)
+			world.add_child(t)
+			t.start()
+			world.get_tree().create_timer(22.0).timeout.connect(func() -> void:
+				for u in flyers:
+					if is_instance_valid(u):
+						print("[flyover] %s lowest clearance %.1f m at %s" % [u.def_id, low[u][0], low[u][1]]))
 		"base":
 			world.fog.enabled = false
 		"nofog":

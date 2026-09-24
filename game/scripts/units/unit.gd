@@ -31,6 +31,10 @@ var guard_pos := Vector3.ZERO
 var queue: Array[Vector3] = []
 var type := "squad"
 var altitude := 0.0
+## Flyers: half width, depth below the origin and half length of the model, to clear obstacles.
+var _air_box := Vector3.ZERO
+var _air_floor := -INF
+var _air_t := 0.0
 var moving := false
 var firing_timer := 0.0
 var _acquire_t := 0.0
@@ -99,6 +103,8 @@ func setup(id: String, t: int, pos: Vector3, face: float) -> void:
 	visual.name = "Visual"
 	add_child(visual)
 	visual.setup(self)
+	if is_air:
+		_air_box = _model_box(visual.get("model"))
 
 
 func display_name() -> String:
@@ -706,13 +712,41 @@ func _integrate(dt: float) -> void:
 				p = global_position
 		p.y = World.inst.terrain.ground_at(p.x, p.z)
 	else:
-		var g := World.inst.terrain.height_at(p.x, p.z)
-		var want := maxf(g, 0.0) + altitude
-		p.y = lerpf(global_position.y, want, clampf(dt * 0.8, 0.0, 1.0))
+		var want := _air_height(p, dt)
+		p.y = lerpf(global_position.y, want, clampf(dt * (2.5 if want > global_position.y else 0.8), 0.0, 1.0))
 	p.x = clampf(p.x, -190.0, 190.0)
 	p.z = clampf(p.z, -190.0, 190.0)
 	global_position = p
 	rotation.y = facing
+
+
+## Cruising height, raised to keep the hull over buildings, walls, trees and rocks under the
+## flyer or up to three seconds ahead of it.
+func _air_height(p: Vector3, dt: float) -> float:
+	var terrain := World.inst.terrain
+	_air_t -= dt
+	if _air_t <= 0.0:
+		_air_t = 0.25
+		var nav := World.inst.nav
+		var b := Basis(Vector3.UP, facing)
+		var ahead := Vector3(velocity.x, 0, velocity.z)
+		var top := -INF
+		for k in 4:
+			for fx: float in [-1.0, 0.0, 1.0]:
+				for fz: float in [-1.0, -0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75, 1.0]:
+					var q := p + ahead * k + b.x * (_air_box.x * fx) + b.z * (_air_box.z * fz)
+					top = maxf(top, nav.top_at(q, terrain.height_at(q.x, q.z)))
+		# sink slowly so a wall that slips between samples does not pull the hull down into it
+		_air_floor = maxf(top + _air_box.y + 3.0, _air_floor - 1.0)
+	return maxf(maxf(terrain.height_at(p.x, p.z), 0.0) + altitude, _air_floor)
+
+
+static func _model_box(root: Node3D) -> Vector3:
+	var box := AABB()
+	var inv := root.global_transform.affine_inverse()
+	for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):
+		box = box.merge(inv * mi.global_transform * mi.get_aabb())
+	return Vector3(maxf(-box.position.x, box.end.x), maxf(0.0, -box.position.y), maxf(-box.position.z, box.end.z))
 
 
 func die() -> void:

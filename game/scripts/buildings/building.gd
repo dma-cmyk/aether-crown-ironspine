@@ -57,6 +57,7 @@ func setup(id: String, t: int, pos: Vector3, face: float, is_built: bool) -> voi
 	hp = max_hp if built else max_hp * 0.1
 	if footprint > 0.0:
 		World.inst.nav.set_blocked_circle(global_position, footprint, true)
+	World.inst.nav.set_roof_circle(global_position, radius, global_position.y + model_height, true)
 	_block_walls(true)
 	rally = global_position + Basis(Vector3.UP, facing) * Vector3(0, 0, radius + 9.0)
 	_update_construction()
@@ -65,7 +66,8 @@ func setup(id: String, t: int, pos: Vector3, face: float, is_built: bool) -> voi
 
 
 ## Solid parts outside the footprint circle, as local [x, z, half x, half z] rectangles.
-## They block movement and give heavy cover up to `wall_cover` metres while the building stands.
+## They block movement, give heavy cover up to `wall_cover` metres and keep flyers above them
+## while the building stands.
 func _block_walls(on: bool) -> void:
 	var basis := Basis(Vector3.UP, facing)
 	var code := 128 | mini(127, roundi(float(def.get("wall_cover", 8.0)) / 0.25))
@@ -73,6 +75,7 @@ func _block_walls(on: bool) -> void:
 		var c := global_position + basis * Vector3(r[0], 0, r[1])
 		World.inst.nav.set_blocked_rect(c, r[2], r[3], facing, on)
 		World.inst.nav.set_cover_rect(c, r[2], r[3], facing, code, on)
+		World.inst.nav.set_roof_rect(c, r[2], r[3], facing, global_position.y + model_height, on)
 
 
 func _start_stacks() -> void:
@@ -285,6 +288,7 @@ func die() -> void:
 	_rubble_t = 12.0
 	if footprint > 0.0:
 		World.inst.nav.set_blocked_circle(global_position, footprint, false)
+	World.inst.nav.set_roof_circle(global_position, radius, 0.0, false)
 	_block_walls(false)
 	var fx := World.inst.fx
 	for h in _stacks:
