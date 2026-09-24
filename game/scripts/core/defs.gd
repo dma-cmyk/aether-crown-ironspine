@@ -31,6 +31,7 @@ const ARMOR_TABLE := {
 	"titan": {"light": 1.2, "heavy": 1.2, "structure": 1.0, "air": 1.0, "beast": 1.1},
 	"missile": {"light": 0.35, "heavy": 0.9, "structure": 1.8, "air": 0.0, "beast": 0.7},
 	"holy": {"light": 1.0, "heavy": 0.8, "structure": 0.5, "air": 1.2, "beast": 1.35},
+	"siege": {"light": 0.5, "heavy": 1.3, "structure": 1.5, "air": 0.8, "beast": 1.2},
 }
 
 const WEAPONS := {
@@ -52,6 +53,13 @@ const WEAPONS := {
 	"titan_beam": {"class": "titan", "range": 34.0, "damage": 150.0, "cooldown": 4.5, "fx": "titan_beam", "splash": 6.0, "air": true},
 	"mech_missiles": {"class": "missile", "range": 30.0, "damage": 56.0, "cooldown": 2.6, "fx": "missile", "splash": 2.8, "air": false},
 	"angel_lance": {"class": "holy", "range": 28.0, "damage": 30.0, "cooldown": 1.5, "fx": "beam", "air": true},
+	# Gearforge machines: "anchors" name the model's muzzle empties the shots leave from
+	"strider_gun": {"class": "cannon", "range": 30.0, "damage": 34.0, "cooldown": 1.7, "fx": "shell_flat", "splash": 2.0, "air": false, "anchors": ["muzzle"]},
+	"quad_cannons": {"class": "cannon", "range": 42.0, "damage": 64.0, "cooldown": 3.0, "fx": "shell_flat", "splash": 3.5, "air": false, "anchors": ["muzzle_l", "muzzle_r"]},
+	"dread_broadside": {"class": "broadside", "range": 34.0, "damage": 70.0, "cooldown": 2.4, "fx": "shell_flat", "splash": 3.5, "air": false, "anchors": ["gun_"], "broadside": true},
+	"dread_mortar": {"class": "shell", "range": 52.0, "min_range": 10.0, "damage": 140.0, "cooldown": 5.5, "fx": "shell_arc", "splash": 6.5, "air": false, "anchors": ["mortar"]},
+	"dread_flak": {"class": "flak", "range": 32.0, "damage": 22.0, "cooldown": 0.6, "fx": "tracer", "air": true, "air_only": true, "anchors": ["gun_"], "broadside": true},
+	"crownspike": {"class": "siege", "range": 54.0, "damage": 280.0, "cooldown": 6.0, "fx": "titan_beam", "splash": 5.0, "air": true, "anchors": ["muzzle"]},
 }
 
 const UNITS := {
@@ -120,6 +128,43 @@ const UNITS := {
 		"model": "mech", "visual": "mech", "portrait": [11.0, 0.4], "commands": ["move", "hold", "attack", "patrol", "special"],
 		"special": "missile_salvo", "capture": 0.0, "altitude": 10.0, "height": 6.8, "hotkey": "W",
 	},
+	# Gearforge machines, rebuilt from the earlier Aether Crown project (tools/blender/gearforge)
+	"strider": {
+		"name": ["疾走歩行機", "ヴァルケシュ疾走機"], "short": "疾走機",
+		"jp": "身軽な二脚の歩行機。足が速く、砲塔の大砲で車両や砲台を狙い撃つ。特殊能力は過負荷。",
+		"type": "walker", "hp": 480.0, "armor": "heavy",
+		"cost": {"material": 150, "aether": 60}, "pop": 4, "build_time": 22.0,
+		"speed": 6.4, "radius": 2.6, "vision": 38.0, "weapons": ["strider_gun"],
+		"model": "strider", "visual": "gearforge", "portrait": [10.5, 2.6], "commands": ["move", "hold", "attack", "patrol", "special"],
+		"special": "overcharge", "capture": 0.6, "height": 4.8, "stride": 3.4, "turn": 3.0, "hotkey": "T",
+	},
+	"quadwalker": {
+		"name": ["四脚重砲機", "ヴァルケシュ四脚砲"], "short": "四脚砲",
+		"jp": "四本脚の重砲機。二連装の大砲で遠くから装甲と建物を撃つ。構えるとさらに射程が伸びる。足は遅い。",
+		"type": "walker", "hp": 1250.0, "armor": "heavy",
+		"cost": {"material": 300, "aether": 180}, "pop": 8, "build_time": 42.0,
+		"speed": 3.0, "radius": 4.2, "vision": 42.0, "weapons": ["quad_cannons"],
+		"model": "quadwalker", "visual": "gearforge", "portrait": [14.0, 2.6], "commands": ["move", "hold", "attack", "patrol", "fortify"],
+		"special": "", "capture": 0.5, "height": 5.6, "stride": 3.6, "turn": 1.6, "hotkey": "Y",
+	},
+	"dreadnought": {
+		"name": ["空中戦艦", "ヴァルケシュ空中要塞"], "short": "空中戦艦",
+		"jp": "二つの気嚢を持つ巨大な空中戦艦。舷側砲と腹の臼砲で地上を砲撃し、対空砲も備える。とても高価で遅い。特殊能力はエーテル爆撃。",
+		"type": "air", "hp": 2400.0, "armor": "air",
+		"cost": {"material": 650, "aether": 550}, "pop": 16, "build_time": 85.0,
+		"speed": 4.0, "radius": 7.5, "vision": 60.0, "weapons": ["dread_broadside", "dread_mortar", "dread_flak"],
+		"model": "dreadnought", "visual": "gearforge", "portrait": [40.0, 0.0], "scale": 0.8, "commands": ["move", "hold", "attack", "patrol", "special"],
+		"special": "aether_bombard", "capture": 0.0, "altitude": 21.0, "height": 8.0, "turn": 0.6, "hotkey": "R",
+	},
+	"colossus": {
+		"name": ["鋼の巨兵", "ヴァルケシュ鋼巨兵"], "short": "鋼の巨兵",
+		"jp": "山をも穿つエーテル砲を担いだ機械の巨兵。とても遠くから装甲と建物を撃ち抜く。工兵で修理できるが、足が遅く歩兵には弱い（同時に1体まで）。特殊能力は過負荷。",
+		"type": "walker", "hp": 4200.0, "armor": "heavy",
+		"cost": {"material": 800, "aether": 700}, "pop": 16, "build_time": 110.0,
+		"speed": 2.6, "radius": 5.0, "vision": 50.0, "weapons": ["crownspike"],
+		"model": "colossus", "visual": "gearforge", "portrait": [21.0, 6.2], "commands": ["move", "hold", "attack", "patrol", "special"],
+		"special": "overcharge", "capture": 1.0, "height": 11.8, "stride": 6.4, "turn": 1.0, "aim": 0.5, "limit": 1, "hotkey": "E",
+	},
 	# creatures of the Beast Sanctum: not machines, so they cannot be repaired but heal
 	# themselves ("regen" HP/s) once out of combat. "aim" = how squarely they must face prey.
 	"cerberus": {
@@ -181,9 +226,9 @@ const UNITS := {
 const BUILDINGS := {
 	"citadel": {
 		"name": ["王冠の本拠地", "ヴァルケシュ本拠地"], "short": "本拠地",
-		"jp": "本拠地。工兵と巨神を生産し、収入と人口上限を与える。破壊されると敗北。",
+		"jp": "本拠地。工兵と巨神・鋼の巨兵を生産し、収入と人口上限を与える。破壊されると敗北。",
 		"hp": 5200.0, "radius": 13.0, "footprint": 12.0, "cost": {"material": 0, "aether": 0}, "build_time": 1.0,
-		"produces": ["artificer", "titan"], "pop": 20, "income": {"material": 185, "aether": 40},
+		"produces": ["artificer", "titan", "colossus"], "pop": 20, "income": {"material": 185, "aether": 40},
 		"model": "citadel", "weapons": ["aether_lance"], "buildable": false, "vision": 50.0,
 	},
 	"barracks": {
@@ -194,15 +239,15 @@ const BUILDINGS := {
 	},
 	"foundry": {
 		"name": ["歯車工廠", "ヴァルケシュ鍛冶場"], "short": "工廠",
-		"jp": "工廠。歩行機と臼砲を生産する。",
+		"jp": "工廠。歩行機・臼砲・疾走機・四脚砲を生産する。",
 		"hp": 1900.0, "radius": 9.5, "footprint": 9.0, "cost": {"material": 220, "aether": 80}, "build_time": 34.0,
-		"produces": ["walker", "mortar"], "pop": 0, "model": "foundry", "buildable": true, "hotkey": "W", "vision": 30.0,
+		"produces": ["walker", "mortar", "strider", "quadwalker"], "pop": 0, "model": "foundry", "buildable": true, "hotkey": "W", "vision": 30.0,
 	},
 	"skyport": {
 		"name": ["飛行場", "ヴァルケシュ空港"], "short": "飛行場",
-		"jp": "飛行場。飛行艦と機動兵を生産する。",
+		"jp": "飛行場。飛行艦・機動兵・空中戦艦を生産する。",
 		"hp": 1600.0, "radius": 8.5, "footprint": 8.0, "cost": {"material": 240, "aether": 180}, "build_time": 40.0,
-		"produces": ["airship", "mech"], "pop": 0, "model": "skyport", "buildable": true, "hotkey": "E", "vision": 40.0,
+		"produces": ["airship", "mech", "dreadnought"], "pop": 0, "model": "skyport", "buildable": true, "hotkey": "E", "vision": 40.0,
 	},
 	"refinery": {
 		"name": ["エーテル精製所", "ヴァルケシュ吸引塔"], "short": "精製所",

@@ -15,6 +15,7 @@ if stage "$1" models; then
   $BL tools/blender/models/buildings.py
   $BL tools/blender/models/units.py
   $BL tools/blender/models/creatures.py
+  $BL tools/blender/gearforge/build.py
 fi
 if stage "$1" icons; then python3 tools/ui/make_icons.py; fi
 if stage "$1" audio; then uv run tools/audio/gen_audio.py; fi

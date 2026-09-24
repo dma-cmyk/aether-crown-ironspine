@@ -64,6 +64,8 @@ static func get_mat(name: String, team: int = -1, world_space: bool = true, uv: 
 	var base := name.get_slice(".", 0)
 	if base == "infantry":
 		return infantry_material(team)
+	if base.begins_with("gf_"):
+		return machine_material(base.substr(3), team)
 	if not SPECS.has(base):
 		return null
 	var key := "%s|%d|%s|%s" % [base, team, world_space, uv]
@@ -183,6 +185,22 @@ static func noise_texture(size: int, freq: float, seed_value: int, normal: bool 
 		t.as_normal_map = true
 		t.bump_strength = 6.0
 	return t
+
+
+## Gearforge machines: baked maps in TEX_DIR/units/<model>_*.png on the machine shader.
+static func machine_material(model: String, team: int) -> ShaderMaterial:
+	var key := "gf|%s|%d" % [model, team]
+	if not _cache.has(key):
+		var f: Dictionary = Defs.FACTIONS.get(team, Defs.FACTIONS[-1])
+		var m := ShaderMaterial.new()
+		m.resource_name = "gf_" + model
+		m.shader = load("res://shaders/machine.gdshader")
+		for map in ["albedo", "orm", "normal", "mask"]:
+			m.set_shader_parameter(map + "_tex", tex("units/%s_%s" % [model, map]))
+		m.set_shader_parameter("paint_color", (f["cloth"] as Color).lerp(Color(0.34, 0.35, 0.38), 0.22))
+		m.set_shader_parameter("glow_color", f["glow"])
+		_cache[key] = m
+	return _cache[key]
 
 
 static func infantry_material(team: int) -> ShaderMaterial:

@@ -4,6 +4,7 @@
 Run after `godot --headless --path game --import` has created the .import
 files; then import again so the new settings take effect.
   3D material textures : VRAM compressed, mipmaps, max 1024 px
+  textures/units/      : the same without the size cap (baked at the size they are meant for)
   *_normal.png         : + normal-map compression
   terrain/splat.png    : lossless + mipmaps (masks must stay exact)
 """
@@ -39,6 +40,10 @@ def main():
                 "detect_3d/compress_to": "0"}
         if imp.name.endswith("_normal.png.import"):
             vals["compress/normal_map"] = "1"
+        n += patch(imp, vals)
+    for imp in sorted((ROOT / "assets" / "textures" / "units").glob("*.png.import")):
+        vals = {"compress/mode": "2", "mipmaps/generate": "true", "process/size_limit": "0",
+                "detect_3d/compress_to": "0", "compress/normal_map": "1" if imp.name.endswith("_normal.png.import") else "0"}
         n += patch(imp, vals)
     splat = ROOT / "assets" / "terrain" / "splat.png.import"
     if splat.exists():

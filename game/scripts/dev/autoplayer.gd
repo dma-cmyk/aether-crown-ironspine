@@ -104,13 +104,13 @@ func _economy() -> void:
 				if world.count_units(0, "artificer") < 3:
 					b.queue_unit("artificer")
 				elif world.match_time > 720.0:
-					b.queue_unit("titan")
+					b.queue_unit("titan" if world.count_units(0, "titan") == 0 else "colossus")
 			"barracks":
 				b.queue_unit("aetherguard")
 			"foundry":
-				b.queue_unit("walker" if randf() < 0.6 else "mortar")
+				b.queue_unit(["walker", "mortar", "strider", "quadwalker"][randi() % 4])
 			"skyport":
-				b.queue_unit("mech" if randf() < 0.5 else "airship")
+				b.queue_unit(["mech", "airship", "dreadnought"][randi() % 3])
 			_:
 				if b.def_id.begins_with("sanctum"):
 					b.queue_unit(b.produces()[randi() % b.produces().size()])

@@ -115,6 +115,8 @@ func setup(id: String, t: int, pos: Vector3, face: float) -> void:
 			visual = DemonVisual.new()
 		"angel":
 			visual = AngelVisual.new()
+		"gearforge":
+			visual = GearforgeVisual.new()
 	visual.name = "Visual"
 	add_child(visual)
 	visual.setup(self)

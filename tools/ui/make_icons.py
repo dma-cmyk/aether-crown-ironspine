@@ -113,6 +113,23 @@ ICONS = {
     + path("M19 58 L21 40 C24 35 40 35 43 40 L45 58 Z", IVORY, "#3a2a2a") + circle(32, 27, 9, IVORY, "#3a2a2a")
     + path("M26 20 C19 17 17 10 20 4 C22 10 25 13 29 16", GOLD, "#4a3a18") + path("M38 20 C45 17 47 10 44 4 C42 10 39 13 35 16", GOLD, "#4a3a18")
     + circle(28.5, 27, 1.8, RED, RED, 1) + circle(35.5, 27, 1.8, RED, RED, 1) + path("M28 33 L36 33", RED, sw=2),
+    "unit_strider": rect(20, 12, 26, 16, IVORY, "#2a3345", rx=3) + path("M20 18 L4 18", GOLD, sw=4.4) + circle(4, 18, 2.4, GOLD, GOLD, 1)
+    + path("M26 28 L22 38 L28 46 L24 56 M40 28 L44 38 L38 46 L42 56 M18 56 L30 56 M36 56 L48 56")
+    + path("M24 24 L42 24", AETHER, sw=2.6) + path("M32 12 L32 6 M38 12 L38 4", IVORY, sw=2.6),
+    "unit_quadwalker": rect(14, 18, 36, 14, IVORY, "#2a3345", rx=3) + rect(22, 10, 18, 9, IVORY, "#2a3345", rx=2)
+    + path("M22 13 L4 13 M22 17 L4 17", GOLD, sw=3) + path("M18 26 L34 26", AETHER, sw=2.6)
+    + path("M16 32 L8 42 L10 54 M26 32 L22 44 L24 54 M38 32 L42 44 L40 54 M48 32 L56 42 L54 54")
+    + path("M6 54 L14 54 M20 54 L28 54 M36 54 L44 54 M50 54 L58 54", GOLD),
+    "unit_dreadnought": path("M8 16 C8 9 50 8 56 14 C50 21 8 22 8 16 Z", IVORY, "#3a3a34")
+    + path("M8 30 C8 23 50 22 56 28 C50 35 8 36 8 30 Z", IVORY, "#3a3a34")
+    + path("M22 36 L24 46 L44 46 L46 36") + path("M18 12 L18 20 M32 10 L32 21 M18 26 L18 34 M32 24 L32 35", GOLD, sw=2)
+    + path("M28 46 L28 54", GOLD, sw=3) + path("M2 8 L8 16 L2 22 M2 24 L8 30 L2 36", GOLD, sw=2.4)
+    + circle(56, 14, 2, AETHER, AETHER, 1) + circle(56, 28, 2, AETHER, AETHER, 1),
+    "unit_colossus": rect(22, 16, 22, 24, IVORY, "#3a3530", rx=3) + rect(28, 8, 10, 8, IVORY, "#2a3040", rx=2)
+    + path("M30 12 L36 12", AETHER, sw=2.4) + rect(8, 20, 12, 10, IVORY, "#2a3040", rx=2) + path("M8 25 L2 25", GOLD, sw=5)
+    + circle(2, 25, 2.2, AETHER, AETHER, 1) + rect(46, 20, 8, 16, IVORY, "#2a3040", rx=2)
+    + path("M27 40 L24 50 L26 60 M39 40 L42 50 L40 60 M18 60 L32 60 M34 60 L48 60") + circle(33, 28, 4, AETHER, "#1d5b73")
+    + path("M28 16 L26 6 M38 16 L40 6", GOLD, sw=2.6),
     "unit_angel": path("M27 32 C18 23 9 22 3 30 C10 31 13 37 11 44 C17 39 23 39 27 41", IVORY, "#2a3345")
     + path("M37 32 C46 23 55 22 61 30 C54 31 51 37 53 44 C47 39 41 39 37 41", IVORY, "#2a3345")
     + path("M27 28 L37 28 L43 58 L21 58 Z", IVORY, "#2a3345") + circle(32, 20, 6, IVORY, "#2a3345")

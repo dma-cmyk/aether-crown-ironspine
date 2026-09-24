@@ -88,15 +88,24 @@ func _economy() -> void:
 			"citadel":
 				if world.count_units(team, "artificer") < 3:
 					choice = "artificer"
-				elif world.match_time > 780.0 and b.can_queue("titan") in ["", "資源不足"] and rng.randf() < 0.25 * diff:
-					choice = "titan"
+				elif world.match_time > 780.0 and rng.randf() < 0.25 * diff:
+					# the titan or the colossus, whichever is not already out
+					for c in (["titan", "colossus"] if rng.randf() < 0.5 else ["colossus", "titan"]):
+						if b.can_queue(c) in ["", "資源不足"]:
+							choice = c
+							break
 			"barracks":
 				choice = "aetherguard" if world.count_units(team, "artificer") >= 2 or rng.randf() < 0.8 else "artificer"
 			"foundry":
-				choice = "walker" if (p.aether >= 160.0 and rng.randf() < 0.7) else "mortar"
+				var r := rng.randf()
+				if p.aether >= 160.0 and r < 0.4:
+					choice = "walker" if r < 0.25 or world.match_time < 480.0 else "quadwalker"
+				else:
+					choice = "strider" if r < 0.7 else "mortar"
 			"skyport":
 				if rng.randf() < 0.5 * diff:
-					choice = "mech" if rng.randf() < 0.5 else "airship"
+					var r := rng.randf()
+					choice = "mech" if r < 0.45 else ("dreadnought" if r > 0.85 and world.match_time > 720.0 else "airship")
 			_:
 				if b.def_id.begins_with("sanctum"):
 					choice = _beast_choice(b, p, diff)

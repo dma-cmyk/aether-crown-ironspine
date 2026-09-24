@@ -108,13 +108,15 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 			var q := Game.arg("lineup", "-135,-70,-5").split(",")
 			var at := Vector3(float(q[0]), 0, float(q[1]))
 			var face := deg_to_rad(float(q[2]))
-			world.spawn_building("sanctum", 0, at, face)
+			world.spawn_building("foundry" if Game.args.has("gearforge") else "sanctum", 0, at, face)
 			var basis := Basis(Vector3.UP, face)
 			var cast: Array = [["griffin", -10, 8, 25], ["cerberus", -5, 18.5, 18], ["cyclops", 7, 15, -20], ["dragon", 9, 1, 0]]
 			if Game.args.has("new_races"):
 				cast = [["demon", -6, 16, 20], ["angel", 7, 13, -20]]
 			if Game.args.has("titan"):
 				cast = [["titan", -2, 20, 10], ["mech", 10, 12, -20]]
+			if Game.args.has("gearforge"):
+				cast = [["colossus", -3, 22, 10], ["quadwalker", 10, 13, -25], ["strider", -11, 11, 25], ["dreadnought", 2, 8, 0]]
 			for c: Array in cast:
 				var u := world.spawn_unit(c[0], 0, at + basis * Vector3(c[1], 0, c[2]), face + deg_to_rad(c[3]))
 				u.order_hold()
@@ -207,6 +209,26 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 				print("[mech_test] 5 s: warcamp %.0f / %.0f, salvo=%s" % [camp.hp, camp.max_hp, mechs[0].use_special(camp.global_position)]))
 			world.get_tree().create_timer(15.0).timeout.connect(func() -> void:
 				print("[mech_test] 15 s: warcamp %s %.0f, mechs %.0f %.0f" % ["alive" if camp.alive else "destroyed", camp.hp, mechs[0].hp, mechs[1].hp]))
+		"gearforge_test":
+			# the four Gearforge machines on the meadow by the western foundry site meet a Varkesh
+			# party coming from the north; prints how each fared after 25 s
+			world.fog.enabled = false
+			var at := Vector3(-135, 0, -58)
+			var foes: Array[Unit] = [world.spawn_unit("walker", 1, at + Vector3(8, 0, 46), PI),
+					world.spawn_unit("aetherguard", 1, at + Vector3(-6, 0, 40), PI), world.spawn_unit("griffin", 1, at + Vector3(-12, 0, 50), PI)]
+			var ours: Array[Unit] = []
+			for c: Array in [["strider", -10, 2], ["quadwalker", 8, -2], ["colossus", -1, -6], ["dreadnought", 0, -14]]:
+				ours.append(world.spawn_unit(c[0], 0, at + Vector3(c[1], 0, c[2]), 0.0))
+			if not Game.args.has("cam"):
+				camera.set_view(at + Vector3(0, 0, 10), -165.0, 60.0)
+			for f in foes:
+				f.order_attack_move(at)
+			for u in ours:
+				u.order_attack_move(at + Vector3(0, 0, 16))
+			world.get_tree().create_timer(25.0).timeout.connect(func() -> void:
+				for u in ours:
+					print("[gearforge_test] %s hp %.0f/%.0f kills %d" % [u.def_id, u.hp, u.max_hp, u.kills])
+				print("[gearforge_test] foes alive %d" % foes.filter(func(f) -> bool: return is_instance_valid(f) and f.alive).size()))
 		"races_test":
 			# a demon and an angel against a Varkesh squad, walker and griffin; specials after 6 s
 			world.fog.enabled = false
