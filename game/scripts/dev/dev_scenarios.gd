@@ -139,6 +139,34 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 			var t: Node = load("res://scripts/dev/touch_test.gd").new()
 			match_node.add_child(t)
 			t.setup(world, commander, camera, match_node.hud)
+		"judgement_test":
+			# our tower strikes a Varkesh column through the HUD path; theirs strikes our citadel
+			world.fog.enabled = false
+			var ours := world.spawn_building("judgement", 0, Vector3(-120, 0, 150), 0.0, true)
+			ours.charge = 999.0
+			var theirs := world.spawn_building("judgement", 1, Vector3(140, 0, -150), 0.0, true)
+			var at := Vector3(-60, 0, 20)
+			var foes: Array[Unit] = []
+			for i in 6:
+				foes.append(world.spawn_unit(["aetherguard", "walker", "cyclops"][i % 3], 1, at + Vector3((i % 3) * 7.0 - 7.0, 0, (i / 3) * 8.0), PI))
+			for f in foes:
+				f.order_hold()
+			camera.set_view(at, -30.0, 90.0)
+			commander.set_selection([ours])
+			commander.begin_strike(ours)
+			var fired := commander.strike_at(at)
+			var cit := world.citadel(0)
+			var before := cit.hp
+			var enemy_ai: EnemyAI = match_node.ai
+			world.get_tree().create_timer(1.0).timeout.connect(func() -> void:
+				print("[judgement_test] ours fired=%s charge=%.0f, enemy AI aims at %s, citadel at %s" % [fired, ours.charge,
+						enemy_ai.strike_target(), cit.global_position])
+				theirs.charge = 999.0
+				theirs.fire_superweapon(cit.global_position))
+			world.get_tree().create_timer(12.0).timeout.connect(func() -> void:
+				var alive := foes.filter(func(f) -> bool: return is_instance_valid(f) and f.alive).size()
+				print("[judgement_test] foes alive %d / %d; our citadel %.0f -> %.0f (lost %.0f%%, cap 30%%)" % [alive, foes.size(), before, cit.hp,
+						(before - cit.hp) / cit.max_hp * 100.0]))
 		"mech_test":
 			# two mechs against a Varkesh warcamp and an infantry squad; a salvo after 5 s
 			world.fog.enabled = false

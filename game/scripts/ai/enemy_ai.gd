@@ -26,6 +26,7 @@ const BUILD_PLAN := [
 	{"id": "sanctum_griffin", "t": 450.0},
 	{"id": "bastion", "t": 480.0},
 	{"id": "sanctum_dragon", "t": 560.0},
+	{"id": "judgement", "t": 600.0},
 	{"id": "sanctum_demon", "t": 620.0},
 	{"id": "sanctum_angel", "t": 700.0},
 ]
@@ -56,6 +57,7 @@ func _physics_process(delta: float) -> void:
 	_think = 1.0
 	_economy()
 	_construction()
+	_superweapon()
 	_defend()
 	_expand()
 	_attack()
@@ -126,6 +128,42 @@ func _reserve() -> Vector2:
 		return Vector2.ZERO
 	var cost: Dictionary = Defs.BUILDINGS[BUILD_PLAN[_build_i]["id"]]["cost"]
 	return Vector2(float(cost["material"]), float(cost["aether"]))
+
+
+## Fire a charged Tower of Judgement where the most of the enemy stands.
+func _superweapon() -> void:
+	for b in world.buildings:
+		if b.team == team and b.strike_ready():
+			var at := strike_target()
+			if at != Vector3.INF:
+				b.fire_superweapon(at)
+
+
+## The point where a strike hurts the enemy most: units weighted by cost, buildings by a flat
+## share. Scored around every enemy unit and building.
+func strike_target() -> Vector3:
+	var foes: Array[Entity] = []
+	for u in world.units:
+		if u.alive and u.team != team and u.team >= 0:
+			foes.append(u)
+	for b in world.buildings:
+		if b.alive and b.team != team and b.team >= 0 and b.def_id != "gate":
+			foes.append(b)
+	var best := Vector3.INF
+	var best_score := 0.0
+	for c in foes:
+		var score := 0.0
+		for e in foes:
+			if Vector2(e.global_position.x - c.global_position.x, e.global_position.z - c.global_position.z).length() < 16.0:
+				if e is Unit:
+					var cost: Dictionary = (e as Unit).def["cost"]
+					score += float(cost["material"]) + float(cost["aether"])
+				else:
+					score += 250.0
+		if score > best_score:
+			best_score = score
+			best = c.global_position
+	return best
 
 
 ## A beast from this shrine: griffins mostly to answer enemy fliers, a dragon when aether allows.

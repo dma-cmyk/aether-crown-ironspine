@@ -395,7 +395,52 @@ def sanctum(name):
     return b.to_object()
 
 
+def judgement(name):
+    """Tower of Judgement: four buttresses climbing to a crystal that gathers light for the
+    strike, with floating brass rings round it and team banners on the plinth."""
+    P = mk.palette()
+    b = mk.Builder(name)
+    b.lathe([(8.2, -0.5), (8.2, 0.5), (7.4, 0.7), (7.4, 1.4), (6.2, 1.6), (0.0, 1.65)], 8, (0, 0, 0), P["stone_dark"], smooth=False)
+    b.torus(6.0, 0.16, 24, 4, (0, 1.7, 0), P["brass"])
+    y0 = 1.6
+    # the shaft
+    b.lathe([(2.6, y0), (2.4, y0 + 6.0), (1.9, y0 + 14.0), (1.5, y0 + 20.0), (2.2, y0 + 21.0), (2.2, y0 + 22.0), (0.0, y0 + 22.2)],
+            8, (0, 0, 0), P["stone"], smooth=False)
+    for y in (y0 + 5.0, y0 + 11.0, y0 + 17.0):
+        b.torus(2.45 - (y - y0) * 0.04, 0.2, 16, 4, (0, y, 0), P["brass"])
+    for k in range(8):
+        a = k / 8 * math.tau
+        b.box((0.3, 3.0, 0.12), (math.sin(a) * 2.3, y0 + 8.5, math.cos(a) * 2.3), P["team_glow"], rot=(0, math.degrees(a), 0))
+    # four buttresses leaning in from the corners of the plinth
+    for k in range(4):
+        a = math.radians(45 + k * 90)
+        foot = (math.sin(a) * 6.2, y0, math.cos(a) * 6.2)
+        top = (math.sin(a) * 2.0, y0 + 15.0, math.cos(a) * 2.0)
+        d = [t - f for f, t in zip(foot, top)]
+        ln = math.sqrt(sum(c * c for c in d))
+        tilt = math.degrees(math.acos(d[1] / ln))
+        mid = tuple((f + t) / 2 for f, t in zip(foot, top))
+        b.box((1.3, ln, 1.1), mid, P["stone_trim"], rot=(tilt, math.degrees(a), 0), taper=(0.6, 0.6), bevel=0.06)
+        b.box((2.0, 1.2, 2.0), (foot[0], y0 + 0.6, foot[2]), P["stone_dark"], rot=(0, math.degrees(a), 0), bevel=0.06)
+        parts.banner(b, P, math.sin(a) * 7.0, y0 + 4.6, math.cos(a) * 7.0, 1.2, 3.2, rot=math.degrees(a), pole=False)
+    # crown: cradle, crystal and floating rings
+    for k in range(6):
+        a = k / 6 * math.tau
+        b.box((0.35, 3.0, 0.35), (math.sin(a) * 2.0, y0 + 23.2, math.cos(a) * 2.0), P["brass"], rot=(math.cos(a) * 18, 0, -math.sin(a) * 18))
+    b.lathe([(0.0, y0 + 22.2), (1.5, y0 + 24.0), (1.2, y0 + 27.5), (0.0, y0 + 30.0)], 6, (0, 0, 0), P["team_glow"], smooth=False)
+    b.torus(3.3, 0.14, 24, 4, (0, y0 + 25.0, 0), P["brass"], rot=(12, 0, 0))
+    b.torus(2.7, 0.12, 24, 4, (0, y0 + 26.6, 0), P["brass"], rot=(-8, 40, 0))
+    b.torus(3.9, 0.1, 24, 4, (0, y0 + 23.6, 0), P["team_trim"], rot=(0, 0, 10))
+    # stair to the door at the front (+Z)
+    b.box((3.0, 3.8, 0.6), (0, y0 + 1.9, 2.55), P["iron_dark"])
+    b.box((3.4, 0.4, 0.8), (0, y0 + 3.9, 2.6), P["brass"])
+    for k in range(3):
+        b.box((3.6, 0.3, 1.0), (0, 0.15 + k * 0.5, 8.4 - k * 0.8), P["stone_trim"])
+    return b.to_object()
+
+
 ASSETS = {
+    "judgement": judgement,
     "citadel": citadel,
     "barracks": barracks,
     "foundry": foundry,

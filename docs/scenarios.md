@@ -112,6 +112,6 @@
 ## 使える ID
 
 - ユニット: `aetherguard`（歩兵）、`artificer`（工兵）、`walker`（歩行機）、`mortar`（臼砲）、`airship`（飛行艦）、
-  `cerberus`（ケルベロス）、`cyclops`（サイクロプス）、`griffin`（グリフォン）、`dragon`（ドラゴン）、`demon`（悪魔）、`angel`（天使）
-- 建物: `citadel` `barracks` `foundry` `skyport` `refinery` `habitat` `bastion` `sanctum_cerberus` `sanctum_cyclops` `sanctum_griffin` `sanctum_dragon` `sanctum_demon` `sanctum_angel`（種類ごとの祠） `gate`。`sanctum` は全種を呼べる旧版の祠で、建設メニューには出ない
+  `cerberus`（ケルベロス）、`cyclops`（サイクロプス）、`griffin`（グリフォン）、`dragon`（ドラゴン）、`demon`（悪魔）、`angel`（天使）、`mech`（機動兵）
+- 建物: `citadel` `barracks` `foundry` `skyport` `refinery` `habitat` `bastion` `sanctum_cerberus` `sanctum_cyclops` `sanctum_griffin` `sanctum_dragon` `sanctum_demon` `sanctum_angel`（種類ごとの祠） `judgement`（天罰の塔） `gate`。`sanctum` は全種を呼べる旧版の祠で、建設メニューには出ない
 - 都市: `central_nexus` `brassholm` `west_foundry` `south_works` `aether_works` `east_bastion` `north_relay`

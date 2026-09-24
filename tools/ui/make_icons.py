@@ -145,6 +145,11 @@ ICONS = {
     "check_fail": rect(8, 8, 48, 48, GOLD, "#2a1818", rx=4) + path("M20 20 L44 44 M44 20 L20 44", RED, sw=5),
     "compass": path("M32 4 L40 32 L32 60 L24 32 Z", GOLD, "#4a3a18", 2) + path("M32 4 L40 32 L24 32 Z", GOLD, GOLD, 1),
     "diamond": path("M32 8 L56 32 L32 56 L8 32 Z", GOLD, "#20232b", 3) + path("M32 20 L44 32 L32 44 L20 32 Z", AETHER, AETHER, 1),
+    "bld_judgement": path("M24 58 L28 22 L36 22 L40 58 Z", IVORY, "#2a3040") + path("M14 58 L50 58", GOLD)
+    + path("M32 4 L39 14 L32 22 L25 14 Z", AETHER, "#1d5b73") + path("M20 14 A12 4 0 1 0 44 14 A12 4 0 1 0 20 14", GOLD)
+    + path("M18 58 L26 34 M46 58 L38 34", IVORY),
+    "strike": path("M36 4 L22 30 L32 30 L26 60 L44 24 L34 24 L40 4 Z", GOLD, "#4a3a18")
+    + path("M10 58 C18 50 46 50 54 58", RED, sw=2.6),
     "cancel": path("M16 16 L48 48 M48 16 L16 48", RED, sw=5),
     "construct": path("M10 54 L30 34 M34 10 L54 30 L44 40 L24 20 Z", IVORY, "#2a3040") + path("M8 58 L58 58", GOLD),
     "units": circle(24, 20, 7) + path("M12 50 L16 32 L32 32 L36 50") + circle(44, 24, 6, GOLD) + path("M36 52 L38 36 L52 36 L54 52", GOLD),

@@ -70,7 +70,7 @@ func _economy() -> void:
 		return
 	# construction plan
 	for plan in [["foundry", 60.0], ["refinery", 100.0], ["habitat", 130.0], ["habitat", 240.0], ["sanctum_cyclops", 330.0], ["skyport", 400.0],
-			["refinery", 460.0], ["sanctum_griffin", 500.0], ["sanctum_dragon", 560.0], ["sanctum_cerberus", 620.0], ["sanctum_demon", 680.0], ["sanctum_angel", 740.0]]:
+			["refinery", 460.0], ["sanctum_griffin", 500.0], ["sanctum_dragon", 560.0], ["sanctum_cerberus", 620.0], ["judgement", 650.0], ["sanctum_demon", 680.0], ["sanctum_angel", 740.0]]:
 		var key := "%s@%d" % plan
 		if _built.has(key) or world.match_time < float(plan[1]):
 			continue
@@ -86,6 +86,12 @@ func _economy() -> void:
 				_log("build %s" % plan[0])
 				break
 		break
+	for b in world.buildings:
+		if b.team == 0 and b.strike_ready():
+			var foe := world.citadel(1)
+			if foe:
+				b.fire_superweapon(foe.global_position)
+				_log("judgement fired at the enemy citadel")
 	for b in world.buildings:
 		if b.team != 0 or not b.built or b.production.size() >= 2:
 			continue

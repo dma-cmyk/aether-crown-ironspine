@@ -627,7 +627,7 @@ func _card_entries() -> Array[String]:
 		return out
 	if b:
 		if b.def_id == "citadel" and build_mode:
-			for id in (Defs.SHRINES if shrine_page else Defs.BUILD_ORDER):
+			for id in (Defs.SPECIAL_BUILDS if shrine_page else Defs.BUILD_ORDER):
 				out.append("bld:" + id)
 			while out.size() < 6:
 				out.append("")
@@ -635,6 +635,8 @@ func _card_entries() -> Array[String]:
 				out.append("" if shrine_page else "toggle:shrines")
 			out.append("toggle:shrines_back" if shrine_page else "toggle:back")
 			return out
+		if b.def.has("superweapon"):
+			out.append("strike:fire")
 		for id in b.produces():
 			out.append("unit:" + id)
 		while out.size() < 7:
@@ -671,6 +673,10 @@ func _on_cmd(i: int) -> void:
 					commander.queue(b, v)
 		"bld":
 			commander.begin_place(v)
+		"strike":
+			var sb := commander.selected_building()
+			if sb:
+				commander.begin_strike(sb)
 		"toggle":
 			match v:
 				"build", "shrines_back":
@@ -687,7 +693,7 @@ func _on_cmd(i: int) -> void:
 
 ## Build menu hotkeys (Q W E R T Y U) while the citadel is selected.
 func build_key(i: int) -> void:
-	var ids: Array = Defs.SHRINES if shrine_page else Defs.BUILD_ORDER
+	var ids: Array = Defs.SPECIAL_BUILDS if shrine_page else Defs.BUILD_ORDER
 	if i < ids.size():
 		commander.begin_place(ids[i])
 	elif not shrine_page and i == 6:
@@ -726,9 +732,12 @@ func _show_tip(i: int) -> void:
 			tip_title.text = Defs.building_name(v, 0) if touch else "%s  [%s]" % [Defs.building_name(v, 0), PROD_KEYS[i]]
 			tip_cost.text = _cost_text(bd["cost"]) + "   建設 %d秒" % int(bd["build_time"])
 			tip_body.text = bd["jp"] + "\n本拠地・自軍の都市の近くに建設できる" + ("" if touch else "（Shiftで連続配置）")
+		"strike":
+			tip_title.text = "発射" if touch else "発射  [Q]"
+			tip_body.text = "着弾地点を選ぶ（ミニマップでも選べる）。10秒後に巨大な光の柱が落ち、周り 22m の敵をなぎ払う。本拠地と城門へのダメージには上限がある。撃つと相手にも着弾地点が知らされる。"
 		"toggle":
-			tip_title.text = {"build": "建設", "shrines": "祠"}.get(v, "戻る")
-			tip_body.text = {"build": "建設メニューを開く", "shrines": "神獣の祠を選ぶ（祠ごとに呼べる神獣が違う）",
+			tip_title.text = {"build": "建設", "shrines": "祠・塔"}.get(v, "戻る")
+			tip_body.text = {"build": "建設メニューを開く", "shrines": "神獣・悪魔・天使の祠と、天罰の塔を選ぶ",
 					"shrines_back": "建設メニューに戻る"}.get(v, "生産メニューに戻る")
 	tooltip.visible = true
 	tooltip.reset_size()
@@ -805,11 +814,18 @@ func _update_commands() -> void:
 				ic.texture = UITheme.icon(Defs.building_icon(v))
 				lab.text = Defs.building_short(v)
 				key.text = "" if compact else PROD_KEYS[i]
-				btn.disabled = not p.can_afford(Defs.BUILDINGS[v]["cost"])
+				btn.disabled = not p.can_afford(Defs.BUILDINGS[v]["cost"]) or commander.at_limit(v)
 				lab.add_theme_color_override("font_color", UITheme.IVORY)
+			"strike":
+				ic.texture = UITheme.icon("strike")
+				lab.text = "発射"
+				key.text = "" if compact else "Q"
+				btn.disabled = b == null or not b.strike_ready()
+				cd.size.y = (btn.size.y - 4.0) * (1.0 - b.charge_ratio()) if b else 0.0
+				lab.add_theme_color_override("font_color", UITheme.GOLD)
 			"toggle":
 				ic.texture = UITheme.icon({"build": "construct", "shrines": "bld_sanctum"}.get(v, "cancel"))
-				lab.text = {"build": "建設", "shrines": "祠"}.get(v, "戻る")
+				lab.text = {"build": "建設", "shrines": "祠・塔"}.get(v, "戻る")
 				key.text = "" if compact else {"build": "B", "shrines": "U"}.get(v, "")
 				btn.disabled = false
 				lab.add_theme_color_override("font_color", UITheme.GOLD)
@@ -907,6 +923,11 @@ func _update_selection() -> void:
 		var st := ""
 		if not b.built:
 			st = "建設中 %d%%" % int(b.progress * 100)
+		elif b.def.has("superweapon"):
+			var full: float = b.def["superweapon"]["charge"]
+			st = "発射できる：「発射」で着弾地点を選ぶ" if b.strike_ready() else "充填中 %d%%（あと%d秒）" % [int(b.charge_ratio() * 100.0), int(ceil(full - b.charge))]
+			if b.team != Defs.TEAM_PLAYER:
+				st = "敵の天罰の塔：充填 %d%%" % int(b.charge_ratio() * 100.0)
 		elif b.team == Defs.TEAM_PLAYER and not b.produces().is_empty():
 			var rally := "地面をタップで集結地点を指定" if Game.touch_input else "右クリックで集結地点を指定"
 			st = rally if b.production.is_empty() else "生産中: %s" % Defs.unit_name(b.production[0], 0)
@@ -1034,10 +1055,12 @@ func _goto_alert() -> void:
 func _on_mode(m: String) -> void:
 	if Game.touch_input:
 		mode_hint.text = {"MOVE": "移動先をタップ", "ATTACK": "攻撃目標か攻撃移動先をタップ", "PATROL": "巡回先をタップ",
-				"REPAIR": "修理対象をタップ", "SPECIAL": "特殊能力の目標地点をタップ", "PLACE": "建設地点をタップ（もう一度タップで建設）"}.get(m, "")
+				"REPAIR": "修理対象をタップ", "SPECIAL": "特殊能力の目標地点をタップ", "PLACE": "建設地点をタップ（もう一度タップで建設）",
+				"STRIKE": "着弾地点をタップ（ミニマップでも可）"}.get(m, "")
 	else:
 		mode_hint.text = {"MOVE": "移動先を選択", "ATTACK": "攻撃目標または攻撃移動先を選択", "PATROL": "巡回先を選択",
-				"REPAIR": "修理対象を選択", "SPECIAL": "特殊能力の目標地点を選択", "PLACE": "建設地点を選択（右クリック／Escで取消・Shiftで連続）"}.get(m, "")
+				"REPAIR": "修理対象を選択", "SPECIAL": "特殊能力の目標地点を選択", "PLACE": "建設地点を選択（右クリック／Escで取消・Shiftで連続）",
+				"STRIKE": "着弾地点を選択（ミニマップでも可・右クリック／Escで取消）"}.get(m, "")
 	if cancel_button:
 		cancel_button.visible = m != "NONE"
 	if m == "NONE":

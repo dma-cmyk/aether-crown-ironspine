@@ -24,6 +24,8 @@ var _fire_t := 0.0
 var _turret_i := 0
 var _collapse := 0.0
 var _stacks: Array[int] = []
+## Tower of Judgement: seconds of charge gathered (full at def.superweapon.charge).
+var charge := 0.0
 
 
 func setup(id: String, t: int, pos: Vector3, face: float, is_built: bool) -> void:
@@ -97,6 +99,23 @@ func display_name() -> String:
 
 func description() -> String:
 	return Defs.building_desc(def_id, team)
+
+
+func strike_ready() -> bool:
+	return alive and built and def.has("superweapon") and charge >= float(def["superweapon"]["charge"])
+
+
+## 0..1 of the superweapon's charge.
+func charge_ratio() -> float:
+	return clampf(charge / float(def["superweapon"]["charge"]), 0.0, 1.0) if def.has("superweapon") else 0.0
+
+
+func fire_superweapon(at: Vector3) -> bool:
+	if not strike_ready():
+		return false
+	charge = 0.0
+	World.inst.projectiles.judgement(self, at)
+	return true
 
 
 func produces() -> Array:
@@ -181,7 +200,16 @@ func tick(dt: float) -> void:
 			World.inst.sfx.play_at("build_done", global_position)
 			if team == Defs.TEAM_PLAYER:
 				World.inst.raise_alert(global_position, "%s 完成" % display_name(), team)
+			elif def.has("superweapon"):
+				# fair warning: the player learns where the enemy's superweapon stands
+				World.inst.raise_alert(global_position, "敵が%sを完成させた！ 壊しに行け" % display_name(), Defs.TEAM_PLAYER)
 		return
+	if def.has("superweapon"):
+		var full: float = def["superweapon"]["charge"]
+		if charge < full:
+			charge = minf(full, charge + dt)
+			if charge >= full and team == Defs.TEAM_PLAYER:
+				World.inst.raise_alert(global_position, "%sの充填が完了した" % display_name(), team)
 	if not production.is_empty():
 		prod_t += dt * build_speed_mult()
 		var uid := production[0]

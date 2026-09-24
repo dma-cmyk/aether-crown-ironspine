@@ -58,7 +58,7 @@ static func capture(m: Node) -> Dictionary:
 	var out_blds := []
 	for b: Building in blds:
 		out_blds.append({"id": b.def_id, "team": b.team, "at": _xz(b.global_position), "facing": b.facing, "hp": b.hp,
-				"tag": b.tag, "built": b.built, "progress": b.progress, "production": Array(b.production), "prod_t": b.prod_t,
+				"tag": b.tag, "built": b.built, "progress": b.progress, "production": Array(b.production), "prod_t": b.prod_t, "charge": b.charge,
 				"rally": _xz(b.rally) if b.rally != Vector3.INF else []})
 	var sites := []
 	for s in w.sites:
@@ -117,6 +117,7 @@ static func restore_world(m: Node, d: Dictionary) -> void:
 		b.restore_progress(float(bd["progress"]), float(bd["hp"]))
 		b.production.assign(bd["production"])
 		b.prod_t = float(bd["prod_t"])
+		b.charge = float(bd.get("charge", 0.0))
 		if not bd["rally"].is_empty():
 			b.rally = _v3(bd["rally"])
 		ents.append(b)

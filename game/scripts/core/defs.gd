@@ -255,6 +255,15 @@ const BUILDINGS := {
 		"hp": 1400.0, "radius": 9.5, "footprint": 9.0, "cost": {"material": 220, "aether": 200}, "build_time": 40.0,
 		"produces": ["angel"], "pop": 0, "model": "sanctum", "icon": "unit_angel", "buildable": true, "hotkey": "Y", "vision": 32.0,
 	},
+	# the superweapon: one per side, charges for four minutes, then strikes anywhere on the map
+	# after a warning both sides can see. Citadels and gates lose at most "cap" of their health.
+	"judgement": {
+		"name": ["天罰の塔", "ヴァルケシュ滅びの塔"], "short": "天罰の塔",
+		"jp": "天罰の塔。約4分ごとに、マップのどこへでも巨大な光の柱を落とせる（1人1基まで）。発射すると相手にも着弾地点が知らされ、10秒後に着弾する。",
+		"hp": 3200.0, "radius": 8.0, "footprint": 7.5, "cost": {"material": 600, "aether": 600}, "build_time": 90.0,
+		"produces": [], "pop": 0, "model": "judgement", "buildable": true, "hotkey": "U", "vision": 40.0, "limit": 1,
+		"superweapon": {"charge": 240.0, "delay": 10.0, "radius": 22.0, "damage": 1400.0, "cap": 0.3},
+	},
 	# the old all-in-one shrine: no longer in the build menu, kept for saves and scenarios
 	"sanctum": {
 		"name": ["神獣の祠", "ヴァルケシュの獣穴"], "short": "神獣の祠",
@@ -267,6 +276,8 @@ const BUILDINGS := {
 ## The citadel's build menu; its seventh button opens the shrines.
 const BUILD_ORDER := ["barracks", "foundry", "skyport", "refinery", "habitat", "bastion"]
 const SHRINES := ["sanctum_cerberus", "sanctum_cyclops", "sanctum_griffin", "sanctum_dragon", "sanctum_demon", "sanctum_angel"]
+## The second page of the build menu: the shrines and the Tower of Judgement.
+const SPECIAL_BUILDS := ["sanctum_cerberus", "sanctum_cyclops", "sanctum_griffin", "sanctum_dragon", "sanctum_demon", "sanctum_angel", "judgement"]
 
 const SPECIALS := {
 	"aether_volley": {"name": "Aether Volley", "jp": "エーテル弾：8秒間、射撃速度2倍・装甲貫通。", "cooldown": 40.0, "duration": 8.0},

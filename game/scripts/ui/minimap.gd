@@ -52,7 +52,12 @@ func map_to_world(m: Vector2) -> Vector3:
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
-		if mb.button_index == MOUSE_BUTTON_LEFT:
+		if mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed and commander.mode == Commander.Mode.STRIKE:
+			# the Tower of Judgement can be aimed anywhere on the map
+			if commander.strike_at(map_to_world(mb.position)):
+				world.sfx.play_ui("confirm")
+			accept_event()
+		elif mb.button_index == MOUSE_BUTTON_LEFT:
 			_drag = mb.pressed
 			if mb.pressed:
 				camera.look_at_point(map_to_world(mb.position))

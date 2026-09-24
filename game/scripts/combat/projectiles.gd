@@ -55,6 +55,27 @@ func strike(source: Entity, target: Entity, delay: float, dmg: float, splash: fl
 			"class": wclass, "team": source.team, "kind": kind, "air": target.is_air})
 
 
+## Tower of Judgement: a warning both sides see at `at` for the delay, then a pillar of light.
+## Destroying the tower before it lands calls the strike off.
+func judgement(source: Building, at: Vector3) -> void:
+	var sw: Dictionary = source.def["superweapon"]
+	var w := World.inst
+	var p := Vector3(at.x, w.terrain.ground_at(at.x, at.z), at.z)
+	strikes.append({"t": float(sw["delay"]), "src": source, "target": null, "pos": p, "dmg": float(sw["damage"]),
+			"splash": float(sw["radius"]), "class": "judgement", "team": source.team, "kind": "judgement", "air": true,
+			"cap": float(sw["cap"]), "pulse": 0.0, "delay": float(sw["delay"])})
+	var sec := int(sw["delay"])
+	if source.team == Defs.TEAM_PLAYER:
+		w.raise_alert(p, "%sを発射した。%d秒後に着弾" % [source.display_name(), sec], Defs.TEAM_PLAYER)
+	else:
+		w.raise_alert(p, "敵の%sが発射された！ %d秒後に着弾（Space で着弾地点へ）" % [source.display_name(), sec], Defs.TEAM_PLAYER)
+	var c := Defs.team_glow(source.team)
+	var top := source.global_position + Vector3(0, 30, 0)
+	w.fx.light_flash(top, c, 12.0)
+	w.fx.beam(top, top + Vector3(0, 160, 0), c, 1.2)
+	w.sfx.play_at("beam", source.global_position)
+
+
 ## Dragon Inferno: one burst of fire on the ground.
 func firestorm(source: Entity, _from: Vector3, to: Vector3) -> void:
 	var p := Vector3(to.x, World.inst.terrain.ground_at(to.x, to.z), to.z)
@@ -67,6 +88,8 @@ func tick(dt: float) -> void:
 	var j := 0
 	while j < strikes.size():
 		strikes[j]["t"] -= dt
+		if strikes[j]["kind"] == "judgement":
+			_warn(strikes[j], dt)
 		if strikes[j]["t"] > 0.0:
 			j += 1
 			continue
@@ -136,6 +159,8 @@ func _land(st: Dictionary) -> void:
 		p = tgt.global_position
 	var fx := World.inst.fx
 	match st["kind"]:
+		"judgement":
+			_judgement_lands(st, src)
 		"smash":
 			Combat.splash(p, st["splash"], st["dmg"], st["class"], st["team"], src)
 			p.y = World.inst.terrain.ground_at(p.x, p.z)
@@ -164,6 +189,53 @@ func _land(st: Dictionary) -> void:
 				fx.burn(p, st["splash"] * 0.6, 2.5, c)
 				fx.crater(p, 1.8)
 			fx.light_flash(p + Vector3(0, 1.5, 0), c, 5.0)
+
+
+## The countdown: a red ring that tightens on the target and a thin beam from the sky.
+func _warn(st: Dictionary, dt: float) -> void:
+	st["pulse"] -= dt
+	if st["pulse"] > 0.0:
+		return
+	var left: float = st["t"]
+	st["pulse"] = 0.25 if left < 3.0 else 0.6
+	var p: Vector3 = st["pos"]
+	var r: float = st["splash"] * (0.3 + 0.7 * clampf(left / float(st["delay"]), 0.0, 1.0))
+	var fx := World.inst.fx
+	fx.ring_burst(p + Vector3(0, 0.6, 0), r, Color(1.0, 0.25, 0.2))
+	fx.beam(p + Vector3(0, 120, 0), p, Color(1.0, 0.3, 0.25, 0.5), 0.3)
+
+
+func _judgement_lands(st: Dictionary, src: Entity) -> void:
+	var w := World.inst
+	var p: Vector3 = st["pos"]
+	var r: float = st["splash"]
+	for e: Entity in w.query(p, r):
+		if e.team == st["team"] or not e.alive:
+			continue
+		var d := Vector2(e.global_position.x - p.x, e.global_position.z - p.z).length() - e.radius * 0.5
+		if d > r:
+			continue
+		var dmg: float = st["dmg"] * clampf(1.0 - d / r, 0.35, 1.0)
+		if e.is_building and e.def_id in ["citadel", "gate"]:
+			dmg = minf(dmg, e.max_hp * float(st["cap"]))
+		e.take_damage(dmg, "judgement", src)
+	var c := Defs.team_glow(st["team"])
+	var fx := w.fx
+	for k in 5:
+		var off := Vector3(randf_range(-3, 3), 0, randf_range(-3, 3))
+		fx.beam(p + off + Vector3(0, 180, 0), p + off, c.lerp(Color.WHITE, 0.5), 1.4)
+	fx.light_flash(p + Vector3(0, 6, 0), c.lerp(Color.WHITE, 0.4), 16.0)
+	for k in 10:
+		var a := k / 10.0 * TAU
+		var q := p + Vector3(cos(a), 0, sin(a)) * r * 0.55
+		q.y = w.terrain.ground_at(q.x, q.z)
+		fx.explosion(q + Vector3(0, 0.8, 0), 2.4, k * 0.05)
+		fx.burn(q, 3.0, 5.0, c)
+	fx.explosion(p + Vector3(0, 1.0, 0), 4.0)
+	fx.crater(p, r * 0.35)
+	fx.debris(p, 14, true)
+	_quake(p, r * 0.5, 1.2)
+	w.sfx.play_at("explosion_big", p)
 
 
 ## Ground shock from a club blow or a boulder: dust ring, stones, scorch and a thud.

@@ -6,7 +6,7 @@ signal selection_changed
 signal mode_changed(mode: String)
 signal order_issued(kind: String, pos: Vector3)
 
-enum Mode { NONE, MOVE, ATTACK, PATROL, REPAIR, SPECIAL, PLACE, RALLY }
+enum Mode { NONE, MOVE, ATTACK, PATROL, REPAIR, SPECIAL, PLACE, RALLY, STRIKE }
 
 var world: World
 var camera: CameraRig
@@ -26,6 +26,8 @@ var _last_click_entity: Entity
 var _last_group_key := -1
 var _last_group_time := 0.0
 var hud: Control
+## The Tower of Judgement waiting for a target (Mode.STRIKE).
+var strike_from: Building
 
 
 func setup(w: World, cam: CameraRig) -> void:
@@ -406,6 +408,10 @@ func _building_key(b: Building, ev: InputEventKey) -> void:
 	if b.def_id == "citadel" and ev.shift_pressed == false and hud and hud.has_method("citadel_build_mode") and hud.citadel_build_mode():
 		hud.build_key(i)
 		return
+	if b.def.has("superweapon"):
+		if i == 0:
+			begin_strike(b)
+		return
 	var prods: Array = b.produces()
 	if i < prods.size():
 		queue(b, prods[i])
@@ -514,6 +520,10 @@ func _confirm_mode(pos: Vector2, shift: bool) -> void:
 					var sid: String = u.def.get("special", "")
 					if sid != "" and Defs.SPECIALS[sid].get("targeted", false):
 						u.use_special(ground)
+		Mode.STRIKE:
+			if ground == Vector3.INF or not strike_at(ground):
+				world.sfx.play_ui("error")
+				return
 		Mode.PLACE:
 			if ghost_valid and ground != Vector3.INF:
 				_place_building(ground)
@@ -526,8 +536,38 @@ func _confirm_mode(pos: Vector2, shift: bool) -> void:
 	set_mode(Mode.NONE)
 
 
+# ---------------------------------------------------------------- superweapon
+func begin_strike(b: Building) -> void:
+	if not b.strike_ready():
+		world.sfx.play_ui("error")
+		world.raise_alert(Vector3.ZERO, "充填中（%d%%）" % int(b.charge_ratio() * 100.0), Defs.TEAM_PLAYER, "strike_err", 1.0)
+		return
+	strike_from = b
+	set_mode(Mode.STRIKE)
+
+
+## Fire the waiting tower at a point (the battlefield or the minimap).
+func strike_at(p: Vector3) -> bool:
+	if mode != Mode.STRIKE or strike_from == null or not is_instance_valid(strike_from):
+		return false
+	var ok := strike_from.fire_superweapon(p)
+	if ok:
+		set_mode(Mode.NONE)
+	return ok
+
+
+func at_limit(id: String) -> bool:
+	var lim := int(Defs.BUILDINGS[id].get("limit", 0))
+	return lim > 0 and world.count_buildings(Defs.TEAM_PLAYER, id) >= lim
+
+
 # ---------------------------------------------------------------- building placement
 func begin_place(id: String) -> void:
+	if at_limit(id):
+		world.sfx.play_ui("error")
+		world.raise_alert(Vector3.ZERO, "%sは%d基までしか建てられない" % [Defs.building_name(id, 0), int(Defs.BUILDINGS[id]["limit"])],
+				Defs.TEAM_PLAYER, "place_err", 1.0)
+		return
 	var cost: Dictionary = Defs.BUILDINGS[id]["cost"]
 	if not world.player(0).can_afford(cost):
 		world.sfx.play_ui("error")
