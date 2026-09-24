@@ -17,42 +17,37 @@ static var _icons := {}
 static var _theme: Theme
 
 
-static func _sys(key: String, names: PackedStringArray, weight: int = 400, italic: bool = false, spacing: int = 0) -> Font:
+## Noto subsets shipped in assets/fonts (tools/fonts/subset_fonts.py): the Web build has no
+## system fonts. `jp` fills in Japanese for the Latin-only faces.
+static func _font(key: String, face: String, jp: String = "", spacing: int = 0) -> Font:
 	if not _fonts.has(key):
-		var f := SystemFont.new()
-		f.font_names = names
-		f.font_weight = weight
-		f.font_italic = italic
-		f.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
-		f.hinting = TextServer.HINTING_LIGHT
-		if spacing != 0:
-			var v := FontVariation.new()
-			v.base_font = f
-			v.spacing_glyph = spacing
-			_fonts[key] = v
-		else:
-			_fonts[key] = f
+		var v := FontVariation.new()
+		v.base_font = load("res://assets/fonts/%s.woff2" % face)
+		if jp != "":
+			v.fallbacks = [load("res://assets/fonts/%s.woff2" % jp)]
+		v.spacing_glyph = spacing
+		_fonts[key] = v
 	return _fonts[key]
 
 
 static func title_font() -> Font:
-	return _sys("title", PackedStringArray(["Noto Serif Display", "Noto Serif", "DejaVu Serif"]), 600, false, 2)
+	return _font("title", "NotoSerifDisplay-SemiBold", "NotoSerifCJKjp-Medium", 2)
 
 
 static func serif_font() -> Font:
-	return _sys("serif", PackedStringArray(["Noto Serif", "DejaVu Serif", "Noto Serif CJK JP"]), 500)
+	return _font("serif", "NotoSerif-Medium", "NotoSerifCJKjp-Medium")
 
 
 static func italic_font() -> Font:
-	return _sys("italic", PackedStringArray(["Noto Serif", "DejaVu Serif"]), 400, true)
+	return _font("italic", "NotoSerif-Italic", "NotoSerifCJKjp-Medium")
 
 
 static func body_font() -> Font:
-	return _sys("body", PackedStringArray(["Noto Sans CJK JP", "Noto Sans", "DejaVu Sans"]), 500)
+	return _font("body", "NotoSansCJKjp-Medium")
 
 
 static func bold_font() -> Font:
-	return _sys("bold", PackedStringArray(["Noto Sans CJK JP", "Noto Sans", "DejaVu Sans"]), 700)
+	return _font("bold", "NotoSansCJKjp-Bold")
 
 
 static func icon(name: String) -> Texture2D:

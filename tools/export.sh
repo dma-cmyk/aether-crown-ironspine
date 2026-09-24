@@ -11,6 +11,7 @@ out="$PWD/build"
 rm -rf "$out/pkg"
 mkdir -p "$out/pkg/linux/$name" "$out/pkg/windows/$name"
 godot --headless --path game --import >/dev/null 2>&1
+godot --headless --path game --script res://scripts/dev/check_glyphs.gd
 godot --headless --path game --export-release "Linux" "$out/pkg/linux/$name/$name.x86_64"
 godot --headless --path game --export-release "Windows" "$out/pkg/windows/$name/$name.exe"
 godot --headless --path game --script res://scripts/dev/licenses.gd -- "$out/pkg/THIRD-PARTY-NOTICES.txt"
