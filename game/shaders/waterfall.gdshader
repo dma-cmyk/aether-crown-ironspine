@@ -1,6 +1,8 @@
 shader_type spatial;
 render_mode blend_mix, depth_draw_never, cull_disabled, diffuse_burley, specular_schlick_ggx, shadows_disabled;
 
+#include "res://shaders/compat.gdshaderinc"
+
 uniform sampler2D foam_noise : filter_linear_mipmap, repeat_enable;
 uniform float speed = 1.3;
 uniform vec3 water_color : source_color = vec3(0.45, 0.60, 0.64);
@@ -21,7 +23,7 @@ void fragment() {
 	vec3 col = mix(water_color, foam_color, clamp(streak + bottom * 0.6, 0.0, 1.0));
 	ALBEDO = col;
 	ROUGHNESS = 0.25;
-	EMISSION = col * 0.08;
+	EMISSION = linear_out(linear_in(col) * 0.08);
 	float edge = smoothstep(0.0, 0.14, UV.x) * smoothstep(1.0, 0.86, UV.x);
 	float top = smoothstep(0.0, 0.12, UV.y);
 	ALPHA = edge * top * clamp(0.55 + streak * 0.45, 0.0, 1.0);

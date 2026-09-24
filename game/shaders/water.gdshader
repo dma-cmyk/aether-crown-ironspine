@@ -1,6 +1,8 @@
 shader_type spatial;
 render_mode blend_mix, depth_draw_always, cull_back, diffuse_burley, specular_schlick_ggx;
 
+#include "res://shaders/compat.gdshaderinc"
+
 uniform sampler2D depth_tex : hint_depth_texture, filter_linear_mipmap;
 uniform sampler2D wave_a : hint_normal, filter_linear_mipmap, repeat_enable;
 uniform sampler2D wave_b : hint_normal, filter_linear_mipmap, repeat_enable;
@@ -21,7 +23,7 @@ void vertex() {
 
 void fragment() {
 	float raw = texture(depth_tex, SCREEN_UV).r;
-	vec4 v = INV_PROJECTION_MATRIX * vec4(SCREEN_UV * 2.0 - 1.0, raw, 1.0);
+	vec4 v = INV_PROJECTION_MATRIX * depth_ndc(SCREEN_UV, raw);
 	v.xyz /= v.w;
 	float water_depth = max(0.0, (-v.z) - (-VERTEX.z));
 	float d = clamp(water_depth / depth_fade, 0.0, 1.0);

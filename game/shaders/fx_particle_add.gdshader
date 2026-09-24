@@ -1,6 +1,8 @@
 shader_type spatial;
 render_mode unshaded, blend_add, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled;
 
+#include "res://shaders/compat.gdshaderinc"
+
 uniform sampler2D tex : source_color, hint_default_white, filter_linear_mipmap;
 uniform float energy = 2.2;
 
@@ -19,6 +21,6 @@ void vertex() {
 void fragment() {
 	vec4 tx = texture(tex, UV);
 	float fade = 1.0 - smoothstep(0.35, 1.0, v_t);
-	ALBEDO = COLOR.rgb * tx.rgb * energy;
+	ALBEDO = linear_out(COLOR.rgb * energy) * tx.rgb;
 	ALPHA = tx.a * COLOR.a * fade;
 }

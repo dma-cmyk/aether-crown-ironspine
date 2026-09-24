@@ -13,6 +13,8 @@ func setup(model: String, team: int) -> void:
 	mm = MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_custom_data = true
+	# white instance colours: Compatibility (Web) multiplies them in even when a mesh only needs custom data
+	mm.use_colors = true
 	mm.mesh = mi.mesh
 	mm.instance_count = 128
 	mm.visible_instance_count = 0
@@ -28,7 +30,10 @@ func alloc(member: Dictionary) -> void:
 		var keep := count
 		mm.instance_count = mm.instance_count * 2
 		mm.visible_instance_count = keep
+		for i in keep:
+			mm.set_instance_color(i, Color.WHITE)
 	member["slot"] = count
+	mm.set_instance_color(count, Color.WHITE)
 	owners.resize(maxi(owners.size(), count + 1))
 	owners[count] = member
 	count += 1

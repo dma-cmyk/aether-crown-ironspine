@@ -1,6 +1,8 @@
 shader_type spatial;
 render_mode unshaded, blend_mix, depth_draw_never, cull_disabled, shadows_disabled;
 
+#include "res://shaders/compat.gdshaderinc"
+
 uniform sampler2D tex : source_color, hint_default_white, filter_linear_mipmap;
 uniform sampler2D depth_tex : hint_depth_texture, filter_linear;
 uniform float soft_distance = 1.6;
@@ -21,11 +23,11 @@ void fragment() {
 	vec4 tx = texture(tex, UV);
 	float fade = smoothstep(0.0, 0.08, v_t) * (1.0 - smoothstep(0.5, 1.0, v_t));
 	float raw = texture(depth_tex, SCREEN_UV).r;
-	vec4 vp = INV_PROJECTION_MATRIX * vec4(SCREEN_UV * 2.0 - 1.0, raw, 1.0);
+	vec4 vp = INV_PROJECTION_MATRIX * depth_ndc(SCREEN_UV, raw);
 	vp.xyz /= vp.w;
 	float soft = clamp((VERTEX.z - vp.z) / soft_distance, 0.0, 1.0);
 	// fake top light
 	float lit = mix(0.75, 1.15, UV.y < 0.5 ? 1.0 - UV.y : 0.5);
-	ALBEDO = COLOR.rgb * tx.rgb * lit;
+	ALBEDO = linear_out(COLOR.rgb * lit) * tx.rgb;
 	ALPHA = tx.a * COLOR.a * fade * soft;
 }

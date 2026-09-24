@@ -1,6 +1,8 @@
 shader_type spatial;
 render_mode cull_back, diffuse_burley, specular_schlick_ggx;
 
+#include "res://shaders/compat.gdshaderinc"
+
 // Baked infantry mesh: COLOR.rgb albedo, COLOR.a part id, UV (metal, rough), UV2 (team, emission).
 // INSTANCE_CUSTOM: x walk phase 0..1, y walk amount, z recoil, w death 0..1.
 uniform vec3 team_color : source_color = vec3(0.12, 0.22, 0.52);
@@ -46,9 +48,10 @@ void vertex() {
 }
 
 void fragment() {
-	vec3 base = mix(v_albedo, team_color * v_albedo * 2.0, v_te.x);
-	ALBEDO = mix(base, glow_color * 0.6, v_te.y);
+	vec3 glow = linear_in(glow_color);
+	vec3 base = mix(v_albedo, linear_in(team_color) * v_albedo * 2.0, v_te.x);
+	ALBEDO = linear_out(mix(base, glow * 0.6, v_te.y));
 	METALLIC = v_mr.x;
 	ROUGHNESS = clamp(v_mr.y, 0.05, 1.0);
-	EMISSION = glow_color * v_te.y * glow_energy;
+	EMISSION = linear_out(glow * v_te.y * glow_energy);
 }

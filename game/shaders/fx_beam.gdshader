@@ -1,6 +1,8 @@
 shader_type spatial;
 render_mode unshaded, blend_add, depth_draw_never, cull_disabled, shadows_disabled, world_vertex_coords, fog_disabled;
 
+#include "res://shaders/compat.gdshaderinc"
+
 // Instance transform: basis.x = segment (tail -> head), origin = tail. custom.y = width, custom.z = beam flag.
 varying float v_beam;
 
@@ -22,6 +24,6 @@ void fragment() {
 	float core = pow(across, 3.0);
 	float along = v_beam > 0.5 ? 1.0 : mix(0.15, 1.0, UV.x);
 	vec3 c = COLOR.rgb * (1.6 + core * 2.5);
-	ALBEDO = c;
+	ALBEDO = linear_out(c);
 	ALPHA = pow(across, 1.4) * along * COLOR.a;
 }

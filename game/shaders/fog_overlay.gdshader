@@ -1,6 +1,8 @@
 shader_type spatial;
 render_mode unshaded, blend_mix, depth_test_disabled, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled;
 
+#include "res://shaders/compat.gdshaderinc"
+
 uniform sampler2D depth_tex : hint_depth_texture, filter_nearest;
 uniform sampler2D fog_tex : filter_linear, repeat_disable;
 uniform float map_size = 400.0;
@@ -12,10 +14,10 @@ void vertex() {
 
 void fragment() {
 	float raw = texture(depth_tex, SCREEN_UV).r;
-	if (raw <= 0.00001) {
+	if (depth_is_sky(raw)) {
 		discard;
 	}
-	vec4 ndc = vec4(SCREEN_UV * 2.0 - 1.0, raw, 1.0);
+	vec4 ndc = depth_ndc(SCREEN_UV, raw);
 	vec4 wp = INV_VIEW_MATRIX * (INV_PROJECTION_MATRIX * ndc);
 	wp.xyz /= wp.w;
 	vec2 uv = wp.xz / map_size + 0.5;

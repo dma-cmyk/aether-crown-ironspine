@@ -44,6 +44,11 @@ func build() -> void:
 	env.adjustment_enabled = true
 	env.adjustment_contrast = 1.06
 	env.adjustment_saturation = 1.06
+	if compat():
+		# Compatibility (the Web build) adds shadowed sunlight in a pass of its own after tonemapping,
+		# which brightens lit ground and fog; these values (and the sun below) match the desktop look
+		env.tonemap_exposure = 0.95
+		env.fog_density = 0.0009
 	world_env = WorldEnvironment.new()
 	world_env.environment = env
 	add_child(world_env)
@@ -51,7 +56,7 @@ func build() -> void:
 	sun = DirectionalLight3D.new()
 	sun.name = "Sun"
 	sun.light_color = Color(1.0, 0.9, 0.78)
-	sun.light_energy = 1.75
+	sun.light_energy = 0.8 if compat() else 1.75
 	sun.rotation_degrees = Vector3(-40.0, -65.0, 0.0)
 	sun.shadow_enabled = true
 	sun.shadow_bias = 0.04
@@ -81,5 +86,12 @@ func apply_quality() -> void:
 		var forward_plus := RenderingServer.get_current_rendering_method() == "forward_plus"
 		vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if (q < 2 and forward_plus) else Viewport.SCALING_3D_MODE_BILINEAR
 		vp.scaling_3d_scale = [0.67, 0.8, 1.0][q]
-		vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if q < 2 else Viewport.SCREEN_SPACE_AA_SMAA
-		vp.msaa_3d = Viewport.MSAA_DISABLED
+		if compat():
+			vp.msaa_3d = Viewport.MSAA_2X if q == 2 else Viewport.MSAA_DISABLED
+		else:
+			vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if q < 2 else Viewport.SCREEN_SPACE_AA_SMAA
+			vp.msaa_3d = Viewport.MSAA_DISABLED
+
+
+static func compat() -> bool:
+	return RenderingServer.get_current_rendering_method() == "gl_compatibility"

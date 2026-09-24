@@ -1,6 +1,8 @@
 shader_type spatial;
 render_mode unshaded, blend_mix, depth_draw_never, cull_disabled, shadows_disabled;
 
+#include "res://shaders/compat.gdshaderinc"
+
 // Looping ambient smoke (chimneys, waterfall spray). Each instance replays one puff forever;
 // the per-cycle randomness comes from hashing the instance seed with the cycle number.
 // MODEL_MATRIX columns: 0 = base velocity, 1 = velocity jitter, 2 = (spread xz, spread y, wind), 3 = origin.
@@ -47,10 +49,10 @@ void fragment() {
 	vec4 tx = texture(tex, UV);
 	float fade = smoothstep(0.0, 0.08, v_t) * (1.0 - smoothstep(0.5, 1.0, v_t));
 	float raw = texture(depth_tex, SCREEN_UV).r;
-	vec4 vp = INV_PROJECTION_MATRIX * vec4(SCREEN_UV * 2.0 - 1.0, raw, 1.0);
+	vec4 vp = INV_PROJECTION_MATRIX * depth_ndc(SCREEN_UV, raw);
 	vp.xyz /= vp.w;
 	float soft = clamp((VERTEX.z - vp.z) / soft_distance, 0.0, 1.0);
 	float lit = mix(0.75, 1.15, UV.y < 0.5 ? 1.0 - UV.y : 0.5);
-	ALBEDO = COLOR.rgb * tx.rgb * lit;
+	ALBEDO = linear_out(COLOR.rgb * lit) * tx.rgb;
 	ALPHA = tx.a * COLOR.a * fade * soft;
 }
