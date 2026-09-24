@@ -376,5 +376,12 @@ def export_glb(path, vertex_colors=False):
 
 
 def save_blend(path):
+    """Write every data-block except the UI layout (its file browser remembers the home folder)."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    bpy.ops.wm.save_as_mainfile(filepath=path, compress=True)
+    ui = (bpy.types.Screen, bpy.types.WorkSpace, bpy.types.WindowManager)
+    ids = set()
+    for name in dir(bpy.data):
+        coll = getattr(bpy.data, name, None)
+        if isinstance(coll, bpy.types.bpy_prop_collection):
+            ids.update(i for i in coll if isinstance(i, bpy.types.ID) and not isinstance(i, ui))
+    bpy.data.libraries.write(path, ids, compress=True)
