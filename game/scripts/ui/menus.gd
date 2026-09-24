@@ -30,11 +30,11 @@ func setup(h: HUD) -> void:
 		items.append(["全画面の切り替え", Game.toggle_fullscreen])
 	elif not Game.is_web():
 		items.append(["ゲームを終了", _quit])
-	pause_box = _box("PAUSED", items)
+	pause_box = _box("一時停止", items)
 	settings_box = SettingsPanel.make(func(): settings_box.visible = false; pause_box.visible = true)
 	add_child(settings_box)
 	settings_box.visible = false
-	end_box = _box("VICTORY", [["次のミッションへ", _next], ["もう一度", _restart], ["タイトルへ戻る", _title]])
+	end_box = _box("勝利", [["次のミッションへ", _next], ["もう一度", _restart], ["タイトルへ戻る", _title]])
 	var v := end_box.get_child(0) as VBoxContainer
 	next_button = v.get_child(1) as Button
 	end_title = v.get_child(0) as Label
@@ -97,11 +97,11 @@ func toggle_pause() -> void:
 func show_end(victory: bool) -> void:
 	var w := hud.world
 	var p := w.player(0)
-	end_title.text = "VICTORY" if victory else "DEFEAT"
+	end_title.text = "勝利" if victory else "敗北"
 	end_title.add_theme_color_override("font_color", UITheme.GOLD if victory else UITheme.RED)
 	var scn: Scenario = hud.match_node.scenario
 	end_sub.text = str(scn.data.get("victory_text" if victory else "defeat_text",
-			"The Crown ascends. Ironspine stands." if victory else "The Ironspine has fallen silent."))
+			"王冠は昇る。アイアンスパインは健在だ。" if victory else "アイアンスパインは沈黙した。"))
 	next_button.visible = victory and scn.next_path() != ""
 	var t := int(w.match_time)
 	end_stats.text = "戦闘時間 %02d:%02d\n生産 %d   損失 %d   撃破 %d\n占領した拠点 %d" % [t / 60, t % 60, p.stats["built"], p.stats["lost"], p.stats["kills"], p.stats["captured"]]
@@ -176,7 +176,7 @@ class SettingsPanel:
 		var v := VBoxContainer.new()
 		v.add_theme_constant_override("separation", 4 if Game.compact else 12)
 		p.add_child(v)
-		var t := UITheme.label("SETTINGS", 24 if Game.compact else 30, UITheme.IVORY, UITheme.title_font(), 2)
+		var t := UITheme.label("設定", 24 if Game.compact else 30, UITheme.IVORY, UITheme.title_font(), 2)
 		t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(t)
 		var q := HBoxContainer.new()

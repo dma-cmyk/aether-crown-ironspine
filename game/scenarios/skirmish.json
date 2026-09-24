@@ -6,12 +6,12 @@
 	"subtitle": "Skirmish",
 	"description": "台本のない通常の対戦。敵 AI は最初から攻めてくる。先に相手の本拠地を落とした側の勝ち。",
 	"map": "ironspine",
-	"victory_text": "The Dominion's seat lies in ruin.",
-	"defeat_text": "The Crown's seat has fallen.",
+	"victory_text": "ヴァルケシュの本拠地は廃墟と化した。",
+	"defeat_text": "王冠の本拠地が落ちた。",
 	"teams": {"1": {"aggression": 1}},
 	"objectives": {
-		"title": "Skirmish",
-		"subtitle": "Break the Varkesh Citadel.",
+		"title": "自由戦",
+		"subtitle": "ヴァルケシュ本拠地を破壊せよ。",
 		"list": [
 			{"id": "citadel", "text": "ヴァルケシュ本拠地を破壊する"},
 			{
@@ -26,8 +26,8 @@
 			"id": "intro",
 			"when": {"type": "time", "at": 0},
 			"do": [
-				{"type": "banner", "title": "SKIRMISH", "text": "先に相手の本拠地を落とした側の勝ち。", "seconds": 6},
-				{"type": "advisor", "text": "FORTUNE FAVOURS\nTHE PREPARED."}
+				{"type": "banner", "title": "自由戦", "text": "先に相手の本拠地を落とした側の勝ち。", "seconds": 6},
+				{"type": "advisor", "text": "備えある者に\n勝機あり。"}
 			]
 		}
 	]

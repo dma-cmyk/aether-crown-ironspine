@@ -7,13 +7,13 @@
 	"description": "ヴァルケシュ軍の4度の攻勢からアイアンスパイン門を守り、援軍と合流して中央ネクサスを奪い、ヴァルケシュ本拠地を破壊する。",
 	"map": "ironspine",
 	"next": "relay_strike",
-	"victory_text": "The Crown ascends. Ironspine stands.",
-	"defeat_text": "The Ironspine has fallen silent.",
+	"victory_text": "王冠は昇る。アイアンスパインは健在だ。",
+	"defeat_text": "アイアンスパインは沈黙した。",
 	"teams": {"1": {"aggression": 0}},
 	"vars": {"waves": 0, "gate_lost": 0, "phase": 0},
 	"objectives": {
-		"title": "Hold the Gate",
-		"subtitle": "For a Stronger Tomorrow.",
+		"title": "門を守れ",
+		"subtitle": "より強い明日のために。",
 		"list": [
 			{
 				"id": "gate",
@@ -41,11 +41,11 @@
 			"do": [
 				{
 					"type": "banner",
-					"title": "HOLD THE GATE",
+					"title": "門を守れ",
 					"text": "ヴァルケシュ軍がアイアンスパイン門に迫っている。援軍到着まで持ちこたえよ。",
 					"seconds": 7
 				},
-				{"type": "advisor", "text": "SOME THINGS\nOUTLIVE EMPIRES."},
+				{"type": "advisor", "text": "帝国より\n長く残るものがある。"},
 				{"type": "focus", "at": [-51.5, 51.5]}
 			]
 		},
@@ -225,17 +225,17 @@
 				{"type": "focus", "at": [0, 0]},
 				{
 					"type": "banner",
-					"title": "REINFORCEMENTS HAVE ARRIVED",
+					"title": "援軍到着",
 					"text": "王冠の援軍が到着。中央ネクサスを奪取し、ヴァルケシュの本拠地を破壊せよ。",
 					"seconds": 7
 				},
-				{"type": "advisor", "text": "DISCIPLINE\nBUILDS WORLDS."},
+				{"type": "advisor", "text": "規律が\n世界を築く。"},
 				{"type": "sound", "name": "objective"},
 				{"type": "message", "text": "援軍が到着した（資材+400 / エーテル+200）", "at": [-120, 128]},
 				{
 					"type": "objectives",
-					"title": "Claim the Aether",
-					"subtitle": "Break the Varkesh Citadel.",
+					"title": "エーテルを奪え",
+					"subtitle": "ヴァルケシュ本拠地を破壊せよ。",
 					"list": [
 						{
 							"id": "gate",
@@ -259,7 +259,7 @@
 			"when": {"type": "sites", "team": 0, "id": "central_nexus"},
 			"do": [
 				{"type": "focus", "at": [150, -150]},
-				{"type": "banner", "title": "THE NEXUS IS OURS", "text": "エーテルの流れは王冠のものだ。", "seconds": 5},
+				{"type": "banner", "title": "ネクサス奪取", "text": "エーテルの流れは王冠のものだ。", "seconds": 5},
 				{"type": "sound", "name": "objective"}
 			]
 		}

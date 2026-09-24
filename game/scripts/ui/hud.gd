@@ -199,7 +199,7 @@ func _build_resources() -> void:
 		ic.size = Vector2(42, 42)
 		ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		p.add_child(ic)
-		var nm := UITheme.label({"material": "Material", "aether": "Aether", "pop": "Population"}[key], 13, UITheme.TEXT_DIM, UITheme.serif_font())
+		var nm := UITheme.label({"material": "資材", "aether": "エーテル", "pop": "人口"}[key], 13, UITheme.TEXT_DIM, UITheme.serif_font())
 		nm.position = Vector2(60, 5)
 		p.add_child(nm)
 		var val := UITheme.label("0", 24, UITheme.IVORY, UITheme.title_font())
@@ -253,7 +253,7 @@ func _build_labels() -> void:
 	mode_hint = UITheme.label("", 15 if compact else 18, UITheme.GOLD, UITheme.serif_font(), 3)
 	mode_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(mode_hint)
-	_place(mode_hint, PRESET_CENTER_TOP, Vector2(0, 34 if compact else 96), Vector2(400 if compact else 700, 28))
+	_place(mode_hint, PRESET_CENTER_TOP, Vector2(0, 38 if compact else 96), Vector2(400 if compact else 700, 28))
 	if compact:
 		cancel_button = Button.new()
 		cancel_button.text = "取消"
@@ -262,7 +262,7 @@ func _build_labels() -> void:
 		cancel_button.visible = false
 		cancel_button.pressed.connect(commander.cancel_mode)
 		add_child(cancel_button)
-		_place(cancel_button, PRESET_CENTER_TOP, Vector2(0, 64), Vector2(120, 40))
+		_place(cancel_button, PRESET_CENTER_TOP, Vector2(0, 68), Vector2(120, 40))
 	banner = UITheme.label("", 28 if compact else 44, UITheme.IVORY, UITheme.title_font(), 6)
 	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(banner)
@@ -527,10 +527,10 @@ func _build_commands() -> void:
 		ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		ic.name = "Icon"
 		b.add_child(ic)
-		var lab := UITheme.label("", 9 if c else 11, UITheme.IVORY, UITheme.title_font())
+		var lab := UITheme.label("", 10 if c else 13, UITheme.IVORY, UITheme.bold_font())
 		lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		lab.position = Vector2(0, 34) if c else Vector2(0, 50)
-		lab.size = Vector2(bs.x, 14 if c else 18)
+		lab.position = Vector2(0, 33) if c else Vector2(0, 49)
+		lab.size = Vector2(bs.x, 15 if c else 20)
 		lab.clip_text = true
 		lab.name = "Label"
 		b.add_child(lab)
@@ -575,7 +575,7 @@ func _build_advisor() -> void:
 	shade.size = Vector2(224, 78)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	p.add_child(shade)
-	advisor_text = UITheme.label("DISCIPLINE\nBUILDS WORLDS.", 16, UITheme.IVORY, UITheme.title_font(), 3)
+	advisor_text = UITheme.label("規律が\n世界を築く。", 16, UITheme.IVORY, UITheme.title_font(), 3)
 	advisor_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	advisor_text.position = Vector2(10, 110)
 	advisor_text.size = Vector2(208, 60)
@@ -713,7 +713,7 @@ func _show_tip(i: int) -> void:
 				for u in commander.own_units():
 					var sid: String = u.def.get("special", "")
 					if sid != "":
-						tip_title.text = Defs.SPECIALS[sid]["name"].to_upper() + ("" if touch else "  [S]")
+						tip_title.text = Defs.special_name(sid) + ("" if touch else "  [S]")
 						tip_body.text = Defs.SPECIALS[sid]["jp"] + "\n再使用 %d秒" % int(Defs.SPECIALS[sid]["cooldown"])
 						break
 		"unit":
@@ -727,7 +727,7 @@ func _show_tip(i: int) -> void:
 			tip_cost.text = _cost_text(bd["cost"]) + "   建設 %d秒" % int(bd["build_time"])
 			tip_body.text = bd["jp"] + "\n本拠地・自軍の都市の近くに建設できる" + ("" if touch else "（Shiftで連続配置）")
 		"toggle":
-			tip_title.text = {"build": "CONSTRUCT", "shrines": "SHRINES"}.get(v, "BACK")
+			tip_title.text = {"build": "建設", "shrines": "祠"}.get(v, "戻る")
 			tip_body.text = {"build": "建設メニューを開く", "shrines": "神獣の祠を選ぶ（祠ごとに呼べる神獣が違う）",
 					"shrines_back": "建設メニューに戻る"}.get(v, "生産メニューに戻る")
 	tooltip.visible = true
@@ -794,7 +794,7 @@ func _update_commands() -> void:
 				lab.add_theme_color_override("font_color", UITheme.AETHER if active else UITheme.IVORY)
 			"unit":
 				ic.texture = UITheme.icon("unit_" + v)
-				lab.text = _short(Defs.unit_name(v, 0))
+				lab.text = Defs.unit_short(v)
 				key.text = "" if compact else PROD_KEYS[i]
 				btn.disabled = b == null or b.can_queue(v) != ""
 				lab.add_theme_color_override("font_color", UITheme.IVORY)
@@ -803,21 +803,16 @@ func _update_commands() -> void:
 					key.text = ("x%d" % n) if compact else "%s x%d" % [PROD_KEYS[i], n]
 			"bld":
 				ic.texture = UITheme.icon(Defs.building_icon(v))
-				lab.text = _short(Defs.building_name(v, 0))
+				lab.text = Defs.building_short(v)
 				key.text = "" if compact else PROD_KEYS[i]
 				btn.disabled = not p.can_afford(Defs.BUILDINGS[v]["cost"])
 				lab.add_theme_color_override("font_color", UITheme.IVORY)
 			"toggle":
 				ic.texture = UITheme.icon({"build": "construct", "shrines": "bld_sanctum"}.get(v, "cancel"))
-				lab.text = {"build": "CONSTRUCT", "shrines": "SHRINES"}.get(v, "BACK")
+				lab.text = {"build": "建設", "shrines": "祠"}.get(v, "戻る")
 				key.text = "" if compact else {"build": "B", "shrines": "U"}.get(v, "")
 				btn.disabled = false
 				lab.add_theme_color_override("font_color", UITheme.GOLD)
-
-
-static func _short(n: String) -> String:
-	var parts := n.split(" ")
-	return parts[parts.size() - 1].to_upper() if parts.size() > 1 else n.to_upper()
 
 
 # ---------------------------------------------------------------- selection panel
@@ -844,7 +839,7 @@ func _update_selection() -> void:
 	portrait.get_parent().visible = sel.size() <= 1
 	if sel.is_empty():
 		studio.show_entity("building", "citadel", Defs.TEAM_PLAYER)
-		sel_name.text = "COMMAND"
+		sel_name.text = "司令部"
 		sel_group.text = ""
 		sel_desc.text = "タップで選択・命令、長押しで範囲選択。" if Game.touch_input else "左ドラッグで範囲選択、右クリックで移動・攻撃。"
 		sel_hp.visible = false
@@ -873,7 +868,7 @@ func _update_selection() -> void:
 	sel_hp_text.text = "%d / %d" % [int(ceil(e.hp)), int(e.max_hp)]
 	var hp_fill := sel_hp.get_theme_stylebox("fill") as StyleBoxFlat
 	hp_fill.bg_color = Color(0.36, 0.86, 0.42) if e.team == Defs.TEAM_PLAYER else Defs.team_color(e.team)
-	sel_name.text = e.display_name().to_upper()
+	sel_name.text = e.display_name()
 	sel_desc.text = e.description()
 	sel_group.text = _group_label(e)
 	if e is Unit:
@@ -926,7 +921,7 @@ func _update_selection() -> void:
 func _group_label(e: Entity) -> String:
 	for k in commander.groups:
 		if e in commander.groups[k]:
-			return "SQUAD %d" % k
+			return "第%d部隊" % k
 	return ""
 
 
@@ -943,11 +938,11 @@ func _unit_status(u: Unit) -> String:
 	var sid: String = u.def.get("special", "")
 	if sid != "":
 		if u.special_time > 0.0:
-			parts.append("%s 発動中 %d秒" % [Defs.SPECIALS[sid]["name"], int(ceil(u.special_time))])
+			parts.append("%s 発動中 %d秒" % [Defs.special_name(sid), int(ceil(u.special_time))])
 		elif u.special_cd > 0.0:
-			parts.append("%s 再使用まで %d秒" % [Defs.SPECIALS[sid]["name"], int(ceil(u.special_cd))])
+			parts.append("%s 再使用まで %d秒" % [Defs.special_name(sid), int(ceil(u.special_cd))])
 		else:
-			parts.append("%s 使用可能 [S]" % Defs.SPECIALS[sid]["name"])
+			parts.append("%s 使用可能" % Defs.special_name(sid) + ("" if Game.touch_input else " [S]"))
 	var order_names := {Unit.Order.IDLE: "待機", Unit.Order.MOVE: "移動中", Unit.Order.ATTACK: "攻撃中", Unit.Order.ATTACK_MOVE: "攻撃移動",
 			Unit.Order.PATROL: "巡回中", Unit.Order.HOLD: "陣地保持", Unit.Order.REPAIR: "修理中"}
 	if u.team == Defs.TEAM_PLAYER:
@@ -1094,8 +1089,8 @@ func _process(delta: float) -> void:
 	res_labels["aether"].text = str(int(p.aether))
 	res_labels["pop"].text = "%d / %d" % [p.pop_used, p.pop_cap]
 	res_labels["pop"].add_theme_color_override("font_color", UITheme.RED if p.pop_used >= p.pop_cap else UITheme.IVORY)
-	rate_labels["material"].text = "+%d/min" % int(p.income_material * p.income_mult)
-	rate_labels["aether"].text = "+%d/min" % int(p.income_aether * p.income_mult)
+	rate_labels["material"].text = "+%d/分" % int(p.income_material * p.income_mult)
+	rate_labels["aether"].text = "+%d/分" % int(p.income_aether * p.income_mult)
 	rate_labels["pop"].text = ""
 	var t := int(world.match_time)
 	clock_label.text = "%02d:%02d" % [t / 60, t % 60]

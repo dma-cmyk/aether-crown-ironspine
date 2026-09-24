@@ -7,8 +7,8 @@
 	"description": "前線の West Foundry から北西の橋を渡り、北の中継塔を奪う。ヴァルケシュの反撃に耐えて3分間守り抜けば勝利。",
 	"map": "ironspine",
 	"next": "iron_tide",
-	"victory_text": "The relay falls silent. The Dominion is blind.",
-	"defeat_text": "The strike was scattered in the north.",
+	"victory_text": "中継塔は沈黙した。ヴァルケシュは目を失った。",
+	"defeat_text": "北への強襲は散り散りになった。",
 	"teams": {"0": {"material": 700, "aether": 350}, "1": {"aggression": 0.5}},
 	"vars": {"phase": 1},
 	"map_start": false,
@@ -37,8 +37,8 @@
 		]
 	},
 	"objectives": {
-		"title": "Silence the Relay",
-		"subtitle": "Cut the Dominion's eyes.",
+		"title": "中継塔を黙らせろ",
+		"subtitle": "ヴァルケシュの目を断て。",
 		"list": [
 			{"id": "take", "text": "北の中継塔を占領する", "done_when": {"type": "fired", "trigger": "relay_taken"}},
 			{
@@ -68,8 +68,8 @@
 					"difficulty_scale": true,
 					"columns": 3
 				},
-				{"type": "banner", "title": "SILENCE THE RELAY", "text": "北の中継塔を奪い、ヴァルケシュの連絡網を断て。", "seconds": 7},
-				{"type": "advisor", "text": "SPEED IS\nA WEAPON."},
+				{"type": "banner", "title": "中継塔を黙らせろ", "text": "北の中継塔を奪い、ヴァルケシュの連絡網を断て。", "seconds": 7},
+				{"type": "advisor", "text": "速さこそ\n武器なり。"},
 				{"type": "focus", "at": [5, -152]}
 			]
 		},
@@ -87,7 +87,7 @@
 			"id": "relay_taken",
 			"when": {"type": "sites", "team": 0, "id": "north_relay"},
 			"do": [
-				{"type": "banner", "title": "RELAY SEIZED", "text": "ヴァルケシュが奪い返しに来る。3分間守り抜け。", "seconds": 6},
+				{"type": "banner", "title": "中継塔を奪取", "text": "ヴァルケシュが奪い返しに来る。3分間守り抜け。", "seconds": 6},
 				{"type": "sound", "name": "objective"},
 				{"type": "ai", "aggression": 0}
 			]

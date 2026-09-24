@@ -85,7 +85,7 @@ func _run() -> void:
 	camera.set_view(cit.global_position, -45.0, 90.0)
 	await _wait(0.6)
 	await _tap(_center(hud.cmd_buttons[7]))
-	_check("CONSTRUCT opens the build menu", hud.build_mode)
+	_check("the 建設 button opens the build menu", hud.build_mode)
 	await _tap(_center(hud.cmd_buttons[0]))
 	_check("a building button starts placing", commander.mode == Commander.Mode.PLACE and commander.ghost != null)
 	var site := _valid_spot(commander.place_id) if commander.mode == Commander.Mode.PLACE else Vector2.INF

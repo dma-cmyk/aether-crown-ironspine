@@ -6,14 +6,14 @@
 	"subtitle": "The Iron Tide",
 	"description": "ヴァルケシュの総攻撃。中央・北西・南東から押し寄せる8回の攻勢に耐え、12分間本拠地を守り抜く。",
 	"map": "ironspine",
-	"victory_text": "The tide breaks upon the Ironspine.",
-	"defeat_text": "The tide swallowed the Crown.",
+	"victory_text": "潮はアイアンスパインに砕けた。",
+	"defeat_text": "潮が王冠を呑み込んだ。",
 	"teams": {"0": {"material": 900, "aether": 450}, "1": {"aggression": 0}},
 	"vars": {"waves": 0, "phase": 0},
 	"start": {"buildings": [{"id": "foundry", "team": 0, "at": [-116, 168], "facing": 135}]},
 	"objectives": {
-		"title": "The Iron Tide",
-		"subtitle": "Stand until the tide breaks.",
+		"title": "鉄の潮",
+		"subtitle": "潮が引くまで耐え抜け。",
 		"list": [
 			{
 				"id": "hold",
@@ -45,8 +45,8 @@
 			"do": [
 				{"type": "site", "id": "west_foundry", "team": 0},
 				{"type": "site", "id": "south_works", "team": 0},
-				{"type": "banner", "title": "THE IRON TIDE", "text": "ヴァルケシュの総攻撃が始まる。12分間、本拠地を守り抜け。", "seconds": 7},
-				{"type": "advisor", "text": "STAND.\nAND BE COUNTED."},
+				{"type": "banner", "title": "鉄の潮", "text": "ヴァルケシュの総攻撃が始まる。12分間、本拠地を守り抜け。", "seconds": 7},
+				{"type": "advisor", "text": "踏みとどまれ。\n名を刻め。"},
 				{"type": "focus", "at": [-51.5, 51.5]}
 			]
 		},
@@ -298,7 +298,7 @@
 			"id": "tide_breaks",
 			"when": {"type": "time", "at": 720},
 			"do": [
-				{"type": "banner", "title": "THE TIDE BREAKS", "text": "ヴァルケシュの攻勢は尽きた。", "seconds": 6},
+				{"type": "banner", "title": "潮は引いた", "text": "ヴァルケシュの攻勢は尽きた。", "seconds": 6},
 				{"type": "victory"}
 			]
 		}
