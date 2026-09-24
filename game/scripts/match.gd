@@ -80,6 +80,8 @@ func _ready() -> void:
 	world.fog.hide_enemy_buildings()
 	world.fog.recompute()
 	_start_audio()
+	if not Game.is_capture() and not Game.args.has("autoplay"):
+		camera.intro()
 	if Game.is_capture():
 		_setup_capture()
 	if Game.args.has("autoplay"):
@@ -142,9 +144,10 @@ func _start_audio() -> void:
 	music = AudioStreamPlayer.new()
 	music.bus = "Music"
 	music.stream = _looped("res://assets/audio/music_battle.wav")
-	music.volume_db = -6.0
+	music.volume_db = -30.0
 	add_child(music)
 	music.play()
+	music.create_tween().tween_property(music, "volume_db", -6.0, 3.0)
 	for f in ["amb_wind", "amb_battle"]:
 		var a := AudioStreamPlayer.new()
 		a.bus = "SFX"

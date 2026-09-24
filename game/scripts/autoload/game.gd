@@ -49,6 +49,9 @@ func _ready() -> void:
 	if args.has("difficulty"):
 		difficulty = clampi(int(args["difficulty"]), 0, 2)
 	apply_audio()
+	if DisplayServer.get_name() != "headless":
+		_make_fader()
+		set_cursors()
 
 
 func _input(event: InputEvent) -> void:
@@ -192,10 +195,87 @@ func _set_bus(bus_name: String, v: float) -> void:
 	AudioServer.set_bus_volume_db(idx, linear_to_db(maxf(v, 0.0001)))
 
 
+func _exit_tree() -> void:
+	# let go of the cursor images before the renderer shuts down
+	Input.set_custom_mouse_cursor(null, Input.CURSOR_ARROW)
+	Input.set_custom_mouse_cursor(null, Input.CURSOR_CROSS)
+
+
+## Gold pointer everywhere, a crosshair while an order waits for its target (HUD sets the shape).
+func set_cursors() -> void:
+	var arrow := load("res://assets/ui/icons/cursor_arrow.svg") as Texture2D
+	var target := load("res://assets/ui/icons/cursor_target.svg") as Texture2D
+	if arrow:
+		Input.set_custom_mouse_cursor(arrow, Input.CURSOR_ARROW, Vector2(4, 2))
+	if target:
+		Input.set_custom_mouse_cursor(target, Input.CURSOR_CROSS, Vector2(16, 16))
+
+
 # ---------------------------------------------------------------- scenes
-func goto_title() -> void:
+var _fader: ColorRect
+var _fader_text: Label
+var _switching := false
+var _fade_tw: Tween
+
+
+## A curtain over everything: a scene change fades to black, says what is loading, and fades
+## back in once the new scene has drawn a few frames (hiding the first-frame hitches).
+func _make_fader() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 120
+	add_child(layer)
+	_fader = ColorRect.new()
+	# black from the first frame, so the boot screen gives way to the title with a fade
+	_fader.color = Color(0.012, 0.014, 0.02, 0.0 if is_capture() or args.has("gallery") else 1.0)
+	_fader.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_fader.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(_fader)
+	_fader_text = UITheme.label("", 20, UITheme.GOLD, UITheme.serif_font(), 0)
+	_fader_text.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_fader_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_fader_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_fader.add_child(_fader_text)
+
+
+func _switch_scene(path: String, line: String) -> void:
+	if is_capture() or _fader == null:
+		get_tree().paused = false
+		get_tree().change_scene_to_file(path)
+		return
+	if _switching:
+		return
+	_switching = true
+	_fader.mouse_filter = Control.MOUSE_FILTER_STOP
+	if _fade_tw:
+		_fade_tw.kill()
+	if _fader.color.a < 1.0:
+		var out := _fader.create_tween().set_parallel()
+		out.tween_property(_fader, "color:a", 1.0, 0.35).set_trans(Tween.TRANS_SINE)
+		# the music fades with the picture; apply_audio() restores it for the next scene
+		var bus := AudioServer.get_bus_index("Music")
+		if bus >= 0:
+			out.tween_method(func(db: float) -> void: AudioServer.set_bus_volume_db(bus, db), AudioServer.get_bus_volume_db(bus), -40.0, 0.35)
+		await out.finished
+	_fader_text.text = line
+	# let the black frame and the line reach the screen before the load blocks
+	await get_tree().process_frame
+	await get_tree().process_frame
 	get_tree().paused = false
-	get_tree().change_scene_to_file("res://scenes/title.tscn")
+	get_tree().change_scene_to_file(path)
+	await get_tree().process_frame
+	apply_audio()
+	for i in 4:
+		await get_tree().process_frame
+	_fader_text.text = ""
+	# the new scene takes input while the picture is still coming up
+	_fader.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_switching = false
+	_fade_tw = _fader.create_tween()
+	_fade_tw.tween_property(_fader, "color:a", 0.0, 0.8).set_trans(Tween.TRANS_SINE)
+
+
+func goto_title() -> void:
+	_switch_scene("res://scenes/title.tscn", "")
 
 
 func load_game(path: String) -> bool:
@@ -211,8 +291,11 @@ func load_game(path: String) -> bool:
 func start_match(path: String = "") -> void:
 	if path != "":
 		scenario_path = path
-	get_tree().paused = false
-	get_tree().change_scene_to_file("res://scenes/match.tscn")
+	var title := ""
+	if pending_save.is_empty():
+		var s := Scenario.load_file(arg("mission", scenario_path))
+		title = str(s.data.get("title", "")) if s.is_valid() else ""
+	_switch_scene("res://scenes/match.tscn", ("%s\n\n" % title if title != "" else "") + "戦場を準備しています…")
 
 
 # ---------------------------------------------------------------- input

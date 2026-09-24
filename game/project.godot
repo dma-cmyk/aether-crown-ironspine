@@ -16,6 +16,8 @@ config/version="1.0.0"
 run/main_scene="res://scenes/boot.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://icon.svg"
+boot_splash/bg_color=Color(0.0706, 0.0784, 0.102, 1)
+boot_splash/image="res://assets/ui/splash.png"
 
 [autoload]
 

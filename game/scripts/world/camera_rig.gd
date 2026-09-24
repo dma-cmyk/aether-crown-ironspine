@@ -55,6 +55,18 @@ func set_view(p: Vector3, yaw_deg: float, dist: float, pitch_deg: float = -1.0) 
 	look_at_point(p, true)
 
 
+## Match start: swing down from higher up while the curtain lifts.
+func intro() -> void:
+	var d := target_distance
+	var y := yaw
+	target_distance = minf(d * 1.55, MAX_DIST)
+	distance = target_distance
+	yaw += 0.35
+	var tw := create_tween().set_parallel().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(self, "target_distance", d, 2.8)
+	tw.tween_property(self, "yaw", y, 2.8)
+
+
 func shake(amount: float) -> void:
 	_shake = maxf(_shake, amount)
 

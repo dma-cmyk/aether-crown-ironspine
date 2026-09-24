@@ -160,11 +160,23 @@ ICONS = {
 }
 
 
+# mouse cursors, drawn at 32 px (the hotspots are set in Game.set_cursors)
+CURSORS = {
+    "cursor_arrow": path("M8 4 L8 50 L20 39 L29 58 L37 54 L28 36 L44 35 Z", "#0b0d12", GOLD, 5)
+    + path("M8 4 L8 50 L20 39 L29 58 L37 54 L28 36 L44 35 Z", "#fff1cf", GOLD, 2),
+    "cursor_target": circle(32, 32, 17, "#0b0d12", "none", 7) + circle(32, 32, 17, GOLD, "none", 3)
+    + path("M32 2 L32 20 M32 44 L32 62 M2 32 L20 32 M44 32 L62 32", "#0b0d12", sw=7)
+    + path("M32 2 L32 20 M32 44 L32 62 M2 32 L20 32 M44 32 L62 32", IVORY, sw=3) + circle(32, 32, 3, IVORY, IVORY, 1),
+}
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for name, body in ICONS.items():
         (OUT / (name + ".svg")).write_text(svg(body, 128), encoding="utf-8")
-    print("icons:", len(ICONS))
+    for name, body in CURSORS.items():
+        (OUT / (name + ".svg")).write_text(svg(body, 32), encoding="utf-8")
+    print("icons:", len(ICONS), "cursors:", len(CURSORS))
 
 
 if __name__ == "__main__":
