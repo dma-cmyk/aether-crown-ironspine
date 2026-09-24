@@ -28,6 +28,7 @@ const ARMOR_TABLE := {
 	"flame": {"light": 1.35, "heavy": 0.6, "structure": 1.1, "air": 0.5, "beast": 1.0},
 	"talon": {"light": 0.8, "heavy": 0.5, "structure": 0.25, "air": 1.6, "beast": 0.9},
 	"hellclaw": {"light": 1.2, "heavy": 1.0, "structure": 1.3, "air": 0.0, "beast": 1.0},
+	"titan": {"light": 1.2, "heavy": 1.2, "structure": 1.0, "air": 1.0, "beast": 1.1},
 	"missile": {"light": 0.35, "heavy": 0.9, "structure": 1.8, "air": 0.0, "beast": 0.7},
 	"holy": {"light": 1.0, "heavy": 0.8, "structure": 0.5, "air": 1.2, "beast": 1.35},
 }
@@ -48,6 +49,7 @@ const WEAPONS := {
 	"dragon_breath": {"class": "flame", "range": 16.0, "damage": 60.0, "cooldown": 2.4, "fx": "flame", "splash": 5.0, "delay": 0.35, "air": true},
 	"griffin_talons": {"class": "talon", "range": 7.0, "damage": 24.0, "cooldown": 0.9, "fx": "talon", "delay": 0.25, "air": true},
 	"demon_claws": {"class": "hellclaw", "range": 5.5, "damage": 62.0, "cooldown": 1.5, "fx": "rend", "splash": 3.2, "delay": 0.32, "air": false},
+	"titan_beam": {"class": "titan", "range": 34.0, "damage": 150.0, "cooldown": 4.5, "fx": "titan_beam", "splash": 6.0, "air": true},
 	"mech_missiles": {"class": "missile", "range": 30.0, "damage": 56.0, "cooldown": 2.6, "fx": "missile", "splash": 2.8, "air": false},
 	"angel_lance": {"class": "holy", "range": 28.0, "damage": 30.0, "cooldown": 1.5, "fx": "beam", "air": true},
 }
@@ -97,6 +99,16 @@ const UNITS := {
 		"speed": 6.2, "radius": 4.6, "vision": 56.0, "weapons": ["broadside", "flak"],
 		"model": "airship", "commands": ["move", "hold", "attack", "patrol", "special"],
 		"special": "aether_bombard", "capture": 0.0, "altitude": 17.0, "hotkey": "T",
+	},
+	# the titan: one at a time, built at the citadel; it comes apart as it lives ("decay" HP/s)
+	"titan": {
+		"name": ["巨神", "ヴァルケシュの巨神"], "short": "巨神",
+		"jp": "山のような巨神。口から光線を放って周りをまとめて焼き払う。とても強いが体が少しずつ崩れていき、やがて倒れる（同時に1体まで）。特殊能力は一直線をなぎ払う巨神の光。",
+		"type": "giant", "hp": 6000.0, "armor": "beast",
+		"cost": {"material": 900, "aether": 900}, "pop": 16, "build_time": 120.0,
+		"speed": 3.4, "radius": 5.0, "vision": 48.0, "weapons": ["titan_beam"],
+		"model": "titan", "visual": "titan", "portrait": [40.0, 10.5], "commands": ["move", "hold", "attack", "patrol", "special"],
+		"special": "titan_ray", "capture": 2.0, "decay": 9.0, "height": 15.5, "turn": 1.0, "aim": 0.35, "limit": 1, "hotkey": "W",
 	},
 	# a flying mech: missiles for buildings, little use against infantry, easy prey for flak
 	"mech": {
@@ -169,9 +181,9 @@ const UNITS := {
 const BUILDINGS := {
 	"citadel": {
 		"name": ["王冠の本拠地", "ヴァルケシュ本拠地"], "short": "本拠地",
-		"jp": "本拠地。工兵を生産し、収入と人口上限を与える。破壊されると敗北。",
+		"jp": "本拠地。工兵と巨神を生産し、収入と人口上限を与える。破壊されると敗北。",
 		"hp": 5200.0, "radius": 13.0, "footprint": 12.0, "cost": {"material": 0, "aether": 0}, "build_time": 1.0,
-		"produces": ["artificer"], "pop": 20, "income": {"material": 185, "aether": 40},
+		"produces": ["artificer", "titan"], "pop": 20, "income": {"material": 185, "aether": 40},
 		"model": "citadel", "weapons": ["aether_lance"], "buildable": false, "vision": 50.0,
 	},
 	"barracks": {
@@ -287,6 +299,7 @@ const SPECIALS := {
 	"boulder_hurl": {"name": "Boulder Hurl", "jp": "大岩投げ：指定地点へ大岩を投げつける（射程 48m、建物に強い）。", "cooldown": 30.0, "duration": 0.0, "targeted": true, "range": 48.0},
 	"frenzy": {"name": "Frenzy", "jp": "狂乱：8秒間、速度と攻撃速度が上昇。", "cooldown": 35.0, "duration": 8.0},
 	"keen_sight": {"name": "Keen Sight", "jp": "鷹の目：15秒間、視界が2倍に広がる。", "cooldown": 40.0, "duration": 15.0},
+	"titan_ray": {"name": "Titan's Light", "jp": "巨神の光：力を溜めてから、指定した方向へ 90m の光線で一直線になぎ払う（本拠地・城門へのダメージは上限あり）。", "cooldown": 90.0, "duration": 0.0, "targeted": true, "range": 90.0, "damage": 520.0, "width": 7.0, "cap": 0.2},
 	"missile_salvo": {"name": "Missile Salvo", "jp": "ミサイル一斉射撃：指定地点へ12発のミサイルを撃ち込む（射程 40m、建物に強い）。", "cooldown": 45.0, "duration": 0.0, "targeted": true, "range": 40.0},
 	"hellfire": {"name": "Hellfire", "jp": "業火：自分の周りを炎で焼き払う（地上の敵に大ダメージ）。", "cooldown": 35.0, "duration": 0.0, "radius": 10.0, "damage": 130.0},
 	"blessing": {"name": "Blessing", "jp": "祝福：周りの味方ユニットの体力を回復する。", "cooldown": 30.0, "duration": 0.0, "radius": 18.0, "heal": 220.0},

@@ -868,6 +868,102 @@ def angel(name):
     return c
 
 
+def titan_paint(p, n):
+    x, y, z = p
+    c = mix(lin((0.36, 0.33, 0.31)), lin((0.5, 0.46, 0.41)), smooth(0.0, 0.9, n[1]) * 0.6)
+    c = mix(c, lin((0.2, 0.19, 0.18)), max(smooth(3.0, 0.6, y), smooth(6.2, 4.6, y) * smooth(2.9, 3.4, abs(x))))
+    return mix(c, lin((0.46, 0.22, 0.16)), smooth(10.4, 11.2, y) * smooth(0.4, 1.3, z) * (1.0 - smooth(0.5, 1.2, abs(x))) * 0.6)
+
+
+def titan(name):
+    """Titan: a hunched colossus about 15 m tall with long arms, an iron mask with a glowing
+    mouth that throws the beam, a burning core in the chest held by iron ribs, plates on the
+    shoulders and spines down the back. Origin at the feet."""
+    P = mk.palette()
+    rig = cr.Rig(name)
+    rig.bone("hips", (0, 7.0, 0), (0, 9.0, 0.2))
+    rig.bone("spine", (0, 9.0, 0.2), (0, 11.0, 0.6), "hips")
+    rig.bone("chest", (0, 11.0, 0.6), (0, 12.3, 1.1), "spine")
+    rig.bone("neck", (0, 12.3, 1.1), (0, 13.0, 2.0), "chest")
+    rig.bone("head", (0, 13.0, 2.0), (0, 14.4, 2.6), "neck")
+    rig.bone("jaw", (0, 13.2, 2.5), (0, 12.7, 3.3), "head")
+    rig.mirror("clav_l", (0.5, 12.0, 0.8), (2.6, 12.2, 0.6), "chest")
+    rig.mirror("uparm_l", (2.6, 12.2, 0.6), (3.3, 8.8, 1.0), "clav_l")
+    rig.mirror("forearm_l", (3.3, 8.8, 1.0), (3.6, 5.4, 1.8), "uparm_l")
+    rig.mirror("hand_l", (3.6, 5.4, 1.8), (3.7, 4.2, 2.2), "forearm_l")
+    rig.mirror("thigh_l", (1.3, 7.0, 0.0), (1.5, 3.8, 0.5), "hips")
+    rig.mirror("shin_l", (1.5, 3.8, 0.5), (1.5, 0.8, -0.2), "thigh_l")
+    rig.mirror("foot_l", (1.5, 0.8, -0.2), (1.5, 0.2, 1.4), "shin_l")
+
+    skin = cr.Body(name + "_skin", P["hide"], res=0.1)
+    skin.ellipsoid((0, 7.1, 0.0), (1.5, 1.0, 1.1))
+    skin.ellipsoid((0, 8.4, 0.25), (1.2, 1.2, 0.95))
+    skin.ellipsoid((0, 10.2, 0.55), (1.9, 1.5, 1.35))
+    skin.ellipsoid((0, 11.6, 0.5), (2.3, 0.9, 1.3))
+    skin.mirror_ball((2.5, 12.0, 0.6), 0.95)
+    skin.capsule((0, 12.0, 1.0), (0, 13.1, 2.0), 0.75)
+    skin.ellipsoid((0, 13.55, 2.45), (0.9, 1.0, 0.95))
+    skin.ellipsoid((0, 12.95, 3.0), (0.75, 0.45, 0.6))
+    skin.mirror_limb([(2.6, 12.2, 0.6), (2.95, 10.5, 0.8), (3.3, 8.8, 1.0)], [0.85, 0.62, 0.52])
+    skin.mirror_limb([(3.3, 8.8, 1.0), (3.45, 7.1, 1.4), (3.6, 5.4, 1.8)], [0.52, 0.55, 0.42])
+    skin.mirror_ellipsoid((3.66, 4.8, 2.0), (0.5, 0.75, 0.5))
+    skin.mirror_limb([(1.3, 7.0, 0.0), (1.4, 5.4, 0.25), (1.5, 3.8, 0.5)], [1.0, 0.85, 0.62])
+    skin.mirror_limb([(1.5, 3.8, 0.5), (1.5, 2.3, 0.15), (1.5, 0.8, -0.2)], [0.62, 0.55, 0.42])
+    skin.mirror_ellipsoid((1.5, 0.5, 0.55), (0.6, 0.45, 1.0))
+
+    c = cr.Creature(rig)
+    c.skin(skin, faces=6500, paint_fn=titan_paint, uv_scale=0.45, dirt=0.6)
+
+    # iron mask with glowing eyes; the mouth slit that throws the beam
+    head = mk.Builder("mask")
+    head.box((1.5, 1.3, 0.3), (0, 13.75, 3.3), P["iron"], rot=(-12, 0, 0), bevel=0.08)
+    head.box((1.6, 0.25, 0.4), (0, 14.45, 3.2), P["brass"], rot=(-12, 0, 0))
+    for sx in (-1, 1):
+        head.box((0.36, 0.14, 0.1), (sx * 0.36, 13.9, 3.5), P["team_glow"], rot=(-12, 0, sx * 8))
+        tube(head, (sx * 0.7, 14.6, 2.6), (sx * 1.3, 15.8, 1.9), 0.2, P["claw"], 6, r2=0.0)
+    c.attach(head, bone="head", uv_scale=1.0)
+    jaw = mk.Builder("jaw_plate")
+    jaw.box((1.2, 0.45, 0.3), (0, 12.85, 3.45), P["iron_dark"], bevel=0.05)
+    jaw.box((0.9, 0.12, 0.1), (0, 13.05, 3.62), P["team_glow"])
+    c.attach(jaw, bone="jaw", uv_scale=1.0)
+    # the core and the iron ribs that cage it
+    core = mk.Builder("core")
+    core.sphere(0.75, 12, 8, (0, 10.9, 1.75), P["team_glow"], scale=(1.0, 1.1, 0.6))
+    for k in range(4):
+        y = 9.9 + k * 0.6
+        for sx in (-1, 1):
+            tube(core, (sx * 0.3, y, 1.95), (sx * 1.6, y + 0.15, 1.2), 0.13, P["iron_dark"], 6, r2=0.08)
+    c.attach(core, bone="spine", uv_scale=1.0)
+    # shoulder plates, bracers and knee guards
+    for sx, side in ((1, "l"), (-1, "r")):
+        pl = mk.Builder("pauldron_" + side)
+        pl.box((2.2, 0.3, 2.2), (sx * 2.7, 13.05, 0.6), P["iron"], rot=(0, 0, -sx * 20), bevel=0.08)
+        pl.box((2.0, 0.28, 2.0), (sx * 3.25, 12.4, 0.62), P["iron"], rot=(0, 0, -sx * 45), bevel=0.08)
+        pl.box((2.3, 0.12, 2.3), (sx * 2.7, 12.9, 0.6), P["team_trim"], rot=(0, 0, -sx * 20))
+        c.attach(pl, bone="clav_" + side, uv_scale=1.0)
+        br = mk.Builder("bracer_" + side)
+        tube(br, (sx * 3.4, 7.8, 1.25), (sx * 3.58, 5.9, 1.7), 0.62, P["iron_dark"], 10, r2=0.52)
+        c.attach(br, bone="forearm_" + side, uv_scale=1.0)
+        kn = mk.Builder("knee_" + side)
+        kn.box((1.1, 1.2, 0.35), (sx * 1.5, 3.9, 1.15), P["iron"], rot=(-10, 0, 0), bevel=0.06)
+        c.attach(kn, bone="shin_" + side, uv_scale=1.0)
+        cl = mk.Builder("claws_" + side)
+        for k in range(4):
+            root = Vector((sx * (3.45 + k * 0.14), 4.3, 2.3 - k * 0.15))
+            tube(cl, tuple(root), tuple(root + Vector((sx * 0.05, -0.75, 0.35))), 0.12, P["claw"], 5, r2=0.0)
+        c.attach(cl, bone="hand_" + side, uv_scale=1.0)
+    spines = mk.Builder("spines")
+    for i, (y, z) in enumerate(((12.6, -0.3), (11.8, -0.55), (10.8, -0.6), (9.8, -0.45), (8.8, -0.35))):
+        size = 1.2 - i * 0.15
+        tube(spines, (0, y, z + 0.2), (0, y + 0.6 * size, z - 1.3 * size), 0.3 * size, P["claw"], 6, r2=0.0)
+    c.attach(spines, uv_scale=1.0)
+    cloth = mk.Builder("loincloth")
+    cloth.box((1.6, 2.4, 0.1), (0, 5.9, 1.15), P["team_cloth"], rot=(8, 0, 0))
+    cloth.box((1.9, 0.18, 0.14), (0, 7.1, 1.1), P["brass"])
+    c.attach(cloth, bone="hips", uv_scale=1.0)
+    return c
+
+
 ASSETS = {
     "cerberus": cerberus,
     "cyclops": cyclops,
@@ -875,6 +971,7 @@ ASSETS = {
     "dragon": dragon,
     "demon": demon,
     "angel": angel,
+    "titan": titan,
 }
 
 

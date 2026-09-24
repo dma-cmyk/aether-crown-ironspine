@@ -968,7 +968,9 @@ func _unit_status(u: Unit) -> String:
 			Unit.Order.PATROL: "巡回中", Unit.Order.HOLD: "陣地保持", Unit.Order.REPAIR: "修理中"}
 	if u.team == Defs.TEAM_PLAYER:
 		parts.push_front(order_names.get(u.order, ""))
-	if u.is_creature and u.hp < u.max_hp and world.match_time - u.last_damage_time > 6.0:
+	if float(u.def.get("decay", 0.0)) > 0.0:
+		parts.append("崩壊まで約%d秒" % int(u.hp / float(u.def["decay"])))
+	elif u.is_creature and u.hp < u.max_hp and world.match_time - u.last_damage_time > 6.0:
 		parts.append("自然回復中")
 	var cover := Combat.cover_near(u)
 	if cover > 0:

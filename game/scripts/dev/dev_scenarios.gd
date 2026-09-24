@@ -109,6 +109,8 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 			var cast: Array = [["griffin", -10, 8, 25], ["cerberus", -5, 18.5, 18], ["cyclops", 7, 15, -20], ["dragon", 9, 1, 0]]
 			if Game.args.has("new_races"):
 				cast = [["demon", -6, 16, 20], ["angel", 7, 13, -20]]
+			if Game.args.has("titan"):
+				cast = [["titan", -2, 20, 10], ["mech", 10, 12, -20]]
 			for c: Array in cast:
 				var u := world.spawn_unit(c[0], 0, at + basis * Vector3(c[1], 0, c[2]), face + deg_to_rad(c[3]))
 				u.order_hold()
@@ -139,6 +141,26 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 			var t: Node = load("res://scripts/dev/touch_test.gd").new()
 			match_node.add_child(t)
 			t.setup(world, commander, camera, match_node.hud)
+		"titan_test":
+			# our titan against a Varkesh line; Titan's Light after 4 s, the limit of one checked
+			world.fog.enabled = false
+			world.player(0).material = 5000.0
+			world.player(0).aether = 5000.0
+			var at := Vector3(-60, 0, 20)
+			var titan := world.spawn_unit("titan", 0, at, 0.0)
+			var foes: Array[Unit] = []
+			for i in 8:
+				foes.append(world.spawn_unit(["aetherguard", "walker", "aetherguard", "mortar"][i % 4], 1, at + Vector3((i % 4) * 6.0 - 9.0, 0, 26.0 + (i / 4) * 12.0), PI))
+			for f in foes:
+				f.order_hold()
+			camera.set_view(at + Vector3(0, 0, 18), -20.0, 80.0)
+			var hp0 := titan.hp
+			print("[titan_test] citadel says: '%s'" % world.citadel(0).can_queue("titan"))
+			world.get_tree().create_timer(4.0).timeout.connect(func() -> void:
+				print("[titan_test] light=%s" % titan.use_special(at + Vector3(0, 0, 40))))
+			world.get_tree().create_timer(14.0).timeout.connect(func() -> void:
+				var alive := foes.filter(func(f) -> bool: return is_instance_valid(f) and f.alive).size()
+				print("[titan_test] 14 s: foes alive %d / %d, titan %.0f -> %.0f (decay %.0f/s)" % [alive, foes.size(), hp0, titan.hp, titan.def["decay"]]))
 		"judgement_test":
 			# our tower strikes a Varkesh column through the HUD path; theirs strikes our citadel
 			world.fog.enabled = false

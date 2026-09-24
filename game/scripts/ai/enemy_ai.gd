@@ -58,6 +58,7 @@ func _physics_process(delta: float) -> void:
 	_economy()
 	_construction()
 	_superweapon()
+	_titan_light()
 	_defend()
 	_expand()
 	_attack()
@@ -89,6 +90,8 @@ func _economy() -> void:
 			"citadel":
 				if world.count_units(team, "artificer") < 3:
 					choice = "artificer"
+				elif world.match_time > 780.0 and b.can_queue("titan") in ["", "資源不足"] and rng.randf() < 0.25 * diff:
+					choice = "titan"
 			"barracks":
 				choice = "aetherguard" if world.count_units(team, "artificer") >= 2 or rng.randf() < 0.8 else "artificer"
 			"foundry":
@@ -130,6 +133,16 @@ func _reserve() -> Vector2:
 	return Vector2(float(cost["material"]), float(cost["aether"]))
 
 
+## A titan turns its Light on the thickest enemy group it can reach.
+func _titan_light() -> void:
+	for u in world.units:
+		if u.team != team or not u.alive or u.def.get("special", "") != "titan_ray" or not u.special_ready():
+			continue
+		var at := strike_target(u.global_position, float(Defs.SPECIALS["titan_ray"]["range"]) * 0.8)
+		if at != Vector3.INF:
+			u.use_special(at)
+
+
 ## Fire a charged Tower of Judgement where the most of the enemy stands.
 func _superweapon() -> void:
 	for b in world.buildings:
@@ -141,7 +154,7 @@ func _superweapon() -> void:
 
 ## The point where a strike hurts the enemy most: units weighted by cost, buildings by a flat
 ## share. Scored around every enemy unit and building.
-func strike_target() -> Vector3:
+func strike_target(near := Vector3.INF, within := INF) -> Vector3:
 	var foes: Array[Entity] = []
 	for u in world.units:
 		if u.alive and u.team != team and u.team >= 0:
@@ -149,6 +162,8 @@ func strike_target() -> Vector3:
 	for b in world.buildings:
 		if b.alive and b.team != team and b.team >= 0 and b.def_id != "gate":
 			foes.append(b)
+	if near != Vector3.INF:
+		foes = foes.filter(func(e: Entity) -> bool: return Vector2(e.global_position.x - near.x, e.global_position.z - near.z).length() < within)
 	var best := Vector3.INF
 	var best_score := 0.0
 	for c in foes:

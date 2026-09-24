@@ -69,6 +69,19 @@ static func fire(shooter: Entity, w: Dictionary, target: Entity) -> void:
 				world.fx.smoke(m, 1.6, 0.35)
 			world.fx.light_flash(muzzles[0], Color(1.0, 0.7, 0.4), 6.0)
 			world.sfx.play_at("cannon", muzzles[0])
+		"titan_beam":
+			# a thick beam from the mask that bursts where it lands, fliers included
+			var m0 := muzzles[0]
+			var c := glow.lerp(Color.WHITE, 0.3)
+			for k in 3:
+				world.fx.beam(m0, aim + Vector3(randf_range(-0.6, 0.6), randf_range(-0.3, 0.3), randf_range(-0.6, 0.6)), c, 0.45)
+			splash(aim, float(w.get("splash", 5.0)), dmg, wclass, shooter.team, shooter, true)
+			var g := Vector3(aim.x, world.terrain.ground_at(aim.x, aim.z), aim.z)
+			world.fx.explosion(aim, 2.0)
+			if not target.is_air:
+				world.fx.burn(g, 3.0, 2.5, glow)
+			world.fx.light_flash(aim, glow, 9.0)
+			world.sfx.play_at("beam", m0)
 		"missile":
 			for m in muzzles:
 				world.projectiles.missile(shooter, m, aim + Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)), dmg / muzzles.size(),

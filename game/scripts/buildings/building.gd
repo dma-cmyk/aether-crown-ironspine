@@ -142,6 +142,14 @@ func can_queue(uid: String) -> String:
 		return "資源不足"
 	if p.pop_used + int(ud["pop"]) > p.pop_cap:
 		return "人口上限"
+	var lim := int(ud.get("limit", 0))
+	if lim > 0:
+		var n := World.inst.count_units(team, uid)
+		for b in World.inst.buildings:
+			if b.team == team and b.alive:
+				n += b.production.count(uid)
+		if n >= lim:
+			return "%d体まで" % lim
 	return ""
 
 

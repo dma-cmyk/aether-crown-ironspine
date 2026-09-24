@@ -43,6 +43,13 @@ var _stuck_t := 0.0
 var _last_pos := Vector3.ZERO
 var _corpse_t := -1.0
 var _bombard_target := Vector3.INF
+## Titan's Light: where it points, seconds since it began (-1 idle), who it has already struck.
+var _ray_target := Vector3.INF
+var _ray_t := -1.0
+var _ray_hit := {}
+var _ray_fx := 0.0
+const RAY_CHARGE := 2.5
+const RAY_SWEEP := 1.2
 var _bombard_drops := 0
 var _bombard_t := 0.0
 var _hurl_target := Vector3.INF
@@ -102,6 +109,8 @@ func setup(id: String, t: int, pos: Vector3, face: float) -> void:
 			visual = GriffinVisual.new()
 		"mech":
 			visual = MechVisual.new()
+		"titan":
+			visual = TitanVisual.new()
 		"demon":
 			visual = DemonVisual.new()
 		"angel":
@@ -370,6 +379,18 @@ func use_special(at: Vector3 = Vector3.INF) -> bool:
 					e.heal(260.0)
 					World.inst.fx.sparkle(e.aim_point(), Defs.team_glow(team))
 			World.inst.fx.ring_burst(global_position + Vector3(0, 0.5, 0), 16.0, Defs.team_glow(team))
+		"titan_ray":
+			if at == Vector3.INF or at.distance_to(global_position) < 4.0:
+				return false
+			order_stop()
+			# rooted while it gathers and sweeps
+			setup_timer = RAY_CHARGE + RAY_SWEEP
+			setup_goal = ""
+			_ray_target = at
+			_ray_t = 0.0
+			_ray_hit = {}
+			if visual:
+				visual.on_special(sid)
 		"missile_salvo":
 			if at == Vector3.INF:
 				return false
@@ -436,6 +457,15 @@ func tick(dt: float) -> void:
 		_tick_bombard(dt)
 	if _hurl_target != Vector3.INF:
 		_tick_hurl(dt)
+	var decay: float = def.get("decay", 0.0)
+	if decay > 0.0:
+		hp -= decay * dt
+		if hp <= 0.0:
+			hp = 0.0
+			die()
+			return
+	if _ray_t >= 0.0:
+		_tick_ray(dt)
 	var regen: float = def.get("regen", 0.0)
 	if regen > 0.0 and hp < max_hp and World.inst.match_time - last_damage_time > 6.0:
 		heal(regen * dt)
@@ -598,6 +628,51 @@ func _tick_bombard(dt: float) -> void:
 			World.inst.projectiles.drop_bomb(self, global_position + Vector3(0, -4, 0), p)
 		if _bombard_drops <= 0:
 			_bombard_target = Vector3.INF
+
+
+## Titan's Light: stand and gather for RAY_CHARGE, then sweep a line from the feet out to
+## the special's range, striking each thing once. Citadels and gates lose at most "cap".
+func _tick_ray(dt: float) -> void:
+	var sp: Dictionary = Defs.SPECIALS["titan_ray"]
+	var dir := Vector3(_ray_target.x - global_position.x, 0, _ray_target.z - global_position.z).normalized()
+	_face_towards(global_position + dir * 10.0, dt)
+	var before := _ray_t
+	_ray_t += dt
+	if _ray_t < RAY_CHARGE:
+		return
+	var s0 := clampf((before - RAY_CHARGE) / RAY_SWEEP, 0.0, 1.0)
+	var s1 := clampf((_ray_t - RAY_CHARGE) / RAY_SWEEP, 0.0, 1.0)
+	var reach: float = sp["range"]
+	var half: float = float(sp["width"]) * 0.5
+	var w := World.inst
+	var a := global_position + dir * lerpf(6.0, reach, s0)
+	var b := global_position + dir * lerpf(6.0, reach, s1)
+	for e: Entity in w.query((a + b) * 0.5, a.distance_to(b) * 0.5 + half + 6.0):
+		if e.team == team or not e.alive or _ray_hit.has(e.get_instance_id()):
+			continue
+		var p := Vector3(e.global_position.x, 0, e.global_position.z)
+		var ab := Vector3(b.x - a.x, 0, b.z - a.z)
+		var t := clampf((p - Vector3(a.x, 0, a.z)).dot(ab) / maxf(ab.length_squared(), 0.001), 0.0, 1.0)
+		if (Vector3(a.x, 0, a.z) + ab * t).distance_to(p) > half + e.radius * 0.5:
+			continue
+		_ray_hit[e.get_instance_id()] = true
+		var dmg: float = sp["damage"]
+		if e.is_building and e.def_id in ["citadel", "gate"]:
+			dmg = minf(dmg, e.max_hp * float(sp["cap"]))
+		e.take_damage(dmg, "titan", self)
+	_ray_fx -= dt
+	if _ray_fx <= 0.0:
+		_ray_fx = 0.06
+		var g := Vector3(b.x, w.terrain.ground_at(b.x, b.z), b.z)
+		var c := Defs.team_glow(team)
+		w.fx.beam(visual.special_point(), g, c.lerp(Color.WHITE, 0.35), 0.25)
+		w.fx.explosion(g + Vector3(0, 0.8, 0), 2.2)
+		w.fx.burn(g, 3.0, 4.0, c)
+		w.fx.light_flash(g + Vector3(0, 3, 0), c, 7.0)
+	if s1 >= 1.0:
+		_ray_t = -1.0
+		_ray_target = Vector3.INF
+		w.camera.shake(0.6)
 
 
 ## Boulder Hurl: walk into range, stop, wind up, and let go when the arm comes over.
