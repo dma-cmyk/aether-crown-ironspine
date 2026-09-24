@@ -12,6 +12,7 @@ config_version=5
 
 config/name="Aether Crown: Ironspine"
 config/description="Real-time strategy on the Ironspine Crossing."
+config/version="1.0.0"
 run/main_scene="res://scenes/boot.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://icon.svg"

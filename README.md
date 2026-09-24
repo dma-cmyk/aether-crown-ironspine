@@ -13,13 +13,18 @@
 
 ## 起動
 
+[Releases](https://github.com/dma-cmyk/aether-crown-ironspine/releases/latest) から Linux 版（`.tar.gz`）か Windows 版（`.zip`）を落として展開し、
+`AetherCrownIronspine.x86_64` か `AetherCrownIronspine.exe` を起動します（Vulkan 対応の GPU が必要）。
+Windows で「PC が保護されました」と出たら、「詳細情報」→「実行」で起動できます（署名のない実行ファイルのため）。
+
+ソースから動かす場合は Godot 4.7（`godot` コマンド）を入れて:
+
 ```bash
 ./run.sh            # 初回は自動でアセットをインポートしてから起動
 # または
 godot --path game
 ```
 
-- 必要なもの: Godot 4.7（`godot` コマンド）。
 - 画質は タイトル → 設定 で「低 / 中 / 高」。内蔵 GPU では「中」で約 50fps（大規模な戦闘中は約 37fps）、「低」で約 65fps（同 約 50fps）。1600x900、Intel Iris Xe、100Hz の垂直同期ありで計測。
 - F11 でフルスクリーン切替。
 
@@ -99,6 +104,8 @@ tools/build_all.sh            # すべて再生成して Godot へ再インポ�
 tools/build_all.sh terrain    # 段階を指定: terrain | models | textures | fx | icons | audio | import
 ```
 
+配布用のパッケージは `tools/export.sh v1.0.0` で `build/` に作ります（Linux の .tar.gz と Windows の .zip。Godot 4.7.2 のエクスポートテンプレートが必要）。
+
 使用ツール: Blender 5.2、Material Maker 1.7、ImageMagick 7、Inkscape（アイコン確認）、uv（音声合成）、Godot 4.7。
 Material Maker は CLI 書き出し後も終了しないため、`build_textures.sh` は出力ファイルを待ってから終了させています。
 
@@ -122,3 +129,7 @@ godot --path game -- --load=/tmp/s.json
 ```
 
 設計の詳細は [docs/design.md](docs/design.md) を参照。
+
+## ライセンス
+
+[MIT License](LICENSE)。配布用パッケージには、Godot Engine と同梱ライブラリのライセンス表記（`THIRD-PARTY-NOTICES.txt`）も入れています。
