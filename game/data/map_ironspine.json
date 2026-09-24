@@ -80,13 +80,13 @@
     {"id": "se_bridge", "a": [109.4, 130.5], "b": [148.0, 92.9], "width": 11.0}
   ],
   "sites": [
-    {"id": "central_nexus", "name": "Central Nexus", "pos": [0.0, 0.0], "owner": -1, "kind": "aether", "material": 60, "aether": 120, "pop": 10, "radius": 24.0},
-    {"id": "brassholm", "name": "Brassholm", "pos": [-66.0, 66.0], "owner": 0, "kind": "industry", "material": 100, "aether": 20, "pop": 10, "radius": 20.0},
-    {"id": "west_foundry", "name": "West Foundry", "pos": [-150.0, 5.0], "owner": -1, "kind": "industry", "material": 120, "aether": 0, "pop": 10, "radius": 22.0},
-    {"id": "south_works", "name": "South Works", "pos": [-5.0, 152.0], "owner": -1, "kind": "aether", "material": 30, "aether": 90, "pop": 10, "radius": 22.0},
-    {"id": "aether_works", "name": "Aether Works", "pos": [66.0, -66.0], "owner": 1, "kind": "industry", "material": 100, "aether": 20, "pop": 10, "radius": 20.0},
-    {"id": "east_bastion", "name": "East Bastion", "pos": [150.0, -5.0], "owner": -1, "kind": "industry", "material": 120, "aether": 0, "pop": 10, "radius": 22.0},
-    {"id": "north_relay", "name": "North Relay", "pos": [5.0, -152.0], "owner": -1, "kind": "aether", "material": 30, "aether": 90, "pop": 10, "radius": 22.0}
+    {"id": "central_nexus", "name": "中央ネクサス", "pos": [0.0, 0.0], "owner": -1, "kind": "aether", "material": 60, "aether": 120, "pop": 10, "radius": 24.0},
+    {"id": "brassholm", "name": "ブラスホルム", "pos": [-66.0, 66.0], "owner": 0, "kind": "industry", "material": 100, "aether": 20, "pop": 10, "radius": 20.0},
+    {"id": "west_foundry", "name": "西の鋳造所", "pos": [-150.0, 5.0], "owner": -1, "kind": "industry", "material": 120, "aether": 0, "pop": 10, "radius": 22.0},
+    {"id": "south_works", "name": "南の工房", "pos": [-5.0, 152.0], "owner": -1, "kind": "aether", "material": 30, "aether": 90, "pop": 10, "radius": 22.0},
+    {"id": "aether_works", "name": "エーテル工廠", "pos": [66.0, -66.0], "owner": 1, "kind": "industry", "material": 100, "aether": 20, "pop": 10, "radius": 20.0},
+    {"id": "east_bastion", "name": "東の砦", "pos": [150.0, -5.0], "owner": -1, "kind": "industry", "material": 120, "aether": 0, "pop": 10, "radius": 22.0},
+    {"id": "north_relay", "name": "北の中継塔", "pos": [5.0, -152.0], "owner": -1, "kind": "aether", "material": 30, "aether": 90, "pop": 10, "radius": 22.0}
   ],
   "bases": [
     {"team": 0, "pos": [-150.0, 150.0], "facing": [1.0, -1.0]},

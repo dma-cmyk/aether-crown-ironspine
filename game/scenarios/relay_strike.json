@@ -4,7 +4,7 @@
 	"order": 2,
 	"title": "北の中継塔",
 	"subtitle": "Silence the Relay",
-	"description": "前線の West Foundry から北西の橋を渡り、北の中継塔を奪う。ヴァルケシュの反撃に耐えて3分間守り抜けば勝利。",
+	"description": "前線の西の鋳造所から北西の橋を渡り、北の中継塔を奪う。ヴァルケシュの反撃に耐えて3分間守り抜けば勝利。",
 	"map": "ironspine",
 	"next": "iron_tide",
 	"victory_text": "中継塔は沈黙した。ヴァルケシュは目を失った。",

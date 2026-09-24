@@ -50,7 +50,7 @@ func setup(d: Dictionary) -> void:
 	ring.set_instance_shader_parameter("ring_width", 0.025)
 	ring.set_instance_shader_parameter("ring_pulse", 1.0)
 	label = Label3D.new()
-	label.text = site_name.to_upper()
+	label.text = site_name
 	label.font = UITheme.title_font()
 	label.font_size = 40
 	label.pixel_size = 0.0005
@@ -105,7 +105,7 @@ func tick(dt: float) -> void:
 			_set_owner(-1)
 			capturing_team = t
 			if old == Defs.TEAM_PLAYER:
-				World.inst.raise_alert(global_position, "%s の支配を失った" % site_name, Defs.TEAM_PLAYER)
+				World.inst.raise_alert(global_position, "%sの支配を失った" % site_name, Defs.TEAM_PLAYER)
 
 
 ## Save/load: owner and capture progress without alerts or capture stats.
@@ -134,9 +134,9 @@ func _set_owner(t: int) -> void:
 		World.inst.fx.ring_burst(global_position + Vector3(0, 1, 0), radius, Defs.team_glow(t))
 		World.inst.sfx.play_at("capture", global_position)
 		if t == Defs.TEAM_PLAYER:
-			World.inst.raise_alert(global_position, "%s を占領した" % site_name, t)
+			World.inst.raise_alert(global_position, "%sを占領した" % site_name, t)
 		else:
-			World.inst.raise_alert(global_position, "敵が %s を占領した" % site_name, Defs.TEAM_PLAYER)
+			World.inst.raise_alert(global_position, "敵が%sを占領した" % site_name, Defs.TEAM_PLAYER)
 	_refresh_owner()
 
 

@@ -53,7 +53,7 @@
 		{
 			"id": "hint1",
 			"when": {"type": "time", "at": 4},
-			"do": [{"type": "message", "text": "ヒント：攻撃は中央の橋だけでなく、北西（West Foundry）と南東（South Works）からも来る。"}]
+			"do": [{"type": "message", "text": "ヒント：攻撃は中央の橋だけでなく、北西（西の鋳造所）と南東（南の工房）からも来る。"}]
 		},
 		{
 			"id": "hint2",
@@ -89,7 +89,7 @@
 		{
 			"id": "warn2",
 			"when": {"type": "time", "at": 98},
-			"do": [{"type": "message", "text": "敵が北西の橋へ向かっている！ West Foundry が狙われる。", "at": [-60, -80]}]
+			"do": [{"type": "message", "text": "敵が北西の橋へ向かっている！ 西の鋳造所が狙われる。", "at": [-60, -80]}]
 		},
 		{
 			"id": "wave2",
@@ -141,7 +141,7 @@
 		{
 			"id": "warn4",
 			"when": {"type": "time", "at": 238},
-			"do": [{"type": "message", "text": "敵が南東の橋へ向かっている！ South Works が狙われる。", "at": [80, 60]}]
+			"do": [{"type": "message", "text": "敵が南東の橋へ向かっている！ 南の工房が狙われる。", "at": [80, 60]}]
 		},
 		{
 			"id": "wave4",

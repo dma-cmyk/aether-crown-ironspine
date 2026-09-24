@@ -64,7 +64,7 @@
 		{
 			"id": "hint3",
 			"when": {"type": "time", "at": 36},
-			"do": [{"type": "message", "text": "ヒント：工兵で近くの West Foundry / South Works を占領すると収入と人口上限が増える。"}]
+			"do": [{"type": "message", "text": "ヒント：工兵で近くの西の鋳造所・南の工房を占領すると収入と人口上限が増える。"}]
 		},
 		{
 			"id": "hint4",
