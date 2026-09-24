@@ -24,7 +24,13 @@ func setup(h: HUD) -> void:
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	dim.visible = false
 	add_child(dim)
-	pause_box = _box("PAUSED", [["再開", _resume], ["セーブ", _open_save.bind(true)], ["ロード", _open_save.bind(false)], ["設定", _open_settings], ["最初からやり直す", _restart], ["タイトルへ戻る", _title], ["ゲームを終了", _quit]])
+	var items := [["再開", _resume], ["セーブ", _open_save.bind(true)], ["ロード", _open_save.bind(false)], ["設定", _open_settings], ["最初からやり直す", _restart], ["タイトルへ戻る", _title]]
+	# a browser tab cannot quit itself; it can go fullscreen instead
+	if Game.can_fullscreen():
+		items.append(["全画面の切り替え", Game.toggle_fullscreen])
+	elif not Game.is_web():
+		items.append(["ゲームを終了", _quit])
+	pause_box = _box("PAUSED", items)
 	settings_box = SettingsPanel.make(func(): settings_box.visible = false; pause_box.visible = true)
 	add_child(settings_box)
 	settings_box.visible = false
@@ -50,15 +56,15 @@ func _box(title: String, buttons: Array) -> PanelContainer:
 	p.visible = false
 	add_child(p)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 12)
+	v.add_theme_constant_override("separation", 6 if Game.compact else 12)
 	p.add_child(v)
-	var t := UITheme.label(title, 34, UITheme.IVORY, UITheme.title_font(), 2)
+	var t := UITheme.label(title, 26 if Game.compact else 34, UITheme.IVORY, UITheme.title_font(), 2)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
 	for b in buttons:
 		var btn := Button.new()
 		btn.text = b[0]
-		btn.custom_minimum_size = Vector2(380, 46)
+		btn.custom_minimum_size = Vector2(380, 40 if Game.compact else 46)
 		btn.add_theme_font_override("font", UITheme.body_font())
 		btn.add_theme_font_size_override("font_size", 18)
 		btn.pressed.connect(b[1])
@@ -168,9 +174,9 @@ class SettingsPanel:
 		p.set_anchors_preset(Control.PRESET_CENTER)
 		p.custom_minimum_size = Vector2(520, 0)
 		var v := VBoxContainer.new()
-		v.add_theme_constant_override("separation", 12)
+		v.add_theme_constant_override("separation", 4 if Game.compact else 12)
 		p.add_child(v)
-		var t := UITheme.label("SETTINGS", 30, UITheme.IVORY, UITheme.title_font(), 2)
+		var t := UITheme.label("SETTINGS", 24 if Game.compact else 30, UITheme.IVORY, UITheme.title_font(), 2)
 		t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(t)
 		var q := HBoxContainer.new()
@@ -194,8 +200,9 @@ class SettingsPanel:
 		v.add_child(_slider("全体音量", Game.master_volume, func(x): Game.master_volume = x; Game.save_settings()))
 		v.add_child(_slider("BGM", Game.music_volume, func(x): Game.music_volume = x; Game.save_settings()))
 		v.add_child(_slider("効果音", Game.sfx_volume, func(x): Game.sfx_volume = x; Game.save_settings()))
-		v.add_child(_check("画面端スクロール", Game.edge_scroll, func(on): Game.edge_scroll = on; Game.save_settings()))
-		v.add_child(_check("FPS表示 (F3)", Game.show_fps, func(on): Game.show_fps = on; Game.save_settings()))
+		if not Game.compact:
+			v.add_child(_check("画面端スクロール", Game.edge_scroll, func(on): Game.edge_scroll = on; Game.save_settings()))
+		v.add_child(_check("FPS表示" if Game.compact else "FPS表示 (F3)", Game.show_fps, func(on): Game.show_fps = on; Game.save_settings()))
 		var diff := HBoxContainer.new()
 		diff.add_child(_lab("難易度（次の対戦から）"))
 		var ob := OptionButton.new()
@@ -207,7 +214,7 @@ class SettingsPanel:
 		v.add_child(diff)
 		var back := Button.new()
 		back.text = "戻る"
-		back.custom_minimum_size = Vector2(0, 44)
+		back.custom_minimum_size = Vector2(0, 40 if Game.compact else 44)
 		back.add_theme_font_override("font", UITheme.body_font())
 		back.pressed.connect(on_back)
 		v.add_child(back)

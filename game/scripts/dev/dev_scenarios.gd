@@ -131,6 +131,10 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 			world.get_tree().create_timer(12.0).timeout.connect(func() -> void:
 				print("[cover_test] after 12 s: behind the rock %.0f hp, in the open %.0f hp (Varkesh %.0f / %.0f)" % [
 						crown[0].hp, crown[1].hp, foes[0].hp, foes[1].hp]))
+		"touch_test":
+			var t: Node = load("res://scripts/dev/touch_test.gd").new()
+			match_node.add_child(t)
+			t.setup(world, commander, camera, match_node.hud)
 		"flyover":
 			# flyers crossing the Ironspine gate and the Crown citadel; prints how close each hull came
 			world.fog.enabled = false

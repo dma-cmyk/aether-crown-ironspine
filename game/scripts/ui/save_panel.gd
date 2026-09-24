@@ -8,7 +8,7 @@ static func make(saving: bool, on_pick: Callable, on_close: Callable) -> PanelCo
 	p.add_theme_stylebox_override("panel", UITheme.panel(Color(0.04, 0.05, 0.065, 0.97), UITheme.GOLD, 2))
 	p.custom_minimum_size = Vector2(620, 0)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 12)
+	v.add_theme_constant_override("separation", 8 if Game.compact else 12)
 	p.add_child(v)
 	var t := UITheme.label("セーブ" if saving else "ロード", 30, UITheme.IVORY, UITheme.title_font(), 2)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -16,7 +16,7 @@ static func make(saving: bool, on_pick: Callable, on_close: Callable) -> PanelCo
 	for i in range(1, SaveGame.SLOTS + 1):
 		var d := SaveGame.read(SaveGame.slot_path(i))
 		var b := Button.new()
-		b.custom_minimum_size = Vector2(580, 64)
+		b.custom_minimum_size = Vector2(580, 56 if Game.compact else 64)
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.add_theme_font_override("font", UITheme.body_font())
 		b.add_theme_font_size_override("font_size", 18)

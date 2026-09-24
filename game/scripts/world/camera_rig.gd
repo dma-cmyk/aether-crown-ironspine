@@ -1,7 +1,7 @@
 class_name CameraRig
 extends Node3D
 ## RTS camera: pan (arrows / screen edge / middle drag with Shift), zoom (wheel),
-## rotate (middle drag / , .), follows terrain height.
+## rotate (middle drag / , .), follows terrain height. TouchControls drives it on phones.
 
 signal moved
 
@@ -68,7 +68,7 @@ func right_dir() -> Vector3:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not input_enabled:
+	if not input_enabled or Game.from_touch(event):
 		return
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
@@ -106,7 +106,7 @@ func _process(delta: float) -> void:
 			pan.y += 1
 		if Input.is_action_pressed("cam_down"):
 			pan.y -= 1
-		if Game.edge_scroll and not _dragging and DisplayServer.window_is_focused():
+		if Game.edge_scroll and not Game.touch_input and not _dragging and DisplayServer.window_is_focused():
 			var vp := get_viewport()
 			var mp := vp.get_mouse_position()
 			var sz := vp.get_visible_rect().size
@@ -155,6 +155,38 @@ func _update_transform() -> void:
 			jitter = Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * _shake * 0.35
 		cam.global_transform = Transform3D(Basis(), pos + jitter).looking_at(at + jitter * 0.5, Vector3.UP)
 	moved.emit()
+
+
+## Touch: move at once rather than easing, so the ground stays under the finger.
+func pan_by(v: Vector3) -> void:
+	target_focus += Vector3(v.x, 0.0, v.z)
+	target_focus.x = clampf(target_focus.x, -bounds, bounds)
+	target_focus.z = clampf(target_focus.z, -bounds, bounds)
+	focus.x = target_focus.x
+	focus.z = target_focus.z
+	_update_transform()
+
+
+func zoom_to(d: float) -> void:
+	target_distance = clampf(d, MIN_DIST, MAX_DIST)
+	distance = target_distance
+	_update_transform()
+
+
+func turn_by(a: float) -> void:
+	yaw += a
+	_update_transform()
+
+
+## Screen point -> point on the horizontal plane at height y (Vector3.INF when looking away).
+func screen_to_plane(screen_pos: Vector2, y: float) -> Vector3:
+	if cam == null:
+		return Vector3.INF
+	var o := cam.project_ray_origin(screen_pos)
+	var d := cam.project_ray_normal(screen_pos)
+	if d.y > -0.01:
+		return Vector3.INF
+	return o + d * ((y - o.y) / d.y)
 
 
 ## Screen point -> ground point (Vector3.INF when the ray misses).

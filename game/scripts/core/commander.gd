@@ -107,6 +107,9 @@ func _ui_hovered() -> bool:
 func _unhandled_input(event: InputEvent) -> void:
 	if not enabled or world.game_over:
 		return
+	# fingers are read by TouchControls; the mouse clicks Godot makes from them only work the HUD
+	if Game.from_touch(event):
+		return
 	if event is InputEventMouseButton:
 		_mouse_button(event)
 	elif event is InputEventMouseMotion:
@@ -139,6 +142,71 @@ func _mouse_button(mb: InputEventMouseButton) -> void:
 			cancel_mode()
 			return
 		_smart_order(mb.position, mb.shift_pressed)
+
+
+# ---------------------------------------------------------------- touch (TouchControls)
+## A tap selects our units and buildings. With units (or a producing building) of ours selected,
+## it gives the order a right click would; otherwise it selects what is there or clears.
+func touch_tap(pos: Vector2) -> void:
+	if mode == Mode.PLACE:
+		_touch_place(pos)
+		return
+	if mode != Mode.NONE:
+		_confirm_mode(pos, false)
+		return
+	var e := pick(pos)
+	var b := selected_building()
+	var commandable := not own_units().is_empty() or (b != null and not b.produces().is_empty())
+	if e and e.team == Defs.TEAM_PLAYER and not (commandable and _wants_repair(e)):
+		_click_select(pos, false, false)
+	elif commandable:
+		_smart_order(pos, false)
+	else:
+		_click_select(pos, false, false)
+
+
+## Hold, then lift without moving: select whatever is there (enemies too), or clear the selection.
+func touch_pick(pos: Vector2) -> void:
+	_click_select(pos, false, false)
+
+
+func touch_box(rect: Rect2) -> void:
+	_box_select(rect, false)
+
+
+func _wants_repair(e: Entity) -> bool:
+	return e.is_building and e.hp < e.max_hp and not e in selection \
+			and own_units().any(func(u: Unit) -> bool: return u.def.get("repair_rate", 0.0) > 0.0)
+
+
+## The first tap sets the ghost down, a tap on the ghost builds it, a tap elsewhere moves it.
+func _touch_place(pos: Vector2) -> void:
+	var g := ground_at_mouse(pos)
+	if g == Vector3.INF:
+		return
+	if ghost and ghost.visible and Vector2(g.x - ghost.global_position.x, g.z - ghost.global_position.z).length() < float(Defs.BUILDINGS[place_id]["radius"]) + 2.0:
+		if ghost_valid:
+			_place_building(ghost.global_position)
+			world.sfx.play_ui("confirm")
+			set_mode(Mode.NONE)
+		else:
+			world.sfx.play_ui("error")
+		return
+	place_at(g)
+	world.sfx.play_ui("click")
+
+
+func place_at(g: Vector3) -> void:
+	if ghost == null:
+		return
+	ghost.visible = true
+	ghost.global_position = g
+	var to_cam := camera.cam.global_position - g
+	ghost.rotation.y = snappedf(atan2(to_cam.x, to_cam.z), PI / 4.0)
+	var v := placement_valid(place_id, g)
+	if v != ghost_valid:
+		ghost_valid = v
+		_ghost_material(ghost, v)
 
 
 func _click_select(pos: Vector2, add: bool, dbl: bool) -> void:
@@ -470,7 +538,14 @@ func begin_place(id: String) -> void:
 	set_mode(Mode.PLACE)
 	ghost = UnitVisual.load_model(Defs.BUILDINGS[id]["model"], 0, true)
 	world.add_child(ghost)
+	ghost_valid = true
 	_ghost_material(ghost, true)
+	if Game.touch_input:
+		# no cursor to follow: start in the middle of the screen and wait for a tap
+		ghost.visible = false
+		var g := camera.screen_to_ground(get_viewport().get_visible_rect().size * Vector2(0.5, 0.45))
+		if g != Vector3.INF:
+			place_at(g)
 
 
 func _ghost_material(root: Node, valid: bool) -> void:
@@ -529,22 +604,14 @@ func _place_building(p: Vector3) -> void:
 
 
 func _process(_delta: float) -> void:
-	if mode == Mode.PLACE and ghost:
-		var mp := get_viewport().get_mouse_position()
-		var g := ground_at_mouse(mp)
+	if mode == Mode.PLACE and ghost and not Game.touch_input:
+		var g := ground_at_mouse(get_viewport().get_mouse_position())
 		if g != Vector3.INF:
-			ghost.visible = true
-			ghost.global_position = g
-			var to_cam := camera.cam.global_position - g
-			ghost.rotation.y = snappedf(atan2(to_cam.x, to_cam.z), PI / 4.0)
-			var v := placement_valid(place_id, g)
-			if v != ghost_valid:
-				ghost_valid = v
-				_ghost_material(ghost, v)
+			place_at(g)
 		else:
 			ghost.visible = false
 	hover = null
-	if not dragging and not _ui_hovered():
+	if not dragging and not Game.touch_input and not _ui_hovered():
 		hover = pick(get_viewport().get_mouse_position())
 
 

@@ -44,6 +44,10 @@ func _ready() -> void:
 			_show_scenarios()
 		elif Game.arg("show") == "saves":
 			_show_saves()
+		elif Game.arg("show") == "help":
+			_show_help()
+		elif Game.arg("show") == "settings":
+			_show_settings()
 
 
 func _stage_scene() -> void:
@@ -90,29 +94,30 @@ func _build_ui() -> void:
 	shade.stretch_mode = TextureRect.STRETCH_SCALE
 	shade.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	shade.anchor_bottom = 1.0
-	shade.offset_right = 1100
+	shade.offset_right = 640 if Game.compact else 1100
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(shade)
+	var c := Game.compact
 	var crest := TextureRect.new()
 	crest.texture = UITheme.icon("crest")
 	crest.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	crest.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	crest.position = Vector2(118, 110)
-	crest.size = Vector2(120, 120)
+	crest.position = Vector2(30, 16) if c else Vector2(118, 110)
+	crest.size = Vector2(60, 60) if c else Vector2(120, 120)
 	ui.add_child(crest)
-	var title := UITheme.label("AETHER CROWN", 92, UITheme.IVORY, UITheme.title_font(), 6)
-	title.position = Vector2(112, 236)
+	var title := UITheme.label("AETHER CROWN", 44 if c else 92, UITheme.IVORY, UITheme.title_font(), 4 if c else 6)
+	title.position = Vector2(100, 10) if c else Vector2(112, 236)
 	ui.add_child(title)
-	var tag := UITheme.label("INDUSTRY.   FAITH.   A HIGHER TOMORROW.", 22, UITheme.GOLD, UITheme.title_font(), 3)
-	tag.position = Vector2(122, 352)
+	var tag := UITheme.label("INDUSTRY.   FAITH.   A HIGHER TOMORROW.", 12 if c else 22, UITheme.GOLD, UITheme.title_font(), 3)
+	tag.position = Vector2(104, 70) if c else Vector2(122, 352)
 	ui.add_child(tag)
-	var jp := UITheme.label("世界を繋ぎ、帝国を築け。", 28, UITheme.IVORY, UITheme.serif_font(), 4)
-	jp.position = Vector2(122, 398)
+	var jp := UITheme.label("世界を繋ぎ、帝国を築け。", 17 if c else 28, UITheme.IVORY, UITheme.serif_font(), 4)
+	jp.position = Vector2(32, 94) if c else Vector2(122, 398)
 	ui.add_child(jp)
 	var menu := VBoxContainer.new()
-	menu.add_theme_constant_override("separation", 8)
-	menu.position = Vector2(120, 448)
-	menu.size = Vector2(520, 400)
+	menu.add_theme_constant_override("separation", 5 if c else 8)
+	menu.position = Vector2(30, 130) if c else Vector2(120, 448)
+	menu.size = Vector2(440, 340) if c else Vector2(520, 400)
 	ui.add_child(menu)
 	_menu_button(menu, "続きから", _show_saves).disabled = not SaveGame.has_any()
 	_menu_button(menu, "キャンペーン ― アイアンスパインの門", _start)
@@ -121,7 +126,11 @@ func _build_ui() -> void:
 	_update_diff()
 	_menu_button(menu, "操作説明", _show_help)
 	_menu_button(menu, "設定", _show_settings)
-	_menu_button(menu, "終了", func(): get_tree().quit())
+	# a browser tab cannot quit itself; it can go fullscreen instead
+	if Game.can_fullscreen():
+		_menu_button(menu, "全画面の切り替え", Game.toggle_fullscreen)
+	elif not Game.is_web():
+		_menu_button(menu, "終了", func(): get_tree().quit())
 	var foot := UITheme.label("Hold the Gate — For a Stronger Tomorrow.   Built with Godot, Blender, Material Maker, Inkscape and ImageMagick.", 14, UITheme.TEXT_DIM, UITheme.italic_font(), 2)
 	foot.anchor_top = 1.0
 	foot.anchor_bottom = 1.0
@@ -129,6 +138,7 @@ func _build_ui() -> void:
 	foot.offset_top = -44
 	foot.offset_right = 1600
 	foot.offset_bottom = -20
+	foot.visible = not c
 	ui.add_child(foot)
 	overlay = Control.new()
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -139,10 +149,10 @@ func _build_ui() -> void:
 func _menu_button(parent: Control, text: String, cb: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
-	b.custom_minimum_size = Vector2(520, 50)
+	b.custom_minimum_size = Vector2(440, 42) if Game.compact else Vector2(520, 50)
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.add_theme_font_override("font", UITheme.body_font())
-	b.add_theme_font_size_override("font_size", 22)
+	b.add_theme_font_size_override("font_size", 18 if Game.compact else 22)
 	b.pressed.connect(func():
 		world.sfx.play_ui("click")
 		cb.call())

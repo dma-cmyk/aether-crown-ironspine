@@ -49,6 +49,10 @@ func _ready() -> void:
 	commander.name = "Commander"
 	add_child(commander)
 	commander.setup(world, camera)
+	var touch := TouchControls.new()
+	touch.name = "TouchControls"
+	add_child(touch)
+	touch.setup(commander, camera)
 	hud_layer = CanvasLayer.new()
 	hud_layer.layer = 10
 	add_child(hud_layer)
