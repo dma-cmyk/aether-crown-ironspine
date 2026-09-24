@@ -404,8 +404,7 @@ func _building_key(b: Building, ev: InputEventKey) -> void:
 	if i < 0:
 		return
 	if b.def_id == "citadel" and ev.shift_pressed == false and hud and hud.has_method("citadel_build_mode") and hud.citadel_build_mode():
-		if i < Defs.BUILD_ORDER.size():
-			begin_place(Defs.BUILD_ORDER[i])
+		hud.build_key(i)
 		return
 	var prods: Array = b.produces()
 	if i < prods.size():

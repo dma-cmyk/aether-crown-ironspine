@@ -69,8 +69,8 @@ func _economy() -> void:
 	if cit == null:
 		return
 	# construction plan
-	for plan in [["foundry", 60.0], ["refinery", 100.0], ["habitat", 130.0], ["habitat", 240.0], ["sanctum", 330.0], ["skyport", 400.0],
-			["refinery", 460.0]]:
+	for plan in [["foundry", 60.0], ["refinery", 100.0], ["habitat", 130.0], ["habitat", 240.0], ["sanctum_cyclops", 330.0], ["skyport", 400.0],
+			["refinery", 460.0], ["sanctum_griffin", 500.0], ["sanctum_dragon", 560.0], ["sanctum_cerberus", 620.0]]:
 		var key := "%s@%d" % plan
 		if _built.has(key) or world.match_time < float(plan[1]):
 			continue
@@ -99,8 +99,9 @@ func _economy() -> void:
 				b.queue_unit("walker" if randf() < 0.6 else "mortar")
 			"skyport":
 				b.queue_unit("airship")
-			"sanctum":
-				b.queue_unit(["cyclops", "cerberus", "griffin", "dragon"][randi() % 4])
+			_:
+				if b.def_id.begins_with("sanctum"):
+					b.queue_unit(b.produces()[randi() % b.produces().size()])
 
 
 func _army() -> void:

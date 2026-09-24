@@ -8,6 +8,7 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 		"ui_build":
 			commander.set_selection([world.citadel(0)])
 			match_node.hud.build_mode = true
+			match_node.hud.shrine_page = Game.arg("page") == "shrines"
 			camera.set_view(Vector3(-128, 0, 128), -45.0, 90.0)
 			commander.begin_place("foundry")
 			Input.warp_mouse(Vector2(900, 480))

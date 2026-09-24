@@ -19,10 +19,13 @@ const BUILD_PLAN := [
 	{"id": "refinery", "t": 160.0},
 	{"id": "skyport", "t": 230.0},
 	{"id": "habitat", "t": 280.0},
-	{"id": "sanctum", "t": 310.0},
+	{"id": "sanctum_cyclops", "t": 310.0},
 	{"id": "barracks", "t": 340.0},
+	{"id": "sanctum_cerberus", "t": 380.0},
 	{"id": "habitat", "t": 420.0},
+	{"id": "sanctum_griffin", "t": 450.0},
 	{"id": "bastion", "t": 480.0},
+	{"id": "sanctum_dragon", "t": 560.0},
 ]
 
 
@@ -89,8 +92,9 @@ func _economy() -> void:
 			"skyport":
 				if rng.randf() < 0.5 * diff:
 					choice = "airship"
-			"sanctum":
-				choice = _beast_choice(p, diff)
+			_:
+				if b.def_id.begins_with("sanctum"):
+					choice = _beast_choice(b, p, diff)
 		if choice != "" and b.can_queue(choice) in ["", "資源不足"]:
 			picks.append([b, choice])
 	# the dearest units get first call on the treasury and are saved for; infantry spend what
@@ -122,20 +126,22 @@ func _reserve() -> Vector2:
 	return Vector2(float(cost["material"]), float(cost["aether"]))
 
 
-## Griffins answer enemy fliers; otherwise giants and hounds, and a dragon when aether allows.
-func _beast_choice(p: PlayerState, diff: float) -> String:
+## A beast from this shrine: griffins mostly to answer enemy fliers, a dragon when aether allows.
+func _beast_choice(b: Building, p: PlayerState, diff: float) -> String:
 	if rng.randf() > 0.6 * diff:
 		return ""
 	var fliers := 0
 	for u in world.units:
 		if u.alive and u.team != team and u.is_air:
 			fliers += 1
-	var roll := rng.randf()
-	if fliers >= 2 and roll < 0.45:
-		return "griffin"
-	if p.aether >= 320.0 and roll < 0.3:
-		return "dragon"
-	return "cyclops" if roll < 0.65 else "cerberus"
+	var options: Array = b.produces().filter(func(id: String) -> bool:
+		match id:
+			"griffin":
+				return fliers >= 2 or rng.randf() < 0.3
+			"dragon":
+				return p.aether >= 320.0
+		return true)
+	return "" if options.is_empty() else options[rng.randi() % options.size()]
 
 
 func _construction() -> void:

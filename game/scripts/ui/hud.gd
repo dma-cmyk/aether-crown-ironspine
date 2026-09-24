@@ -47,6 +47,8 @@ var advisor_img: TextureRect
 var advisor_text: Label
 var menus: Menus
 var build_mode := false
+## Inside the build menu: the page of beast shrines.
+var shrine_page := false
 var compact := false
 var cancel_button: Button
 var deselect_button: Button
@@ -625,11 +627,13 @@ func _card_entries() -> Array[String]:
 		return out
 	if b:
 		if b.def_id == "citadel" and build_mode:
-			for id in Defs.BUILD_ORDER:
+			for id in (Defs.SHRINES if shrine_page else Defs.BUILD_ORDER):
 				out.append("bld:" + id)
-			while out.size() < 7:
+			while out.size() < 6:
 				out.append("")
-			out.append("toggle:back")
+			if out.size() < 7:
+				out.append("" if shrine_page else "toggle:shrines")
+			out.append("toggle:shrines_back" if shrine_page else "toggle:back")
 			return out
 		for id in b.produces():
 			out.append("unit:" + id)
@@ -668,9 +672,27 @@ func _on_cmd(i: int) -> void:
 		"bld":
 			commander.begin_place(v)
 		"toggle":
-			build_mode = v == "build"
+			match v:
+				"build", "shrines_back":
+					build_mode = true
+					shrine_page = false
+				"shrines":
+					shrine_page = true
+				_:
+					build_mode = false
+					shrine_page = false
 			world.sfx.play_ui("click")
 			_sel_sig = ""
+
+
+## Build menu hotkeys (Q W E R T Y U) while the citadel is selected.
+func build_key(i: int) -> void:
+	var ids: Array = Defs.SHRINES if shrine_page else Defs.BUILD_ORDER
+	if i < ids.size():
+		commander.begin_place(ids[i])
+	elif not shrine_page and i == 6:
+		shrine_page = true
+		_sel_sig = ""
 
 
 func _show_tip(i: int) -> void:
@@ -705,8 +727,9 @@ func _show_tip(i: int) -> void:
 			tip_cost.text = _cost_text(bd["cost"]) + "   建設 %d秒" % int(bd["build_time"])
 			tip_body.text = bd["jp"] + "\n本拠地・自軍の都市の近くに建設できる" + ("" if touch else "（Shiftで連続配置）")
 		"toggle":
-			tip_title.text = "CONSTRUCT" if v == "build" else "BACK"
-			tip_body.text = "建設メニューを開く" if v == "build" else "生産メニューに戻る"
+			tip_title.text = {"build": "CONSTRUCT", "shrines": "SHRINES"}.get(v, "BACK")
+			tip_body.text = {"build": "建設メニューを開く", "shrines": "神獣の祠を選ぶ（祠ごとに呼べる神獣が違う）",
+					"shrines_back": "建設メニューに戻る"}.get(v, "生産メニューに戻る")
 	tooltip.visible = true
 	tooltip.reset_size()
 	await get_tree().process_frame
@@ -779,15 +802,15 @@ func _update_commands() -> void:
 				if n > 0:
 					key.text = ("x%d" % n) if compact else "%s x%d" % [PROD_KEYS[i], n]
 			"bld":
-				ic.texture = UITheme.icon("bld_" + v)
+				ic.texture = UITheme.icon(Defs.building_icon(v))
 				lab.text = _short(Defs.building_name(v, 0))
 				key.text = "" if compact else PROD_KEYS[i]
 				btn.disabled = not p.can_afford(Defs.BUILDINGS[v]["cost"])
 				lab.add_theme_color_override("font_color", UITheme.IVORY)
 			"toggle":
-				ic.texture = UITheme.icon("construct" if v == "build" else "cancel")
-				lab.text = "CONSTRUCT" if v == "build" else "BACK"
-				key.text = "B" if v == "build" and not compact else ""
+				ic.texture = UITheme.icon({"build": "construct", "shrines": "bld_sanctum"}.get(v, "cancel"))
+				lab.text = {"build": "CONSTRUCT", "shrines": "SHRINES"}.get(v, "BACK")
+				key.text = "" if compact else {"build": "B", "shrines": "U"}.get(v, "")
 				btn.disabled = false
 				lab.add_theme_color_override("font_color", UITheme.GOLD)
 
@@ -801,6 +824,7 @@ static func _short(n: String) -> String:
 func _refresh_selection() -> void:
 	_sel_sig = ""
 	build_mode = false
+	shrine_page = false
 
 
 func _selection_signature() -> String:
@@ -812,7 +836,7 @@ func _selection_signature() -> String:
 
 func _update_selection() -> void:
 	var sel := commander.selection.filter(func(e): return is_instance_valid(e) and e.alive)
-	var sig := _selection_signature() + str(build_mode)
+	var sig := _selection_signature() + str(build_mode) + str(shrine_page)
 	var rebuild := sig != _sel_sig
 	_sel_sig = sig
 	sel_grid.visible = sel.size() > 1
@@ -965,7 +989,7 @@ func _unit_card(e: Entity) -> Control:
 	b.custom_minimum_size = Vector2(42, 50) if compact else Vector2(44, 52)
 	b.focus_mode = Control.FOCUS_NONE
 	var ic := TextureRect.new()
-	ic.texture = UITheme.icon(("unit_" if e is Unit else "bld_") + e.def_id)
+	ic.texture = UITheme.icon("unit_" + e.def_id if e is Unit else Defs.building_icon(e.def_id))
 	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	ic.position = Vector2(4, 3)
@@ -1062,7 +1086,7 @@ func _process(delta: float) -> void:
 	if deselect_button:
 		deselect_button.visible = not commander.selection.is_empty()
 	_ui_t -= delta
-	if _ui_t > 0.0 and _sel_sig == _selection_signature() + str(build_mode):
+	if _ui_t > 0.0 and _sel_sig == _selection_signature() + str(build_mode) + str(shrine_page):
 		return
 	_ui_t = 0.1
 	var p := world.player(Defs.TEAM_PLAYER)
@@ -1086,6 +1110,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		return
 	if k.physical_keycode == KEY_B and commander.selected_building() and commander.selected_building().def_id == "citadel":
 		build_mode = not build_mode
+		shrine_page = false
 		_sel_sig = ""
 	elif k.physical_keycode == KEY_SPACE:
 		_goto_alert()

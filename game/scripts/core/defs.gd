@@ -193,15 +193,43 @@ const BUILDINGS := {
 		# towers and wall stubs either side of the arch; the road runs through the middle
 		"walls": [[-9.0, 0.0, 4.9, 4.9], [9.0, 0.0, 4.9, 4.9], [-17.0, -1.0, 4.9, 2.0], [17.0, -1.0, 4.9, 2.0]], "wall_cover": 10.0,
 	},
+	# one shrine per kind of beast (all the same stones for now); "icon" is the card picture
+	"sanctum_cerberus": {
+		"name": ["Shrine of the Hound", "Varkesh Hound Pit"], "desc": ["Three heads, one oath.", "Hunger, three times over."],
+		"jp": "ケルベロスの祠。三つ首の猟犬ケルベロスを呼び出す。",
+		"hp": 1400.0, "radius": 9.5, "footprint": 9.0, "cost": {"material": 150, "aether": 60}, "build_time": 30.0,
+		"produces": ["cerberus"], "pop": 0, "model": "sanctum", "icon": "unit_cerberus", "buildable": true, "hotkey": "Q", "vision": 32.0,
+	},
+	"sanctum_cyclops": {
+		"name": ["Shrine of the Giant", "Varkesh Giant Pit"], "desc": ["The mountain opens its eye.", "Chained, starved, unleashed."],
+		"jp": "サイクロプスの祠。一つ目の巨人サイクロプスを呼び出す。",
+		"hp": 1600.0, "radius": 9.5, "footprint": 9.0, "cost": {"material": 200, "aether": 120}, "build_time": 36.0,
+		"produces": ["cyclops"], "pop": 0, "model": "sanctum", "icon": "unit_cyclops", "buildable": true, "hotkey": "W", "vision": 32.0,
+	},
+	"sanctum_griffin": {
+		"name": ["Shrine of the Griffin", "Varkesh Griffin Roost"], "desc": ["The sky has knights of its own.", "A scream from the high crags."],
+		"jp": "グリフォンの祠。空の騎士グリフォンを呼び出す。",
+		"hp": 1400.0, "radius": 9.5, "footprint": 9.0, "cost": {"material": 200, "aether": 120}, "build_time": 36.0,
+		"produces": ["griffin"], "pop": 0, "model": "sanctum", "icon": "unit_griffin", "buildable": true, "hotkey": "E", "vision": 32.0,
+	},
+	"sanctum_dragon": {
+		"name": ["Shrine of the Dragon", "Varkesh Dragon Pit"], "desc": ["Older than the Crown, and prouder.", "Ash follows its shadow."],
+		"jp": "ドラゴンの祠。炎の息を吐くドラゴンを呼び出す。",
+		"hp": 1800.0, "radius": 9.5, "footprint": 9.0, "cost": {"material": 240, "aether": 180}, "build_time": 44.0,
+		"produces": ["dragon"], "pop": 0, "model": "sanctum", "icon": "unit_dragon", "buildable": true, "hotkey": "R", "vision": 32.0,
+	},
+	# the old all-in-one shrine: no longer in the build menu, kept for saves and scenarios
 	"sanctum": {
 		"name": ["Beast Sanctum", "Varkesh Beast Pit"], "desc": ["Old pacts, renewed in light.", "Where monsters are broken."],
 		"jp": "神獣の祠。ケルベロス・サイクロプス・グリフォン・ドラゴンを呼び出す。",
 		"hp": 1800.0, "radius": 9.5, "footprint": 9.0, "cost": {"material": 220, "aether": 150}, "build_time": 40.0,
-		"produces": ["cerberus", "cyclops", "griffin", "dragon"], "pop": 0, "model": "sanctum", "buildable": true, "hotkey": "U", "vision": 32.0,
+		"produces": ["cerberus", "cyclops", "griffin", "dragon"], "pop": 0, "model": "sanctum", "buildable": false, "vision": 32.0,
 	},
 }
 
-const BUILD_ORDER := ["barracks", "foundry", "skyport", "refinery", "habitat", "bastion", "sanctum"]
+## The citadel's build menu; its seventh button opens the shrines.
+const BUILD_ORDER := ["barracks", "foundry", "skyport", "refinery", "habitat", "bastion"]
+const SHRINES := ["sanctum_cerberus", "sanctum_cyclops", "sanctum_griffin", "sanctum_dragon"]
 
 const SPECIALS := {
 	"aether_volley": {"name": "Aether Volley", "jp": "エーテル弾：8秒間、射撃速度2倍・装甲貫通。", "cooldown": 40.0, "duration": 8.0},
@@ -244,6 +272,10 @@ static func building_name(id: String, team: int) -> String:
 static func building_desc(id: String, team: int) -> String:
 	var d: Dictionary = BUILDINGS[id]
 	return d["desc"][1 if team == TEAM_ENEMY else 0]
+
+
+static func building_icon(id: String) -> String:
+	return BUILDINGS[id].get("icon", "bld_" + id)
 
 
 static func team_color(team: int) -> Color:
