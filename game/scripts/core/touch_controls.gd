@@ -5,9 +5,13 @@ extends Node
 ## kind on screen; drag to pan; hold still, then drag, to box-select. Two fingers: pinch to zoom,
 ## twist to turn, move together to pan. Hold still and lift to select anything (enemies too) or
 ## clear the selection. Touches that land on the HUD are left to it.
+## Building: drag a building button out onto the field, or drag the placed ghost, and the
+## building follows the finger (held a little above it); lifting the finger builds it there.
 
 const TAP_SLOP := 16.0
 const HOLD := 0.45
+## The ghost rides this far above a dragging finger, so the finger does not hide it.
+const LIFT := Vector2(0, -70)
 
 var commander: Commander
 var camera: CameraRig
@@ -23,6 +27,10 @@ var _two_zoom := 0.0
 ## Where and when a mouse click made from a finger got past the HUD.
 var _free_press := Vector2.INF
 var _free_frame := -1
+## The finger went down on the ghost being placed.
+var _on_ghost := false
+## A building button was pressed: the next finger that drags off it carries the building.
+var _card_pending := false
 
 
 func setup(c: Commander, cam: CameraRig) -> void:
@@ -51,6 +59,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_start = st.position
 		_start_t = _now()
 		_gesture = ""
+		_on_ghost = _near_ghost(st.position)
 	elif _touches.size() == 2:
 		_begin_two()
 	get_viewport().set_input_as_handled()
@@ -62,6 +71,8 @@ func _input(event: InputEvent) -> void:
 		_touches.erase(st.index)
 		if st.canceled:
 			_reset()
+		elif _gesture in ["ghost", "card"]:
+			_drop(st.position)
 		elif _touches.is_empty():
 			_finish(st.position)
 		elif _touches.size() == 1:
@@ -70,14 +81,24 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	var sd := event as InputEventScreenDrag
+	if sd and _card_pending and _touches.is_empty():
+		if commander.mode != Commander.Mode.PLACE:
+			_card_pending = false
+		elif not _on_card(sd.position):
+			# the finger has left the button: from here on it carries the building
+			_card_pending = false
+			_touches[sd.index] = sd.position
+			_gesture = "card"
 	if sd and _touches.has(sd.index):
 		_touches[sd.index] = sd.position
 		if _touches.size() == 2:
 			_move_two()
 		elif _gesture == "" and sd.position.distance_to(_start) > TAP_SLOP:
-			_gesture = "pan"
+			_gesture = "ghost" if _on_ghost and commander.mode == Commander.Mode.PLACE else "pan"
 			_grab = camera.screen_to_ground(_start)
-		if _gesture == "pan":
+		if _gesture in ["ghost", "card"]:
+			_carry(sd.position)
+		elif _gesture == "pan":
 			_pan_to(sd.position)
 		elif _gesture == "box":
 			commander.drag_rect = Rect2(_start, sd.position - _start).abs()
@@ -123,6 +144,44 @@ func _finish(pos: Vector2) -> void:
 	_reset()
 
 
+## HUD: a building button went down under a finger.
+func card_pressed() -> void:
+	_card_pending = true
+
+
+func _on_card(p: Vector2) -> bool:
+	var hud: HUD = commander.hud as HUD
+	if hud == null:
+		return false
+	var card := hud.cmd_grid.get_parent() as Control
+	return card.get_global_rect().has_point(p)
+
+
+func _near_ghost(p: Vector2) -> bool:
+	if commander.mode != Commander.Mode.PLACE or commander.ghost == null or not commander.ghost.visible:
+		return false
+	var g := camera.screen_to_ground(p)
+	var gp := commander.ghost.global_position
+	return g != Vector3.INF and Vector2(g.x - gp.x, g.z - gp.z).length() < float(Defs.BUILDINGS[commander.place_id]["radius"]) + 3.0
+
+
+func _carry(p: Vector2) -> void:
+	if _on_hud(p):
+		return
+	var g := camera.screen_to_ground(p + LIFT)
+	if g != Vector3.INF:
+		commander.place_at(g)
+
+
+## Lifting the finger builds where the ghost stands; back on the HUD it gives up instead.
+func _drop(p: Vector2) -> void:
+	if _gesture == "card" and _on_hud(p):
+		commander.cancel_mode()
+	elif commander.mode == Commander.Mode.PLACE:
+		commander.confirm_ghost()
+	_reset()
+
+
 func _reset() -> void:
 	if _gesture == "box":
 		commander.dragging = false
@@ -130,6 +189,8 @@ func _reset() -> void:
 	_touches.clear()
 	_gesture = ""
 	_grab = Vector3.INF
+	_on_ghost = false
+	_card_pending = false
 
 
 ## Keep the ground point first touched under the finger.

@@ -187,15 +187,22 @@ func _touch_place(pos: Vector2) -> void:
 	if g == Vector3.INF:
 		return
 	if ghost and ghost.visible and Vector2(g.x - ghost.global_position.x, g.z - ghost.global_position.z).length() < float(Defs.BUILDINGS[place_id]["radius"]) + 2.0:
-		if ghost_valid:
-			_place_building(ghost.global_position)
-			world.sfx.play_ui("confirm")
-			set_mode(Mode.NONE)
-		else:
-			world.sfx.play_ui("error")
+		confirm_ghost()
 		return
 	place_at(g)
 	world.sfx.play_ui("click")
+
+
+## Touch: build where the ghost stands (a tap on it, or a finger lifted after dragging it).
+func confirm_ghost() -> void:
+	if ghost == null or not ghost.visible:
+		return
+	if ghost_valid:
+		_place_building(ghost.global_position)
+		world.sfx.play_ui("confirm")
+		set_mode(Mode.NONE)
+	else:
+		world.sfx.play_ui("error")
 
 
 func place_at(g: Vector3) -> void:
@@ -577,6 +584,8 @@ func begin_place(id: String) -> void:
 		return
 	place_id = id
 	set_mode(Mode.PLACE)
+	if ghost:
+		ghost.queue_free()
 	ghost = UnitVisual.load_model(Defs.BUILDINGS[id]["model"], 0, true)
 	world.add_child(ghost)
 	_add_footprint(ghost, float(Defs.BUILDINGS[id]["radius"]))

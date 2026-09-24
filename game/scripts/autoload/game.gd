@@ -55,7 +55,8 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventScreenTouch or event is InputEventScreenDrag:
+	# a click made from a finger arrives just before the touch itself: it counts as touch too
+	if event is InputEventScreenTouch or event is InputEventScreenDrag or (event is InputEventMouse and event.device == InputEvent.DEVICE_ID_EMULATION):
 		touch_input = true
 		_touch_ms = Time.get_ticks_msec()
 	elif event is InputEventMouse and not from_touch(event) and (event is InputEventMouseButton or (event as InputEventMouseMotion).relative.length() > 2.0):

@@ -59,6 +59,8 @@ var _tip_t := 0.0
 var _last_alert_pos := Vector3.INF
 var _sel_sig := ""
 var _card_ids: Array[String] = []
+## Touch: the building button under the finger already started placing (so it can be dragged out).
+var _placing_from_card := false
 
 
 func setup(w: World, c: Commander, cam: CameraRig, m: Node) -> void:
@@ -590,6 +592,7 @@ func _build_commands() -> void:
 		b.add_child(cd)
 		var idx := i
 		b.pressed.connect(func(): _on_cmd(idx))
+		b.button_down.connect(func(): _on_cmd_down(idx))
 		b.mouse_entered.connect(func(): if not Game.touch_input: _show_tip(idx))
 		b.mouse_exited.connect(func(): if not Game.touch_input: tooltip.visible = false)
 		cmd_grid.add_child(b)
@@ -711,6 +714,18 @@ func _card_entries() -> Array[String]:
 	return out
 
 
+## A finger on a building button starts placing at once, so the building can be dragged out
+## onto the field; a plain tap then leaves it in the middle of the screen as before.
+func _on_cmd_down(i: int) -> void:
+	_placing_from_card = false
+	if not Game.touch_input or i >= _card_ids.size() or not _card_ids[i].begins_with("bld:"):
+		return
+	commander.begin_place(_card_ids[i].get_slice(":", 1))
+	if commander.mode == Commander.Mode.PLACE:
+		_placing_from_card = true
+		(match_node.get_node("TouchControls") as TouchControls).card_pressed()
+
+
 func _on_cmd(i: int) -> void:
 	if i >= _card_ids.size():
 		return
@@ -735,7 +750,10 @@ func _on_cmd(i: int) -> void:
 				else:
 					commander.queue(b, v)
 		"bld":
-			commander.begin_place(v)
+			if _placing_from_card:
+				_placing_from_card = false
+			else:
+				commander.begin_place(v)
 		"strike":
 			var sb := commander.selected_building()
 			if sb:

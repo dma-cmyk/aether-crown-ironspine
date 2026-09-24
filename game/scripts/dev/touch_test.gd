@@ -100,6 +100,29 @@ func _run() -> void:
 	_check("a second tap on the ghost builds it", world.buildings.size() == n + 1 and commander.mode == Commander.Mode.NONE,
 			"%d -> %d" % [n, world.buildings.size()])
 
+	# drag a building button out onto the field: lifting the finger builds it there
+	commander.set_selection([cit])
+	await _wait(0.3)
+	if not hud.build_mode:
+		await _tap(_center(hud.cmd_buttons[7]))
+	var spot := _valid_spot("barracks", 200)
+	_check("found a spot to drag a building to", spot != Vector2.INF)
+	await _drag([_center(hud.cmd_buttons[0])], [spot - TouchControls.LIFT])
+	_check("dragging a building button out and lifting builds it", world.buildings.size() == n + 2 and commander.mode == Commander.Mode.NONE,
+			"%d -> %d" % [n + 1, world.buildings.size()])
+
+	# a placed ghost can be dragged with the finger, and lifting builds it
+	commander.set_selection([cit])
+	await _wait(0.3)
+	if not hud.build_mode:
+		await _tap(_center(hud.cmd_buttons[7]))
+	await _tap(_center(hud.cmd_buttons[0]))
+	var from := _screen(commander.ghost.global_position) if commander.ghost else Vector2.ZERO
+	var spot2 := _valid_spot("barracks", 200)
+	await _drag([from], [spot2 - TouchControls.LIFT])
+	_check("dragging the ghost moves it and lifting builds it", world.buildings.size() == n + 3 and commander.mode == Commander.Mode.NONE,
+			"%d -> %d" % [n + 2, world.buildings.size()])
+
 	var gear: Button = hud.find_children("*", "Button", true, false).filter(
 			func(x: Button) -> bool: return x.tooltip_text.begins_with("メニュー"))[0]
 	await _tap(_center(gear))
@@ -136,8 +159,8 @@ func _empty_spot() -> Vector2:
 
 
 ## A screen point on the battlefield where the building fits.
-func _valid_spot(id: String) -> Vector2:
-	for y in range(140, 320, 20):
+func _valid_spot(id: String, max_y: int = 320) -> Vector2:
+	for y in range(140, max_y, 20):
 		for x in range(300, 760, 20):
 			var g := camera.screen_to_ground(Vector2(x, y))
 			if g != Vector3.INF and commander.placement_valid(id, g):

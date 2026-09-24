@@ -10,9 +10,10 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 			match_node.hud.build_mode = true
 			match_node.hud.shrine_page = Game.arg("page") == "shrines"
 			camera.set_view(Vector3(-128, 0, 128), -45.0, 90.0)
-			commander.begin_place("foundry")
-			var m := Game.arg("mouse", "900,480").split(",")
-			Input.warp_mouse(Vector2(float(m[0]), float(m[1])))
+			if not Game.args.has("noplace"):
+				commander.begin_place("foundry")
+				var m := Game.arg("mouse", "900,480").split(",")
+				Input.warp_mouse(Vector2(float(m[0]), float(m[1])))
 		"ui_pause":
 			match_node.hud.toggle_pause()
 		"ui_save":
