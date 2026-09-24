@@ -65,10 +65,14 @@ func setup(id: String, t: int, pos: Vector3, face: float, is_built: bool) -> voi
 
 
 ## Solid parts outside the footprint circle, as local [x, z, half x, half z] rectangles.
+## They block movement and give heavy cover up to `wall_cover` metres while the building stands.
 func _block_walls(on: bool) -> void:
 	var basis := Basis(Vector3.UP, facing)
+	var code := 128 | mini(127, roundi(float(def.get("wall_cover", 8.0)) / 0.25))
 	for r: Array in def.get("walls", []):
-		World.inst.nav.set_blocked_rect(global_position + basis * Vector3(r[0], 0, r[1]), r[2], r[3], facing, on)
+		var c := global_position + basis * Vector3(r[0], 0, r[1])
+		World.inst.nav.set_blocked_rect(c, r[2], r[3], facing, on)
+		World.inst.nav.set_cover_rect(c, r[2], r[3], facing, code, on)
 
 
 func _start_stacks() -> void:

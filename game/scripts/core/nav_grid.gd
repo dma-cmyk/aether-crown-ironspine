@@ -8,6 +8,10 @@ var cell := 2.0
 var half := 200.0
 var base_walk := PackedByteArray()
 var blockers := PackedInt32Array()
+## Cover per cell from the map (trees, props, rocks) and from standing walls: 0 = none, otherwise the
+## height in 0.25 m steps (low 7 bits) plus bit 7 for heavy cover.
+var cover := PackedByteArray()
+var cover_walls := {}
 
 
 func load_from(path: String, size: float, cell_size: float) -> void:
@@ -27,6 +31,34 @@ func load_from(path: String, size: float, cell_size: float) -> void:
 		for ix in n:
 			if base_walk[iz * n + ix] == 0:
 				astar.set_point_solid(Vector2i(ix, iz), true)
+	var cover_path := path.get_base_dir().path_join("cover.bin")
+	cover = FileAccess.get_file_as_bytes(cover_path) if FileAccess.file_exists(cover_path) else PackedByteArray()
+	if cover.size() != n * n:
+		cover = PackedByteArray()
+		cover.resize(n * n)
+
+
+## Cover code at a point (see `cover`), the stronger of the map's and any standing wall's.
+func cover_at(p: Vector3) -> int:
+	var c := to_cell(p)
+	var i := c.y * n + c.x
+	return maxi(cover[i], int(cover_walls.get(i, 0)))
+
+
+## Add (or remove) a standing wall's cover over a rotated rectangle.
+func set_cover_rect(center: Vector3, half_x: float, half_z: float, yaw: float, code: int, on: bool) -> void:
+	var r := sqrt(half_x * half_x + half_z * half_z)
+	var c0 := to_cell(center - Vector3(r, 0, r))
+	var c1 := to_cell(center + Vector3(r, 0, r))
+	var b := Basis(Vector3.UP, yaw).inverse()
+	for iz in range(c0.y, c1.y + 1):
+		for ix in range(c0.x, c1.x + 1):
+			var l := b * (to_world(Vector2i(ix, iz)) - Vector3(center.x, 0, center.z))
+			if absf(l.x) <= half_x and absf(l.z) <= half_z:
+				if on:
+					cover_walls[iz * n + ix] = code
+				else:
+					cover_walls.erase(iz * n + ix)
 
 
 ## Block (or release) a rotated rectangle; counts overlaps like set_blocked_circle.

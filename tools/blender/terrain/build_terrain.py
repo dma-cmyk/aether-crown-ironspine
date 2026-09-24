@@ -5,6 +5,7 @@ Outputs (all regenerated):
   game/assets/terrain/terrain.glb        terrain chunks, water, waterfalls, bridges
   game/assets/terrain/height.bin         float32 [N*N] heights (row = z)
   game/assets/terrain/nav.png            walkable grid (255 = walkable)
+  game/assets/terrain/cover.bin          cover per nav cell (height in 0.25 m steps, bit 7 = heavy)
   game/assets/terrain/splat.png          RGBA = dirt, rock, ash, forest floor
   game/assets/terrain/minimap.png        tactical map background
   game/assets/terrain/placements.json    trees, rocks, props, mist, bridges
@@ -382,13 +383,14 @@ def main():
     log("placements trees=%d rocks=%d props=%d" % (len(placements["trees"]), len(placements["rocks"]), len(placements["props"])))
     blocked = g.block_props(placements, mapgen.prop_extents(os.path.join(ROOT, "game", "assets", "models"), placements))
     nav = g.nav
-    log("nav: %d cells blocked by props, walkable %.1f%%" % (blocked, nav.mean() * 100))
+    log("nav: %d cells blocked by props and trees, walkable %.1f%%, cover cells %d" % (blocked, nav.mean() * 100, int((g.cover > 0).sum())))
 
     os.makedirs(OUT, exist_ok=True)
     os.makedirs(PREV, exist_ok=True)
     H.astype("<f4").tofile(os.path.join(OUT, "height.bin"))
     mapgen.write_png(os.path.join(OUT, "nav.png"), (nav * 255).astype(np.uint8))
     (nav.astype(np.uint8)).tofile(os.path.join(OUT, "nav.bin"))
+    g.cover.tofile(os.path.join(OUT, "cover.bin"))
     mapgen.write_png(os.path.join(OUT, "splat.png"), splat)
     mini = g.minimap(512)
     mapgen.write_png(os.path.join(OUT, "minimap.png"), mini)

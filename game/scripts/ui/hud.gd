@@ -813,6 +813,9 @@ func _unit_status(u: Unit) -> String:
 		parts.push_front(order_names.get(u.order, ""))
 	if u.is_creature and u.hp < u.max_hp and world.match_time - u.last_damage_time > 6.0:
 		parts.append("自然回復中")
+	var cover := Combat.cover_near(u)
+	if cover > 0:
+		parts.append("遮蔽物のそば：%s" % ("建物・岩" if cover == 2 else "木"))
 	if u.kills > 0:
 		parts.append("撃破 %d" % u.kills)
 	return "  ・  ".join(parts)

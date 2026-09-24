@@ -191,7 +191,7 @@ const BUILDINGS := {
 		"hp": 5000.0, "radius": 11.0, "footprint": 0.0, "cost": {"material": 0, "aether": 0}, "build_time": 1.0,
 		"produces": [], "pop": 0, "model": "gate", "weapons": ["tower_cannon", "tower_cannon"], "buildable": false, "vision": 46.0,
 		# towers and wall stubs either side of the arch; the road runs through the middle
-		"walls": [[-9.0, 0.0, 4.9, 4.9], [9.0, 0.0, 4.9, 4.9], [-17.0, -1.0, 4.9, 2.0], [17.0, -1.0, 4.9, 2.0]],
+		"walls": [[-9.0, 0.0, 4.9, 4.9], [9.0, 0.0, 4.9, 4.9], [-17.0, -1.0, 4.9, 2.0], [17.0, -1.0, 4.9, 2.0]], "wall_cover": 10.0,
 	},
 	"sanctum": {
 		"name": ["Beast Sanctum", "Varkesh Beast Pit"], "desc": ["Old pacts, renewed in light.", "Where monsters are broken."],

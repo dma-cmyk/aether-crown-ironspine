@@ -110,6 +110,26 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 				u.order_hold()
 				if c[0] == "cerberus":
 					u.use_special()
+		"cover_test":
+			# two identical firefights; only the first Crown squad stands behind a rock
+			world.fog.enabled = false
+			var rock := Vector3(-132.8, 0, -38.5)
+			var crown: Array[Unit] = []
+			var foes: Array[Unit] = []
+			for lane in 2:
+				var dz := -16.0 * lane
+				crown.append(world.spawn_unit("aetherguard", 0, rock + Vector3(3.4, 0, dz), deg_to_rad(-90)))
+				foes.append(world.spawn_unit("aetherguard", 1, rock + Vector3(-22.0, 0, dz), deg_to_rad(90)))
+				crown[lane].order_hold()
+				foes[lane].order_hold()
+			world.get_tree().create_timer(0.5).timeout.connect(func() -> void:
+				for lane in 2:
+					print("[cover_test] lane %d: shots at the Crown meet cover %s, shots back meet %s" % [lane,
+							Combat.cover_against(foes[lane].aim_point(), crown[lane]).get("kind", 0),
+							Combat.cover_against(crown[lane].aim_point(), foes[lane]).get("kind", 0)]))
+			world.get_tree().create_timer(12.0).timeout.connect(func() -> void:
+				print("[cover_test] after 12 s: behind the rock %.0f hp, in the open %.0f hp (Varkesh %.0f / %.0f)" % [
+						crown[0].hp, crown[1].hp, foes[0].hp, foes[1].hp]))
 		"base":
 			world.fog.enabled = false
 		"nofog":

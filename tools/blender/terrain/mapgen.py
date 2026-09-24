@@ -470,15 +470,25 @@ class MapGen:
         return keep
 
     def block_props(self, placements, extents, margin=0.6, skip=("lamp_post",)):
-        """Mark houses, walls and other props (and big rocks) as obstacles on the nav grid.
+        """Mark houses, walls and other props, big rocks and trees as obstacles on the nav grid,
+        and record them as cover from direct fire.
 
-        extents: model -> (half x, half z) in the model's own frame. Returns cells blocked."""
+        extents: model -> (half x, half z, height) in the model's own frame. Returns cells blocked.
+        self.cover holds one byte per nav cell: 0 = none, otherwise the cover height in 0.25 m steps
+        (low 7 bits) plus bit 7 for heavy cover (props and rocks; trees are light cover)."""
         cell = self.L["nav_cell"]
         n = self.nav.shape[0]
         half = self.S / 2
         before = int(self.nav.sum())
+        self.cover = np.zeros(self.nav.shape, dtype=np.uint8)
 
-        def stamp(x, z, hx, hz, rot):
+        def mark(i, j, height, heavy):
+            self.nav[i, j] = False
+            code = min(127, max(1, int(round(height / 0.25)))) | (128 if heavy else 0)
+            if code > self.cover[i, j]:
+                self.cover[i, j] = code
+
+        def stamp(x, z, hx, hz, rot, height, heavy):
             r = math.hypot(hx, hz)
             j0, j1 = max(0, int((x - r + half) / cell)), min(n - 1, int((x + r + half) / cell))
             i0, i1 = max(0, int((z - r + half) / cell)), min(n - 1, int((z + r + half) / cell))
@@ -488,16 +498,27 @@ class MapGen:
                 for j in range(j0, j1 + 1):
                     cx = -half + (j + 0.5) * cell - x
                     if abs(cx * c - cz * s) <= hx and abs(cx * s + cz * c) <= hz:
-                        self.nav[i, j] = False
+                        mark(i, j, height, heavy)
+
+        def stamp_circle(x, z, r, height, heavy):
+            j0, j1 = max(0, int((x - r + half) / cell)), min(n - 1, int((x + r + half) / cell))
+            i0, i1 = max(0, int((z - r + half) / cell)), min(n - 1, int((z + r + half) / cell))
+            for i in range(i0, i1 + 1):
+                for j in range(j0, j1 + 1):
+                    if math.hypot(-half + (j + 0.5) * cell - x, -half + (i + 0.5) * cell - z) <= r:
+                        mark(i, j, height, heavy)
 
         for p in placements["props"]:
             if p["model"] in skip:
                 continue
-            hx, hz = extents[p["model"]]
-            stamp(p["pos"][0], p["pos"][2], hx * p["scale"] + margin, hz * p["scale"] + margin, p["rot"])
-        for (x, y, z, sc, rot, _v) in placements["rocks"]:
+            hx, hz, h = extents[p["model"]]
+            stamp(p["pos"][0], p["pos"][2], hx * p["scale"] + margin, hz * p["scale"] + margin, p["rot"], h * p["scale"], True)
+        for (x, y, z, sc, rot, v) in placements["rocks"]:
             if sc >= 1.0:
-                stamp(x, z, 1.1 * sc, 1.1 * sc, rot)
+                stamp(x, z, 1.1 * sc, 1.1 * sc, rot, extents[ROCKS[v]][2] * sc, True)
+        # trees: the lowest ring of branches, so nothing walks through the foliage
+        for (x, y, z, sc, rot, v) in placements["trees"]:
+            stamp_circle(x, z, min(3.0, 2.5 * sc), extents[TREES[v]][2] * sc, False)
         # drop pockets the new obstacles cut off from the first base
         bx, bz = self.L["bases"][0]["pos"]
         keep = np.zeros_like(self.nav)
@@ -846,23 +867,30 @@ class MapGen:
         return out
 
 
+# model per rock / tree variant, in the order the game's scatter uses them
+ROCKS = ("rock_a", "rock_b", "rock_c")
+TREES = ("tree_pine_a", "tree_pine_b", "tree_pine_c")
+
+
 def glb_extent(path):
-    """Half extents (x, z) of the meshes in a .glb, measured from its origin."""
+    """Half extents (x, z) and height of the meshes in a .glb, measured from its origin."""
     with open(path, "rb") as f:
         data = f.read()
     ln = struct.unpack("<I", data[12:16])[0]
     j = json.loads(data[20:20 + ln])
-    hx = hz = 0.0
+    hx = hz = h = 0.0
     for m in j["meshes"]:
         for prim in m["primitives"]:
             acc = j["accessors"][prim["attributes"]["POSITION"]]
             hx = max(hx, abs(acc["min"][0]), abs(acc["max"][0]))
             hz = max(hz, abs(acc["min"][2]), abs(acc["max"][2]))
-    return hx, hz
+            h = max(h, acc["max"][1])
+    return hx, hz, h
 
 
 def prop_extents(models_dir, placements):
-    return {m: glb_extent(os.path.join(models_dir, m + ".glb")) for m in {p["model"] for p in placements["props"]}}
+    models = {p["model"] for p in placements["props"]} | set(ROCKS) | set(TREES)
+    return {m: glb_extent(os.path.join(models_dir, m + ".glb")) for m in models}
 
 
 def load_layout(path):
