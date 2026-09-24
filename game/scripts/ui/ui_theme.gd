@@ -162,3 +162,74 @@ class Corners:
 			draw_line(p, p + Vector2(dx, 0), color, w)
 			var d := p + Vector2(dx * 0.45, dy * 0.45)
 			draw_colored_polygon(PackedVector2Array([d + Vector2(0, -3), d + Vector2(3, 0), d + Vector2(0, 3), d + Vector2(-3, 0)]), color)
+
+
+## A dark band that fades out at both ends, with thin gold edges: sits behind text drawn
+## over the battlefield (banners, hints) so it stays readable on bright ground.
+class Ribbon:
+	extends Control
+	var strength := 0.62
+	var edges := true
+
+	func _init() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var w := size.x
+		var xs := [0.0, w * 0.2, w * 0.8, w]
+		var a := [0.0, 1.0, 1.0, 0.0]
+		var bg := Color(0.015, 0.02, 0.03)
+		for i in 3:
+			var c0 := Color(bg, a[i] * strength)
+			var c1 := Color(bg, a[i + 1] * strength)
+			if strength > 0.0:
+				_band(xs[i], xs[i + 1], 0.0, size.y, c0, c1)
+			if edges:
+				var g0 := Color(GOLD_DIM, a[i] * 0.9)
+				var g1 := Color(GOLD_DIM, a[i + 1] * 0.9)
+				_band(xs[i], xs[i + 1], 0.0, 1.5, g0, g1)
+				_band(xs[i], xs[i + 1], size.y - 1.5, size.y, g0, g1)
+
+	func _band(x0: float, x1: float, y0: float, y1: float, c0: Color, c1: Color) -> void:
+		draw_polygon(PackedVector2Array([Vector2(x0, y0), Vector2(x1, y0), Vector2(x1, y1), Vector2(x0, y1)]),
+				PackedColorArray([c0, c1, c1, c0]))
+
+
+## A thin gold rule that fades out at both ends, for under titles and between sections.
+static func divider(width: float = 0.0) -> Control:
+	var r := Ribbon.new()
+	r.strength = 0.0
+	r.custom_minimum_size = Vector2(width, 3)
+	return r
+
+
+## Title-screen menu entries: no box, a dark band fading to the right, and a gold edge on
+## the left that thickens (and pushes the text in a little) under the pointer.
+static func menu_button_styles(b: Button) -> void:
+	var looks := {
+		"normal": [Color(0.02, 0.025, 0.035, 0.55), GOLD_DIM, 2, 22],
+		"hover": [Color(0.13, 0.1, 0.05, 0.85), GOLD, 5, 30],
+		"pressed": [Color(0.2, 0.15, 0.07, 0.9), GOLD, 5, 30],
+		"focus": [Color(0.13, 0.1, 0.05, 0.85), GOLD, 5, 30],
+		"disabled": [Color(0.02, 0.025, 0.035, 0.35), Color(0.3, 0.28, 0.25), 2, 22],
+	}
+	for state: String in looks:
+		var l: Array = looks[state]
+		var g := Gradient.new()
+		var bg: Color = l[0]
+		var edge: Color = l[1]
+		var px: float = l[2] / 520.0
+		g.offsets = PackedFloat32Array([0.0, px, px + 0.001, 0.55, 1.0])
+		g.colors = PackedColorArray([edge, edge, bg, Color(bg, bg.a * 0.55), Color(bg, 0.0)])
+		var gt := GradientTexture2D.new()
+		gt.gradient = g
+		gt.width = 520
+		gt.height = 4
+		var sb := StyleBoxTexture.new()
+		sb.texture = gt
+		sb.content_margin_left = l[3]
+		sb.content_margin_right = 12
+		b.add_theme_stylebox_override(state, sb)
+	b.add_theme_color_override("font_hover_color", Color(1.0, 0.93, 0.78))
+	b.add_theme_color_override("font_focus_color", Color(1.0, 0.93, 0.78))
+	b.add_theme_color_override("font_disabled_color", Color(0.5, 0.48, 0.44))

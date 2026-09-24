@@ -9,9 +9,10 @@ var settings_box: PanelContainer
 var end_box: PanelContainer
 var end_title: Label
 var end_sub: Label
-var end_stats: Label
+var end_stats: HBoxContainer
 var next_button: Button
 var save_box: PanelContainer
+var help_box: PanelContainer
 
 
 func setup(h: HUD) -> void:
@@ -24,7 +25,7 @@ func setup(h: HUD) -> void:
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	dim.visible = false
 	add_child(dim)
-	var items := [["再開", _resume], ["セーブ", _open_save.bind(true)], ["ロード", _open_save.bind(false)], ["設定", _open_settings], ["最初からやり直す", _restart], ["タイトルへ戻る", _title]]
+	var items := [["再開", _resume], ["セーブ", _open_save.bind(true)], ["ロード", _open_save.bind(false)], ["設定", _open_settings], ["操作説明", _open_help], ["最初からやり直す", _restart], ["タイトルへ戻る", _title]]
 	# a browser tab cannot quit itself; it can go fullscreen instead
 	if Game.can_fullscreen():
 		items.append(["全画面の切り替え", Game.toggle_fullscreen])
@@ -34,18 +35,7 @@ func setup(h: HUD) -> void:
 	settings_box = SettingsPanel.make(func(): settings_box.visible = false; pause_box.visible = true)
 	add_child(settings_box)
 	settings_box.visible = false
-	end_box = _box("勝利", [["次のミッションへ", _next], ["もう一度", _restart], ["タイトルへ戻る", _title]])
-	var v := end_box.get_child(0) as VBoxContainer
-	next_button = v.get_child(1) as Button
-	end_title = v.get_child(0) as Label
-	end_sub = UITheme.label("", 18, UITheme.GOLD, UITheme.italic_font())
-	end_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(end_sub)
-	v.move_child(end_sub, 1)
-	end_stats = UITheme.label("", 16, UITheme.IVORY, UITheme.body_font())
-	end_stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(end_stats)
-	v.move_child(end_stats, 2)
+	end_box = _end_panel()
 
 
 func _box(title: String, buttons: Array) -> PanelContainer:
@@ -61,6 +51,7 @@ func _box(title: String, buttons: Array) -> PanelContainer:
 	var t := UITheme.label(title, 26 if Game.compact else 34, UITheme.IVORY, UITheme.title_font(), 2)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
+	v.add_child(UITheme.divider())
 	for b in buttons:
 		var btn := Button.new()
 		btn.text = b[0]
@@ -74,8 +65,71 @@ func _box(title: String, buttons: Array) -> PanelContainer:
 	return p
 
 
+## The report after a match: the verdict, the scenario's closing line, a row of numbers and
+## the ways onward.
+func _end_panel() -> PanelContainer:
+	var c := Game.compact
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", UITheme.panel(Color(0.035, 0.042, 0.058, 0.97), UITheme.GOLD, 2))
+	p.custom_minimum_size = Vector2(600 if c else 700, 0)
+	p.visible = false
+	add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 6 if c else 12)
+	p.add_child(v)
+	end_title = UITheme.label("", 40 if c else 58, UITheme.GOLD, UITheme.title_font(), 3)
+	end_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(end_title)
+	end_sub = UITheme.label("", 16 if c else 19, UITheme.IVORY, UITheme.italic_font())
+	end_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	end_sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	end_sub.custom_minimum_size.x = 540 if c else 640
+	v.add_child(end_sub)
+	v.add_child(UITheme.divider())
+	end_stats = HBoxContainer.new()
+	end_stats.alignment = BoxContainer.ALIGNMENT_CENTER
+	end_stats.add_theme_constant_override("separation", 8 if c else 10)
+	v.add_child(end_stats)
+	v.add_child(UITheme.divider())
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 10)
+	v.add_child(row)
+	for b: Array in [["次のミッションへ", _next], ["もう一度", _restart], ["タイトルへ戻る", _title]]:
+		var btn := Button.new()
+		btn.text = b[0]
+		btn.custom_minimum_size = Vector2(176 if c else 200, 42 if c else 46)
+		btn.add_theme_font_override("font", UITheme.body_font())
+		btn.add_theme_font_size_override("font_size", 17)
+		btn.pressed.connect(b[1])
+		row.add_child(btn)
+		if b[1] == _next:
+			next_button = btn
+	UITheme.add_corners(p)
+	p.resized.connect(func(): p.position = (get_viewport_rect().size - p.size) * 0.5)
+	return p
+
+
+func _stat_tile(value: String, caption: String) -> Control:
+	var c := Game.compact
+	var t := PanelContainer.new()
+	t.add_theme_stylebox_override("panel", UITheme.panel(Color(0.02, 0.025, 0.035, 0.9), UITheme.GOLD_DIM, 1))
+	t.custom_minimum_size = Vector2(100 if c else 118, 0)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 0)
+	t.add_child(v)
+	var n := UITheme.label(value, 24 if c else 30, UITheme.IVORY, UITheme.title_font())
+	n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(n)
+	var l := UITheme.label(caption, 12 if c else 13, UITheme.TEXT_DIM, UITheme.body_font())
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(l)
+	return t
+
+
 func _center(p: Control) -> void:
 	await get_tree().process_frame
+	p.reset_size()
 	p.position = (size - p.size) * 0.5
 
 
@@ -84,6 +138,9 @@ func toggle_pause() -> void:
 		return
 	if save_box:
 		_close_save()
+		return
+	if help_box:
+		_close_help()
 		return
 	var show := not pause_box.visible and not settings_box.visible
 	pause_box.visible = show
@@ -104,10 +161,28 @@ func show_end(victory: bool) -> void:
 			"王冠は昇る。アイアンスパインは健在だ。" if victory else "アイアンスパインは沈黙した。"))
 	next_button.visible = victory and scn.next_path() != ""
 	var t := int(w.match_time)
-	end_stats.text = "戦闘時間 %02d:%02d\n生産 %d   損失 %d   撃破 %d\n占領した拠点 %d" % [t / 60, t % 60, p.stats["built"], p.stats["lost"], p.stats["kills"], p.stats["captured"]]
+	for ch in end_stats.get_children():
+		ch.queue_free()
+	for st: Array in [["%02d:%02d" % [t / 60, t % 60], "戦闘時間"], [str(p.stats["built"]), "生産"], [str(p.stats["kills"]), "撃破"],
+			[str(p.stats["lost"]), "損失"], [str(p.stats["captured"]), "占領"]]:
+		end_stats.add_child(_stat_tile(st[0], st[1]))
+	pause_box.visible = false
+	settings_box.visible = false
+	# the last blow plays out in slow motion, then the report fades in over the field
+	var cinematic := not Game.is_capture() and not Game.args.has("autoplay")
+	if cinematic:
+		Engine.time_scale = 0.3
+		var slow := create_tween().set_ignore_time_scale(true)
+		slow.tween_interval(0.9)
+		slow.tween_property(Engine, "time_scale", 1.0, 1.2)
 	end_box.visible = true
 	dim.visible = true
-	pause_box.visible = false
+	end_box.modulate.a = 0.0
+	dim.modulate.a = 0.0
+	var delay := 1.2 if cinematic else 0.0
+	var tw := create_tween().set_ignore_time_scale(true).set_parallel()
+	tw.tween_property(dim, "modulate:a", 1.0, 0.8).set_delay(delay)
+	tw.tween_property(end_box, "modulate:a", 1.0, 0.5).set_delay(delay + 0.3)
 	_center(end_box)
 	w.sfx.play_ui("objective", 0.0)
 
@@ -142,6 +217,21 @@ func _close_save() -> void:
 	_center(pause_box)
 
 
+func _open_help() -> void:
+	pause_box.visible = false
+	help_box = HelpPanel.make(_close_help)
+	add_child(help_box)
+	_center(help_box)
+
+
+func _close_help() -> void:
+	if help_box:
+		help_box.queue_free()
+		help_box = null
+	pause_box.visible = true
+	_center(pause_box)
+
+
 func _open_settings() -> void:
 	pause_box.visible = false
 	settings_box.visible = true
@@ -150,16 +240,19 @@ func _open_settings() -> void:
 
 func _restart() -> void:
 	get_tree().paused = false
+	Engine.time_scale = 1.0
 	Game.start_match()
 
 
 func _next() -> void:
 	get_tree().paused = false
+	Engine.time_scale = 1.0
 	Game.start_match(hud.match_node.scenario.next_path())
 
 
 func _title() -> void:
 	get_tree().paused = false
+	Engine.time_scale = 1.0
 	Game.goto_title()
 
 

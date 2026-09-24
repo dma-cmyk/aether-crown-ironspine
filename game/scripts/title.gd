@@ -34,9 +34,10 @@ func _ready() -> void:
 	music = AudioStreamPlayer.new()
 	music.bus = "Music"
 	music.stream = preload("res://scripts/match.gd")._looped("res://assets/audio/music_battle.wav")
-	music.volume_db = -4.0
+	music.volume_db = -30.0
 	add_child(music)
 	music.play()
+	music.create_tween().tween_property(music, "volume_db", -4.0, 2.5)
 	if Game.is_capture():
 		var cap := preload("res://scripts/dev/capture.gd").new()
 		add_child(cap)
@@ -140,6 +141,17 @@ func _build_ui() -> void:
 	foot.offset_bottom = -20
 	foot.visible = not c
 	ui.add_child(foot)
+	if not Game.is_capture():
+		# the crest, the name and then the menu drift in from the left as the curtain lifts
+		var parts: Array[Control] = [crest, title, tag, jp, menu]
+		for i in parts.size():
+			var part := parts[i]
+			var x := part.position.x
+			part.modulate.a = 0.0
+			part.position.x = x - 28.0
+			var tw := part.create_tween().set_parallel().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+			tw.tween_property(part, "modulate:a", 1.0, 0.8).set_delay(0.45 + i * 0.12)
+			tw.tween_property(part, "position:x", x, 1.0).set_delay(0.45 + i * 0.12)
 	overlay = Control.new()
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -153,6 +165,8 @@ func _menu_button(parent: Control, text: String, cb: Callable) -> Button:
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.add_theme_font_override("font", UITheme.body_font())
 	b.add_theme_font_size_override("font_size", 18 if Game.compact else 22)
+	UITheme.menu_button_styles(b)
+	b.mouse_entered.connect(func(): if not b.disabled: world.sfx.play_ui("click", -18.0))
 	b.pressed.connect(func():
 		world.sfx.play_ui("click")
 		cb.call())

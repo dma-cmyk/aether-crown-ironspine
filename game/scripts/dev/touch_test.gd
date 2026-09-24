@@ -105,7 +105,7 @@ func _run() -> void:
 	await _tap(_center(gear))
 	_check("the gear pauses the game", get_tree().paused and hud.menus.pause_box.visible)
 	await _shot("pause")
-	await _tap(_center(hud.menus.pause_box.get_child(0).get_child(1)))
+	await _tap(_center(hud.menus.pause_box.get_child(0).get_child(2)))
 	_check("再開 resumes", not get_tree().paused)
 
 	print("[touch_test] %s (%d failed)" % ["ALL PASSED" if fails == 0 else "FAILED", fails])

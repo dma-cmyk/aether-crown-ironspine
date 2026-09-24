@@ -100,7 +100,7 @@ func _update_fog() -> void:
 		var data := PackedByteArray()
 		data.resize(FogOfWar.CELLS * FogOfWar.CELLS * 4)
 		for i in FogOfWar.CELLS * FogOfWar.CELLS:
-			var a := 0 if fog.vis[i] else (95 if fog.explored[i] else 200)
+			var a := 0 if fog.vis[i] else (110 if fog.explored[i] else 190)
 			data[i * 4] = 6
 			data[i * 4 + 1] = 9
 			data[i * 4 + 2] = 14
@@ -112,7 +112,7 @@ func _update_fog() -> void:
 func _draw() -> void:
 	var s := _scale()
 	draw_set_transform(size * 0.5, camera.yaw, Vector2(s, s))
-	draw_texture_rect(tex, Rect2(-MAP * 0.5, -MAP * 0.5, MAP, MAP), false, Color(0.82, 0.86, 0.92))
+	draw_texture_rect(tex, Rect2(-MAP * 0.5, -MAP * 0.5, MAP, MAP), false, Color(1.45, 1.45, 1.4))
 	draw_texture_rect(fog_tex, Rect2(-MAP * 0.5, -MAP * 0.5, MAP, MAP), false)
 	draw_rect(Rect2(-MAP * 0.5, -MAP * 0.5, MAP, MAP), UITheme.GOLD_DIM, false, 2.0 / s)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)

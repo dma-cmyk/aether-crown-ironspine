@@ -18,12 +18,23 @@ func _init() -> void:
 
 func _ready() -> void:
 	var env := Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color(0.09, 0.11, 0.15)
+	# a dim studio backdrop: lighter at the horizon behind the model, dark above and below
+	var sky_mat := ProceduralSkyMaterial.new()
+	sky_mat.sky_top_color = Color(0.03, 0.04, 0.06)
+	sky_mat.sky_horizon_color = Color(0.2, 0.23, 0.29)
+	sky_mat.ground_horizon_color = Color(0.16, 0.18, 0.22)
+	sky_mat.ground_bottom_color = Color(0.02, 0.025, 0.035)
+	sky_mat.sky_curve = 0.25
+	sky_mat.ground_curve = 0.12
+	var sky := Sky.new()
+	sky.sky_material = sky_mat
+	env.background_mode = Environment.BG_SKY
+	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.6, 0.65, 0.75)
 	env.ambient_light_energy = 1.4
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
+	env.tonemap_exposure = 1.25
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
@@ -31,12 +42,20 @@ func _ready() -> void:
 	key.rotation_degrees = Vector3(-35, -40, 0)
 	key.light_energy = 2.2
 	key.light_color = Color(1.0, 0.92, 0.8)
+	key.sky_mode = DirectionalLight3D.SKY_MODE_LIGHT_ONLY
 	add_child(key)
 	var rim := DirectionalLight3D.new()
 	rim.rotation_degrees = Vector3(-15, 150, 0)
 	rim.light_energy = 1.6
 	rim.light_color = Color(0.5, 0.75, 1.0)
+	rim.sky_mode = DirectionalLight3D.SKY_MODE_LIGHT_ONLY
 	add_child(rim)
+	var fill := DirectionalLight3D.new()
+	fill.rotation_degrees = Vector3(-8, 12, 0)
+	fill.light_energy = 0.7
+	fill.light_color = Color(0.85, 0.9, 1.0)
+	fill.sky_mode = DirectionalLight3D.SKY_MODE_LIGHT_ONLY
+	add_child(fill)
 	pivot = Node3D.new()
 	add_child(pivot)
 	cam = Camera3D.new()

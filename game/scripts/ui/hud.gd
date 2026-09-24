@@ -19,6 +19,8 @@ var obj_list: VBoxContainer
 var alert_box: VBoxContainer
 var banner: Label
 var banner_sub: Label
+var banner_bg: Control
+var hint_bg: Control
 var _banner_t := 0.0
 var mode_hint: Label
 var fps_label: Label
@@ -154,10 +156,18 @@ func _framed(anchor: int, off: Vector2, sz: Vector2, corners: bool = true) -> Pa
 
 # ---------------------------------------------------------------- top
 func _build_title() -> void:
-	clock_label = UITheme.label("00:00", 14 if compact else 15, UITheme.GOLD, UITheme.title_font(), 3)
+	# the match clock hangs under the resource bar like a tab
+	var at := Vector2(0, 6 if compact else 66)
+	var plate := Panel.new()
+	plate.add_theme_stylebox_override("panel", UITheme.panel(Color(0.035, 0.04, 0.055, 0.9), UITheme.GOLD_DIM, 1))
+	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(plate)
+	_place(plate, PRESET_CENTER_TOP, at, Vector2(84, 24))
+	clock_label = UITheme.label("00:00", 14 if compact else 15, UITheme.GOLD, UITheme.title_font(), 0)
 	clock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	clock_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	add_child(clock_label)
-	_place(clock_label, PRESET_CENTER_TOP, Vector2(0, 8 if compact else 70), Vector2(120, 22))
+	_place(clock_label, PRESET_CENTER_TOP, at + Vector2(0, -1), Vector2(84, 24))
 	if compact:
 		return
 	var p := _framed(PRESET_TOP_LEFT, Vector2(10, 8), Vector2(440, 78))
@@ -250,6 +260,14 @@ func _build_resources_compact() -> void:
 
 
 func _build_labels() -> void:
+	hint_bg = UITheme.Ribbon.new()
+	hint_bg.visible = false
+	add_child(hint_bg)
+	_place(hint_bg, PRESET_CENTER_TOP, Vector2(0, 36 if compact else 95), Vector2(520 if compact else 760, 32))
+	banner_bg = UITheme.Ribbon.new()
+	banner_bg.visible = false
+	add_child(banner_bg)
+	_place(banner_bg, PRESET_CENTER_TOP, Vector2(0, 106 if compact else 160), Vector2(780 if compact else 1040, 82 if compact else 112))
 	mode_hint = UITheme.label("", 15 if compact else 18, UITheme.GOLD, UITheme.serif_font(), 3)
 	mode_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(mode_hint)
@@ -365,13 +383,34 @@ func _build_alerts() -> void:
 func _on_alert(pos: Vector3, text: String, team: int) -> void:
 	if team != Defs.TEAM_PLAYER:
 		return
-	var l := UITheme.label(text, 13 if compact else 17, UITheme.IVORY, UITheme.serif_font(), 3)
+	var l := UITheme.label(text, 13 if compact else 16, UITheme.IVORY, UITheme.serif_font(), 0)
 	if compact:
 		# stay clear of the mode hint in the middle of the top edge
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.custom_minimum_size.x = 290
-	l.set_meta("t", 6.0)
-	alert_box.add_child(l)
+		l.custom_minimum_size.x = 266
+	# a dark slip with a coloured edge: blue for hints, red for trouble, gold for the rest
+	var edge := UITheme.GOLD
+	if text.begins_with("ヒント"):
+		edge = UITheme.AETHER
+	elif ["敵", "失", "警告", "攻撃を受け", "破壊された", "不足"].any(func(w: String) -> bool: return w in text):
+		edge = UITheme.RED
+	var slip := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.02, 0.025, 0.035, 0.74)
+	sb.border_color = edge
+	sb.border_width_left = 3
+	sb.set_corner_radius_all(2)
+	sb.content_margin_left = 10
+	sb.content_margin_right = 12
+	sb.content_margin_top = 3
+	sb.content_margin_bottom = 4
+	slip.add_theme_stylebox_override("panel", sb)
+	slip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	slip.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	slip.add_child(l)
+	slip.set_meta("t", 6.0)
+	slip.modulate.a = 0.0
+	alert_box.add_child(slip)
 	while alert_box.get_child_count() > (4 if compact else 6):
 		alert_box.get_child(0).queue_free()
 		alert_box.remove_child(alert_box.get_child(0))
@@ -380,10 +419,14 @@ func _on_alert(pos: Vector3, text: String, team: int) -> void:
 	world.sfx.play_ui("alert", -10.0)
 
 
+var _banner_len := 5.0
+
+
 func show_banner(title: String, sub: String = "", duration: float = 5.0) -> void:
 	banner.text = title
 	banner_sub.text = sub
 	_banner_t = duration
+	_banner_len = duration
 
 
 # ---------------------------------------------------------------- bottom
@@ -569,16 +612,31 @@ func _build_advisor() -> void:
 	advisor_img.modulate = Color(0.85, 0.85, 0.9)
 	advisor_img.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	p.add_child(advisor_img)
-	var shade := ColorRect.new()
-	shade.color = Color(0, 0, 0, 0.35)
-	shade.position = Vector2(4, 96)
-	shade.size = Vector2(224, 78)
+	# the words sit on a shadow rising from the bottom edge, clear of the picture
+	var shade := TextureRect.new()
+	var g := Gradient.new()
+	g.set_color(0, Color(0.01, 0.012, 0.018, 0.0))
+	g.set_color(1, Color(0.01, 0.012, 0.018, 0.94))
+	g.add_point(0.55, Color(0.01, 0.012, 0.018, 0.8))
+	var gt := GradientTexture2D.new()
+	gt.gradient = g
+	gt.fill_from = Vector2(0, 0)
+	gt.fill_to = Vector2(0, 1)
+	gt.width = 4
+	gt.height = 64
+	shade.texture = gt
+	shade.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	shade.stretch_mode = TextureRect.STRETCH_SCALE
+	shade.position = Vector2(4, 70)
+	shade.size = Vector2(224, 104)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	p.add_child(shade)
-	advisor_text = UITheme.label("規律が\n世界を築く。", 16, UITheme.IVORY, UITheme.title_font(), 3)
+	advisor_text = UITheme.label("規律が\n世界を築く。", 15, UITheme.IVORY, UITheme.title_font(), 0)
 	advisor_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	advisor_text.position = Vector2(10, 110)
-	advisor_text.size = Vector2(208, 60)
+	advisor_text.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	advisor_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	advisor_text.position = Vector2(12, 104)
+	advisor_text.size = Vector2(206, 62)
 	p.add_child(advisor_text)
 	await get_tree().create_timer(1.0).timeout
 	if is_instance_valid(shot):
@@ -586,8 +644,13 @@ func _build_advisor() -> void:
 
 
 func set_advisor(text: String) -> void:
-	if advisor_text:
-		advisor_text.text = text
+	if advisor_text == null or advisor_text.text == text:
+		return
+	advisor_text.text = text
+	# the new line writes itself out
+	advisor_text.visible_ratio = 0.0
+	var tw := advisor_text.create_tween()
+	tw.tween_property(advisor_text, "visible_ratio", 1.0, clampf(text.length() * 0.05, 0.4, 2.0))
 
 
 func _build_tooltip() -> void:
@@ -1088,17 +1151,21 @@ func _process(delta: float) -> void:
 	for c in alert_box.get_children():
 		var tt: float = c.get_meta("t", 0.0) - delta
 		c.set_meta("t", tt)
-		c.modulate.a = clampf(tt, 0.0, 1.0)
+		c.modulate.a = clampf(tt, 0.0, 1.0) * clampf((6.0 - tt) * 6.0, 0.0, 1.0)
 		if tt <= 0.0:
 			c.queue_free()
 	if _banner_t > 0.0:
 		_banner_t -= delta
-		var a := clampf(_banner_t, 0.0, 1.0)
+		var a := clampf(_banner_t, 0.0, 1.0) * clampf((_banner_len - _banner_t) * 3.0, 0.0, 1.0)
 		banner.modulate.a = a
 		banner_sub.modulate.a = a
+		banner_bg.modulate.a = a
+		banner_bg.visible = true
 	elif banner.text != "":
 		banner.text = ""
 		banner_sub.text = ""
+		banner_bg.visible = false
+	hint_bg.visible = mode_hint.text != ""
 	if _tip_t > 0.0:
 		_tip_t -= delta
 		if _tip_t <= 0.0:
@@ -1155,6 +1222,7 @@ class SelectionBox:
 		queue_redraw()
 
 	func _draw() -> void:
+		_draw_rally()
 		if commander.dragging and commander.drag_rect.size.length() > 8.0:
 			var r := commander.drag_rect
 			draw_rect(r, Color(0.5, 1.0, 0.6, 0.08))
@@ -1164,5 +1232,32 @@ class SelectionBox:
 			var cam := commander.camera.cam
 			if not cam.is_position_behind(e.aim_point()):
 				var p := cam.unproject_position(e.global_position + Vector3(0, e.height + 2.5, 0))
-				var col := UITheme.IVORY if e.team == Defs.TEAM_PLAYER else Defs.team_color(e.team)
-				draw_string(UITheme.serif_font(), p + Vector2(-80, 0), e.display_name(), HORIZONTAL_ALIGNMENT_CENTER, 160, 14, col)
+				var col := UITheme.IVORY if e.team == Defs.TEAM_PLAYER else Defs.team_color(e.team).lightened(0.2)
+				var font := UITheme.serif_font()
+				var tw := font.get_string_size(e.display_name(), HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
+				# a dark tag with a thin health line under the name
+				var r := Rect2(p + Vector2(-tw * 0.5 - 8.0, -16.0), Vector2(tw + 16.0, 24.0))
+				draw_rect(r, Color(0.02, 0.025, 0.035, 0.72))
+				draw_rect(Rect2(r.position + Vector2(0, r.size.y - 2.0), Vector2(r.size.x * e.hp_ratio(), 2.0)), col)
+				draw_string(font, p + Vector2(-tw * 0.5, 0), e.display_name(), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, col)
+
+	## A selected production building shows where its units will gather: a dashed line and a flag.
+	func _draw_rally() -> void:
+		var b := commander.selected_building()
+		if b == null or b.team != Defs.TEAM_PLAYER or b.rally == Vector3.INF or b.produces().is_empty():
+			return
+		var cam := commander.camera.cam
+		var to := b.rally + Vector3(0, 0.5, 0)
+		if cam.is_position_behind(to) or cam.is_position_behind(b.global_position):
+			return
+		var a := cam.unproject_position(b.global_position + Vector3(0, 1.0, 0))
+		var c := cam.unproject_position(to)
+		var d := c - a
+		var n := int(d.length() / 14.0)
+		for i in n:
+			var t0 := float(i) / n
+			draw_line(a + d * t0, a + d * (t0 + 0.5 / n), Color(UITheme.GOLD, 0.8), 2.0, true)
+		draw_arc(c, 9.0, 0, TAU, 20, Color(UITheme.GOLD, 0.9), 2.0, true)
+		var flag := UITheme.icon("flag")
+		if flag:
+			draw_texture_rect(flag, Rect2(c + Vector2(-4, -34), Vector2(30, 30)), false)
