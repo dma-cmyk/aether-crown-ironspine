@@ -226,7 +226,8 @@ func _matches(e: Entity, f: Dictionary) -> bool:
 func _act(a: Dictionary) -> void:
 	match str(a["type"]):
 		"message":
-			world.raise_alert(_flat(a.get("at", [0, 0])), _text(a["text"]), Defs.TEAM_PLAYER)
+			var text: String = a.get("touch_text", a["text"]) if Game.touch_input else a["text"]
+			world.raise_alert(_flat(a.get("at", [0, 0])), _text(text), Defs.TEAM_PLAYER)
 			if a.has("sound"):
 				world.sfx.play_ui(str(a["sound"]), -2.0)
 		"banner":

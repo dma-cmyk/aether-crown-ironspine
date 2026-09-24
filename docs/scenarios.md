@@ -89,7 +89,7 @@
 
 | type | 内容 | 項目 |
 |---|---|---|
-| `message` | 左の通知欄に表示（`at` があれば Space でその場所へ） | `text`、`at`、`sound` |
+| `message` | 左の通知欄に表示（`at` があれば Space でその場所へ）。`touch_text` はタッチ操作のときに `text` の代わりに出す | `text`、`at`、`sound`、`touch_text` |
 | `banner` | 画面中央の大見出し | `title`、`text`、`seconds` |
 | `advisor` | 右下の標語 | `text` |
 | `spawn` | ユニットを出す | `team`、`units`（`{"walker": 2}`）、`at`、`facing`（度）、`columns` `spacing` `rotate`（隊形）、`tag`、`difficulty_scale`（難易度で数を 0.75〜1.35 倍）、`order` `target` `spread` |
