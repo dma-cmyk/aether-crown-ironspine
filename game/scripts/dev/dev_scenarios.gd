@@ -11,7 +11,8 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 			match_node.hud.shrine_page = Game.arg("page") == "shrines"
 			camera.set_view(Vector3(-128, 0, 128), -45.0, 90.0)
 			commander.begin_place("foundry")
-			Input.warp_mouse(Vector2(900, 480))
+			var m := Game.arg("mouse", "900,480").split(",")
+			Input.warp_mouse(Vector2(float(m[0]), float(m[1])))
 		"ui_pause":
 			match_node.hud.toggle_pause()
 		"ui_save":
@@ -21,6 +22,8 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 			match_node.hud.menus.add_child(HelpPanel.make(func(): pass))
 		"ui_end":
 			world.end_game(0)
+		"ui_multi":
+			commander.set_selection(world.units.filter(func(u: Unit) -> bool: return u.team == 0))
 		"ui_walker":
 			for u in world.units:
 				if u.team == 0 and u.def_id == "walker":

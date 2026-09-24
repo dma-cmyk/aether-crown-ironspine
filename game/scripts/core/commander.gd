@@ -485,6 +485,8 @@ func set_mode(m: Mode) -> void:
 	if m != Mode.PLACE and ghost:
 		ghost.queue_free()
 		ghost = null
+	if m != Mode.PLACE:
+		_hide_territory()
 
 
 func cancel_mode() -> void:
@@ -577,8 +579,10 @@ func begin_place(id: String) -> void:
 	set_mode(Mode.PLACE)
 	ghost = UnitVisual.load_model(Defs.BUILDINGS[id]["model"], 0, true)
 	world.add_child(ghost)
+	_add_footprint(ghost, float(Defs.BUILDINGS[id]["radius"]))
 	ghost_valid = true
 	_ghost_material(ghost, true)
+	_show_territory()
 	if Game.touch_input:
 		# no cursor to follow: start in the middle of the screen and wait for a tap
 		ghost.visible = false
@@ -587,14 +591,99 @@ func begin_place(id: String) -> void:
 			place_at(g)
 
 
+const GHOST_OK := Color(0.35, 1.0, 0.55)
+const GHOST_BAD := Color(1.0, 0.3, 0.22)
+var _ghost_mats := {}
+## Where the player may build while placing: rings on the ground around the citadel, gates and cities.
+var _territory: Node3D
+
+
 func _ghost_material(root: Node, valid: bool) -> void:
-	var m := StandardMaterial3D.new()
-	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.albedo_color = Color(0.4, 1.0, 0.55, 0.38) if valid else Color(1.0, 0.3, 0.25, 0.38)
+	if not _ghost_mats.has(valid):
+		var m := ShaderMaterial.new()
+		m.shader = load("res://shaders/ghost.gdshader")
+		var c := GHOST_OK if valid else GHOST_BAD
+		m.set_shader_parameter("tint", Vector3(c.r, c.g, c.b))
+		_ghost_mats[valid] = m
 	for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):
-		mi.material_override = m
+		if mi.name == "Footprint":
+			mi.set_instance_shader_parameter("ring_color", Color(GHOST_OK if valid else GHOST_BAD, 0.85))
+			continue
+		mi.material_override = _ghost_mats[valid]
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+## A ring on the ground under the ghost, the size of the building's footprint.
+func _add_footprint(root: Node3D, radius: float) -> void:
+	var ring := MeshInstance3D.new()
+	ring.name = "Footprint"
+	var q := QuadMesh.new()
+	q.orientation = PlaneMesh.FACE_Y
+	q.size = Vector2(radius * 2.0, radius * 2.0)
+	ring.mesh = q
+	var m := ShaderMaterial.new()
+	m.shader = load("res://shaders/ring.gdshader")
+	ring.material_override = m
+	ring.position.y = 0.5
+	ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(ring)
+	ring.set_instance_shader_parameter("ring_width", 0.06)
+	ring.set_instance_shader_parameter("ring_pulse", 1.0)
+	ring.set_instance_shader_parameter("ring_fill", 1.0)
+
+
+func _show_territory() -> void:
+	_hide_territory()
+	_territory = Node3D.new()
+	world.add_child(_territory)
+	for b in world.buildings:
+		if b.team == Defs.TEAM_PLAYER and b.alive and b.def_id in ["citadel", "gate"]:
+			_territory.add_child(_ground_circle(b.global_position, 62.0 if b.def_id == "citadel" else 26.0))
+	for st in world.sites:
+		if st.owner_team == Defs.TEAM_PLAYER:
+			_territory.add_child(_ground_circle(st.global_position, st.radius + 20.0))
+
+
+func _hide_territory() -> void:
+	if _territory:
+		_territory.queue_free()
+		_territory = null
+
+
+## A thin band that follows the ground around a circle (a flat quad would sink into hills).
+func _ground_circle(c: Vector3, r: float) -> MeshInstance3D:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var n := clampi(int(r * 1.6), 32, 128)
+	var col := Color(0.55, 0.9, 1.0, 0.5)
+	var inner := Color(0.55, 0.9, 1.0, 0.0)
+	var pts: Array[Vector3] = []
+	for i in n + 1:
+		var a := TAU * i / n
+		var d := Vector3(cos(a), 0.0, sin(a))
+		for k: float in [r - 2.2, r]:
+			var q := c + d * k
+			pts.append(Vector3(q.x, world.terrain.ground_at(q.x, q.z) + 0.35, q.z))
+	for i in n:
+		var a0 := pts[i * 2]
+		var b0 := pts[i * 2 + 1]
+		var a1 := pts[i * 2 + 2]
+		var b1 := pts[i * 2 + 3]
+		for v: Array in [[a0, inner], [b0, col], [b1, col], [a0, inner], [b1, col], [a1, inner]]:
+			st.set_color(v[1])
+			st.add_vertex(v[0])
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.vertex_color_use_as_albedo = true
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	m.no_depth_test = false
+	m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.material_override = m
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return mi
 
 
 func placement_valid(id: String, p: Vector3) -> bool:

@@ -201,6 +201,10 @@ func tick(dt: float) -> void:
 		_update_construction()
 		if randf() < dt * 3.0:
 			World.inst.fx.dust(global_position + Vector3(randf_range(-radius, radius), 0.5, randf_range(-radius, radius)) * 0.8, 2.5)
+		if randf() < dt * 2.5 and seen_by_player:
+			# welding sparks here and there on the rising frame
+			var at := Vector3(randf_range(-radius, radius) * 0.6, model_height * progress * randf_range(0.3, 0.9), randf_range(-radius, radius) * 0.6)
+			World.inst.fx.sparks(global_position + at, 5)
 		if progress >= 1.0:
 			built = true
 			_update_construction()
