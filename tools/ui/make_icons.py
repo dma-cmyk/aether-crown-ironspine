@@ -101,6 +101,10 @@ ICONS = {
     "unit_dragon": path("M8 52 C8 36 18 24 32 21 L42 9 L41 21 C49 22 55 28 57 34 L45 36 L50 43 L37 41 C31 48 20 53 8 52 Z", IVORY, "#3a2a2a")
     + circle(40, 28, 2.4, AETHER, AETHER, 1) + path("M28 22 L22 10", GOLD)
     + path("M52 41 C57 45 58 50 56 56 C54 51 50 48 47 47", RED, sw=2.6),
+    "unit_mech": path("M21 30 L43 30 L45 48 L19 48 Z", IVORY, "#2a3345") + rect(8, 26, 11, 13, IVORY, "#2a3345", rx=2)
+    + rect(45, 26, 11, 13, IVORY, "#2a3345", rx=2) + rect(26, 14, 12, 12, IVORY, "#2a3345", rx=2)
+    + path("M28 20 L36 20", AETHER, sw=2.6) + path("M32 15 L23 4 M32 15 L41 4", GOLD, sw=2.6)
+    + path("M25 48 L23 60 M39 48 L41 60", IVORY) + circle(32, 38, 2.6, AETHER, AETHER, 1),
     "unit_demon": path("M4 20 L20 36 L18 44 L3 40 L9 33 Z", IVORY, "#3a2a2a") + path("M60 20 L44 36 L46 44 L61 40 L55 33 Z", IVORY, "#3a2a2a")
     + path("M19 58 L21 40 C24 35 40 35 43 40 L45 58 Z", IVORY, "#3a2a2a") + circle(32, 27, 9, IVORY, "#3a2a2a")
     + path("M26 20 C19 17 17 10 20 4 C22 10 25 13 29 16", GOLD, "#4a3a18") + path("M38 20 C45 17 47 10 44 4 C42 10 39 13 35 16", GOLD, "#4a3a18")

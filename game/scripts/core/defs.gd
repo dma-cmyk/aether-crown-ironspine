@@ -28,6 +28,7 @@ const ARMOR_TABLE := {
 	"flame": {"light": 1.35, "heavy": 0.6, "structure": 1.1, "air": 0.5, "beast": 1.0},
 	"talon": {"light": 0.8, "heavy": 0.5, "structure": 0.25, "air": 1.6, "beast": 0.9},
 	"hellclaw": {"light": 1.2, "heavy": 1.0, "structure": 1.3, "air": 0.0, "beast": 1.0},
+	"missile": {"light": 0.35, "heavy": 0.9, "structure": 1.8, "air": 0.0, "beast": 0.7},
 	"holy": {"light": 1.0, "heavy": 0.8, "structure": 0.5, "air": 1.2, "beast": 1.35},
 }
 
@@ -47,6 +48,7 @@ const WEAPONS := {
 	"dragon_breath": {"class": "flame", "range": 16.0, "damage": 60.0, "cooldown": 2.4, "fx": "flame", "splash": 5.0, "delay": 0.35, "air": true},
 	"griffin_talons": {"class": "talon", "range": 7.0, "damage": 24.0, "cooldown": 0.9, "fx": "talon", "delay": 0.25, "air": true},
 	"demon_claws": {"class": "hellclaw", "range": 5.5, "damage": 62.0, "cooldown": 1.5, "fx": "rend", "splash": 3.2, "delay": 0.32, "air": false},
+	"mech_missiles": {"class": "missile", "range": 30.0, "damage": 56.0, "cooldown": 2.6, "fx": "missile", "splash": 2.8, "air": false},
 	"angel_lance": {"class": "holy", "range": 28.0, "damage": 30.0, "cooldown": 1.5, "fx": "beam", "air": true},
 }
 
@@ -95,6 +97,16 @@ const UNITS := {
 		"speed": 6.2, "radius": 4.6, "vision": 56.0, "weapons": ["broadside", "flak"],
 		"model": "airship", "commands": ["move", "hold", "attack", "patrol", "special"],
 		"special": "aether_bombard", "capture": 0.0, "altitude": 17.0, "hotkey": "T",
+	},
+	# a flying mech: missiles for buildings, little use against infantry, easy prey for flak
+	"mech": {
+		"name": ["王冠の機動兵", "ヴァルケシュ機動兵"], "short": "機動兵",
+		"jp": "空を飛ぶ人型の機動兵器。肩のミサイルで建物と拠点を壊すのが得意。歩兵には効きにくく、対空攻撃に弱い。特殊能力はミサイル一斉射撃。",
+		"type": "air", "hp": 700.0, "armor": "air",
+		"cost": {"material": 260, "aether": 200}, "pop": 6, "build_time": 38.0,
+		"speed": 9.0, "radius": 2.6, "vision": 40.0, "weapons": ["mech_missiles"],
+		"model": "mech", "visual": "mech", "portrait": [11.0, 0.4], "commands": ["move", "hold", "attack", "patrol", "special"],
+		"special": "missile_salvo", "capture": 0.0, "altitude": 10.0, "height": 6.8, "hotkey": "W",
 	},
 	# creatures of the Beast Sanctum: not machines, so they cannot be repaired but heal
 	# themselves ("regen" HP/s) once out of combat. "aim" = how squarely they must face prey.
@@ -176,9 +188,9 @@ const BUILDINGS := {
 	},
 	"skyport": {
 		"name": ["飛行場", "ヴァルケシュ空港"], "short": "飛行場",
-		"jp": "飛行場。飛行艦を生産する。",
+		"jp": "飛行場。飛行艦と機動兵を生産する。",
 		"hp": 1600.0, "radius": 8.5, "footprint": 8.0, "cost": {"material": 240, "aether": 180}, "build_time": 40.0,
-		"produces": ["airship"], "pop": 0, "model": "skyport", "buildable": true, "hotkey": "E", "vision": 40.0,
+		"produces": ["airship", "mech"], "pop": 0, "model": "skyport", "buildable": true, "hotkey": "E", "vision": 40.0,
 	},
 	"refinery": {
 		"name": ["エーテル精製所", "ヴァルケシュ吸引塔"], "short": "精製所",
@@ -264,6 +276,7 @@ const SPECIALS := {
 	"boulder_hurl": {"name": "Boulder Hurl", "jp": "大岩投げ：指定地点へ大岩を投げつける（射程 48m、建物に強い）。", "cooldown": 30.0, "duration": 0.0, "targeted": true, "range": 48.0},
 	"frenzy": {"name": "Frenzy", "jp": "狂乱：8秒間、速度と攻撃速度が上昇。", "cooldown": 35.0, "duration": 8.0},
 	"keen_sight": {"name": "Keen Sight", "jp": "鷹の目：15秒間、視界が2倍に広がる。", "cooldown": 40.0, "duration": 15.0},
+	"missile_salvo": {"name": "Missile Salvo", "jp": "ミサイル一斉射撃：指定地点へ12発のミサイルを撃ち込む（射程 40m、建物に強い）。", "cooldown": 45.0, "duration": 0.0, "targeted": true, "range": 40.0},
 	"hellfire": {"name": "Hellfire", "jp": "業火：自分の周りを炎で焼き払う（地上の敵に大ダメージ）。", "cooldown": 35.0, "duration": 0.0, "radius": 10.0, "damage": 130.0},
 	"blessing": {"name": "Blessing", "jp": "祝福：周りの味方ユニットの体力を回復する。", "cooldown": 30.0, "duration": 0.0, "radius": 18.0, "heal": 220.0},
 	"inferno": {"name": "Inferno", "jp": "火炎の嵐：指定地点へ飛び、辺り一帯を炎で焼き払う。", "cooldown": 45.0, "duration": 0.0, "targeted": true},

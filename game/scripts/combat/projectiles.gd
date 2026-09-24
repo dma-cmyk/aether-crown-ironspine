@@ -22,6 +22,16 @@ func shell(source: Entity, from: Vector3, to: Vector3, w: Dictionary, arc: bool,
 			"trail": 0.0, "bomb": false, "prev": from})
 
 
+## A missile on a shallow, weaving arc with a smoke trail and a glowing motor.
+func missile(source: Entity, from: Vector3, to: Vector3, dmg: float, splash: float, wclass: String) -> void:
+	var d := from.distance_to(to)
+	var g := World.inst.terrain.ground_at(to.x, to.z)
+	var side := Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)).normalized() * minf(d * 0.12, 4.0)
+	shells.append({"from": from, "to": Vector3(to.x, maxf(to.y, g), to.z), "t": 0.0, "flight": d / 48.0 + 0.15, "arc": false,
+			"h": d * 0.14, "dmg": dmg, "class": wclass, "splash": splash, "team": source.team, "src": source, "trail": 0.0,
+			"bomb": false, "prev": from, "wob": side, "glow": Defs.team_glow(source.team)})
+
+
 func drop_bomb(source: Entity, from: Vector3, to: Vector3) -> void:
 	shells.append({"from": from, "to": to, "t": 0.0, "flight": 1.1, "arc": false, "h": 0.0, "dmg": 75.0,
 			"class": "shell", "splash": 6.5, "team": source.team, "src": source, "trail": 0.0, "bomb": true, "prev": from})
@@ -75,6 +85,8 @@ func tick(dt: float) -> void:
 		else:
 			p = (s["from"] as Vector3).lerp(s["to"], k)
 			p.y += sin(k * PI) * float(s["h"])
+			if s.has("wob"):
+				p += (s["wob"] as Vector3) * sin(k * PI)
 		s["prev"] = p
 		s["trail"] -= dt
 		if s.has("rock"):
@@ -88,7 +100,7 @@ func tick(dt: float) -> void:
 			if s["trail"] <= 0.0:
 				s["trail"] = 0.05 if s["arc"] else 0.03
 				fx.smoke(p, 0.7 if s["arc"] else 0.45, 0.22)
-			fx.glow_dot(p, Color(1.0, 0.75, 0.4) if not s["bomb"] else Color(0.5, 0.9, 1.0), 0.9 if s["arc"] else 0.6)
+			fx.glow_dot(p, s.get("glow", Color(1.0, 0.75, 0.4) if not s["bomb"] else Color(0.5, 0.9, 1.0)), 0.9 if s["arc"] else 0.6)
 		if k >= 1.0:
 			_impact(s)
 			shells.remove_at(i)

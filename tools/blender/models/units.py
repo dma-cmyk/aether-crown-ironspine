@@ -294,7 +294,79 @@ def airship(name):
     return root
 
 
+def mech(name):
+    """Flying mech: a knight-like frame with a V-shaped crest, missile pods on both shoulders,
+    a rifle in the right hand and a thruster pack. Origin at the waist (it hovers).
+    Named parts for the animation: body, arm_l/arm_r, leg_l/leg_r, and pod_l/pod_r on the body."""
+    P = mk.palette()
+    root = mk.empty(name)
+    b = mk.Builder("body")
+    b.box((1.3, 0.6, 0.95), (0, 0.0, 0.0), P["iron_dark"], bevel=0.06)
+    b.box((1.15, 0.75, 0.9), (0, 0.55, 0.05), P["iron"], bevel=0.06)
+    b.box((2.3, 1.4, 1.45), (0, 1.35, 0.05), P["team_trim"], bevel=0.14)
+    b.box((1.9, 0.5, 0.2), (0, 1.1, 0.78), P["iron"], bevel=0.04)
+    for sx in (-1, 1):
+        b.box((0.5, 0.35, 0.12), (sx * 0.62, 1.55, 0.8), P["brass"], bevel=0.03)
+    b.sphere(0.26, 10, 6, (0, 1.42, 0.78), P["team_glow"], scale=(1.0, 1.0, 0.5))
+    # head: helmet, visor, V-shaped crest, chin guard
+    b.box((0.7, 0.66, 0.74), (0, 2.38, 0.12), P["iron"], bevel=0.1)
+    b.box((0.58, 0.14, 0.06), (0, 2.42, 0.5), P["team_glow"])
+    b.box((0.3, 0.2, 0.2), (0, 2.12, 0.46), P["team_trim"], bevel=0.03)
+    for sx in (-1, 1):
+        b.box((0.1, 0.62, 0.08), (sx * 0.24, 2.9, 0.42), P["brass"], rot=(0, 0, sx * 38))
+        b.box((0.12, 0.3, 0.3), (sx * 0.38, 2.4, 0.05), P["iron_dark"])
+    b.box((0.16, 0.2, 0.12), (0, 2.7, 0.48), P["team_glow"])
+    # thruster pack, fins and nozzles
+    b.box((1.6, 1.3, 0.8), (0, 1.3, -0.95), P["iron"], bevel=0.1)
+    for sx in (-1, 1):
+        b.lathe([(0.0, 0.0), (0.26, 0.05), (0.34, 0.5), (0.3, 0.75)], 10, (sx * 0.5, 0.75, -1.25), P["iron_dark"], rot=(200, 0, 0))
+        b.cylinder(0.24, 0.05, 10, (sx * 0.5, 0.05, -1.52), P["fire_glow"], rot=(200, 0, 0))
+        b.box((0.25, 1.9, 0.7), (sx * 1.05, 2.35, -1.25), P["team_cloth"], rot=(-20, 0, -sx * 28), bevel=0.04)
+        b.box((0.28, 0.2, 0.75), (sx * 1.38, 3.2, -1.55), P["brass"], rot=(-20, 0, -sx * 28))
+    ob_body = b.to_object(parent=root)
+    # missile pods on the shoulders (separate so they can recoil)
+    for side, sx in (("l", 1), ("r", -1)):
+        pv = (sx * 1.55, 2.0, -0.1)
+        pod = mk.Builder("pod_" + side)
+        pod.box((0.85, 0.8, 1.25), (sx * 1.6, 2.15, -0.1), P["iron_dark"], bevel=0.06)
+        pod.box((0.9, 0.12, 1.3), (sx * 1.6, 2.6, -0.1), P["team_trim"])
+        for gx in (-0.2, 0.2):
+            for gy in (-0.18, 0.18):
+                pod.cylinder(0.11, 0.1, 8, (sx * 1.6 + gx, 2.15 + gy, 0.52), P["brass"], rot=(90, 0, 0))
+        pod.to_object(parent=ob_body, origin=pv)
+    # arms (shoulder pivots); the right fist holds the rifle
+    for side, sx in (("l", 1), ("r", -1)):
+        sh = (sx * 1.35, 1.75, 0.0)
+        arm = mk.Builder("arm_" + side)
+        arm.sphere(0.42, 10, 6, sh, P["team_trim"], scale=(1.1, 0.9, 1.0))
+        arm.box((0.52, 1.05, 0.58), (sx * 1.42, 1.05, 0.0), P["iron"], bevel=0.05)
+        arm.sphere(0.24, 8, 6, (sx * 1.45, 0.45, 0.05), P["brass"])
+        arm.box((0.62, 1.1, 0.68), (sx * 1.47, -0.1, 0.15), P["team_trim"], rot=(-12, 0, 0), bevel=0.06)
+        arm.box((0.42, 0.42, 0.42), (sx * 1.48, -0.78, 0.3), P["iron_dark"], bevel=0.05)
+        if side == "r":
+            arm.box((0.3, 0.42, 2.2), (-1.48, -0.72, 0.95), P["iron_dark"], bevel=0.04)
+            arm.cylinder(0.1, 1.0, 8, (-1.48, -0.66, 2.0), P["iron"], rot=(90, 0, 0))
+            arm.box((0.14, 0.3, 0.6), (-1.48, -0.45, 0.4), P["brass"])
+            arm.cylinder(0.08, 0.06, 8, (-1.48, -0.66, 3.0), P["team_glow"], rot=(90, 0, 0))
+        else:
+            arm.box((0.14, 1.4, 0.9), (1.8, -0.35, 0.3), P["team_trim"], bevel=0.04)
+        arm.to_object(parent=ob_body, origin=sh)
+    # legs (hip pivots), with calf thrusters
+    for side, sx in (("l", 1), ("r", -1)):
+        hip = (sx * 0.5, -0.3, 0.0)
+        lg = mk.Builder("leg_" + side)
+        lg.box((0.68, 1.25, 0.78), (sx * 0.55, -1.05, 0.05), P["iron"], bevel=0.06)
+        lg.sphere(0.3, 8, 6, (sx * 0.56, -1.75, 0.15), P["brass"])
+        lg.box((0.8, 1.6, 0.92), (sx * 0.56, -2.55, -0.02), P["team_trim"], bevel=0.08)
+        lg.box((0.5, 0.9, 0.3), (sx * 0.56, -2.3, 0.5), P["iron"], bevel=0.04)
+        lg.box((0.78, 0.42, 1.3), (sx * 0.56, -3.5, 0.2), P["iron_dark"], bevel=0.06, taper=(0.9, 0.85))
+        lg.cylinder(0.16, 0.05, 8, (sx * 0.56, -2.4, -0.5), P["fire_glow"], rot=(-90, 0, 0))
+        lg.to_object(parent=ob_body, origin=hip)
+    return root
+
+
 ASSETS = {
+    "mech": (mech, False),
     "aetherguard": (aetherguard, True),
     "artificer": (artificer, True),
     "walker": (walker, False),

@@ -98,7 +98,7 @@ func _economy() -> void:
 			"foundry":
 				b.queue_unit("walker" if randf() < 0.6 else "mortar")
 			"skyport":
-				b.queue_unit("airship")
+				b.queue_unit("mech" if randf() < 0.5 else "airship")
 			_:
 				if b.def_id.begins_with("sanctum"):
 					b.queue_unit(b.produces()[randi() % b.produces().size()])

@@ -100,6 +100,8 @@ func setup(id: String, t: int, pos: Vector3, face: float) -> void:
 			visual = DragonVisual.new()
 		"griffin":
 			visual = GriffinVisual.new()
+		"mech":
+			visual = MechVisual.new()
 		"demon":
 			visual = DemonVisual.new()
 		"angel":
@@ -368,6 +370,14 @@ func use_special(at: Vector3 = Vector3.INF) -> bool:
 					e.heal(260.0)
 					World.inst.fx.sparkle(e.aim_point(), Defs.team_glow(team))
 			World.inst.fx.ring_burst(global_position + Vector3(0, 0.5, 0), 16.0, Defs.team_glow(team))
+		"missile_salvo":
+			if at == Vector3.INF:
+				return false
+			if flat_distance_to(at) > float(sp["range"]):
+				order_move(at)
+			_bombard_target = at
+			_bombard_drops = 12
+			_bombard_t = 0.0
 		"aether_bombard":
 			if at == Vector3.INF:
 				return false
@@ -562,16 +572,26 @@ func _auto_repair(dt: float) -> void:
 			return
 
 
+## Dragon Inferno, Skyfrigate bombs and the mech's Missile Salvo: close in, then rain on the area.
 func _tick_bombard(dt: float) -> void:
-	var dragon: bool = def.get("special", "") == "inferno"
-	if flat_distance_to(_bombard_target) > (16.0 if dragon else 18.0):
+	var sid: String = def.get("special", "")
+	var dragon := sid == "inferno"
+	var salvo := sid == "missile_salvo"
+	var reach := 16.0 if dragon else (float(Defs.SPECIALS[sid]["range"]) if salvo else 18.0)
+	if flat_distance_to(_bombard_target) > reach:
 		return
 	_bombard_t -= dt
 	if _bombard_t <= 0.0:
-		_bombard_t = 0.38 if dragon else 0.28
+		_bombard_t = 0.38 if dragon else (0.12 if salvo else 0.28)
 		_bombard_drops -= 1
 		var p := _bombard_target + Vector3(randf_range(-7, 7), 0, randf_range(-7, 7))
-		if dragon:
+		if salvo:
+			# the mech stops where it can reach and fires from the shoulder pods
+			if order == Order.MOVE:
+				order_stop()
+			_face_towards(_bombard_target, dt)
+			World.inst.projectiles.missile(self, visual.special_point(), p, 45.0, 4.0, "missile")
+		elif dragon:
 			World.inst.projectiles.firestorm(self, visual.special_point(), p)
 			visual.on_special_at("inferno", p)
 		else:

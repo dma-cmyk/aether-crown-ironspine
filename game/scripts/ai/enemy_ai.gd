@@ -93,7 +93,7 @@ func _economy() -> void:
 				choice = "walker" if (p.aether >= 160.0 and rng.randf() < 0.7) else "mortar"
 			"skyport":
 				if rng.randf() < 0.5 * diff:
-					choice = "airship"
+					choice = "mech" if rng.randf() < 0.5 else "airship"
 			_:
 				if b.def_id.begins_with("sanctum"):
 					choice = _beast_choice(b, p, diff)

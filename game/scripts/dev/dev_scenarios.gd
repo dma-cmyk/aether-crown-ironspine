@@ -139,6 +139,20 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 			var t: Node = load("res://scripts/dev/touch_test.gd").new()
 			match_node.add_child(t)
 			t.setup(world, commander, camera, match_node.hud)
+		"mech_test":
+			# two mechs against a Varkesh warcamp and an infantry squad; a salvo after 5 s
+			world.fog.enabled = false
+			var at := Vector3(-60, 0, 20)
+			var camp := world.spawn_building("barracks", 1, at + Vector3(0, 0, 36), PI, true)
+			world.spawn_unit("aetherguard", 1, at + Vector3(10, 0, 30), PI)
+			var mechs: Array[Unit] = [world.spawn_unit("mech", 0, at, 0.0), world.spawn_unit("mech", 0, at + Vector3(6, 0, 0), 0.0)]
+			camera.set_view(at + Vector3(0, 0, 18), -20.0, 60.0)
+			for m in mechs:
+				m.order_attack(camp)
+			world.get_tree().create_timer(5.0).timeout.connect(func() -> void:
+				print("[mech_test] 5 s: warcamp %.0f / %.0f, salvo=%s" % [camp.hp, camp.max_hp, mechs[0].use_special(camp.global_position)]))
+			world.get_tree().create_timer(15.0).timeout.connect(func() -> void:
+				print("[mech_test] 15 s: warcamp %s %.0f, mechs %.0f %.0f" % ["alive" if camp.alive else "destroyed", camp.hp, mechs[0].hp, mechs[1].hp]))
 		"races_test":
 			# a demon and an angel against a Varkesh squad, walker and griffin; specials after 6 s
 			world.fog.enabled = false

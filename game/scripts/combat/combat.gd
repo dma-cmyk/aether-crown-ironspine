@@ -69,6 +69,13 @@ static func fire(shooter: Entity, w: Dictionary, target: Entity) -> void:
 				world.fx.smoke(m, 1.6, 0.35)
 			world.fx.light_flash(muzzles[0], Color(1.0, 0.7, 0.4), 6.0)
 			world.sfx.play_at("cannon", muzzles[0])
+		"missile":
+			for m in muzzles:
+				world.projectiles.missile(shooter, m, aim + Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)), dmg / muzzles.size(),
+						float(w.get("splash", 2.5)), wclass)
+				world.fx.muzzle(m, glow, 1.0)
+				world.fx.smoke(m, 1.0, 0.3)
+			world.sfx.play_at("mortar", muzzles[0], -8.0)
 		"shell_arc":
 			var lead := Vector3.ZERO
 			if target is Unit:
