@@ -18,6 +18,7 @@ var fx: FX
 var sfx: Sfx
 var camera: CameraRig
 var fog: FogOfWar
+var forest: Forest
 var projectiles: Projectiles
 var players: Array[PlayerState] = []
 var units: Array[Unit] = []
@@ -65,6 +66,33 @@ func setup(t: Terrain, cam: CameraRig) -> void:
 	fog.name = "Fog"
 	add_child(fog)
 	fog.setup(self)
+	forest = Forest.new()
+	forest.setup(self)
+
+
+## How far from the citadel, a gate or a held city a side may build (the city's own radius is added).
+const BUILD_AREA := {"citadel": 85.0, "gate": 32.0, "site": 26.0}
+
+
+## The circles a side may build in: [[centre, radius], ...].
+func build_areas(team: int) -> Array:
+	var out := []
+	for b in buildings:
+		if b.team == team and b.alive and BUILD_AREA.has(b.def_id):
+			out.append([b.global_position, BUILD_AREA[b.def_id]])
+	for s in sites:
+		if s.owner_team == team:
+			out.append([s.global_position, s.radius + BUILD_AREA["site"]])
+	return out
+
+
+func in_build_area(team: int, p: Vector3) -> bool:
+	if not terrain.in_bounds(p.x, p.z, 20.0):
+		return false
+	for a: Array in build_areas(team):
+		if Vector2(a[0].x - p.x, a[0].z - p.z).length() < a[1]:
+			return true
+	return false
 
 
 func player(team: int) -> PlayerState:
@@ -83,6 +111,9 @@ func spawn_unit(id: String, team: int, pos: Vector3, facing: float = 0.0) -> Uni
 
 
 func spawn_building(id: String, team: int, pos: Vector3, facing: float, built: bool = true) -> Building:
+	if not built:
+		# construction starts: fell the trees on the site
+		forest.clear_area(pos, float(Defs.BUILDINGS[id]["footprint"]) + 1.0)
 	var b := Building.new()
 	b.name = "%s_%d" % [id, randi() % 100000]
 	building_root.add_child(b)

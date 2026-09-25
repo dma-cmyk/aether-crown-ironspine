@@ -17,6 +17,9 @@ var water_material: ShaderMaterial
 var fall_material: ShaderMaterial
 var fog_texture: ImageTexture
 var scatter_root: Node3D
+## Tree index (placements["trees"]) -> [MultiMesh, instance, rest transform, colour], for felling.
+var tree_slots := {}
+var build_map: ImageTexture
 
 
 func build(with_scatter: bool = true) -> void:
@@ -178,7 +181,10 @@ func _load_mesh(model: String, team: int = -1) -> Mesh:
 
 func _spawn_scatter() -> void:
 	# trees + rocks: [x, y, z, scale, rot, variant]
-	_multimesh_group("trees", ["tree_pine_a", "tree_pine_b", "tree_pine_c"], placements["trees"], true)
+	var trees: Array = []
+	for i in placements["trees"].size():
+		trees.append(placements["trees"][i] + [i])
+	_multimesh_group("trees", ["tree_pine_a", "tree_pine_b", "tree_pine_c"], trees, true)
 	_multimesh_group("rocks", ["rock_a", "rock_b", "rock_c"], placements["rocks"], false)
 	# props: group by model
 	var by_model := {}
@@ -237,11 +243,64 @@ func _multimesh_group(group_name: String, models: Array, items: Array, tint: boo
 			var it: Array = list[i]
 			var s := float(it[3])
 			var b := Basis(Vector3.UP, float(it[4])).scaled(Vector3(s, s * (rng.randf_range(0.9, 1.15) if tint else 1.0), s))
-			mm.set_instance_transform(i, Transform3D(b, Vector3(it[0], it[1], it[2])))
+			var xf := Transform3D(b, Vector3(it[0], it[1], it[2]))
+			mm.set_instance_transform(i, xf)
+			var c := Color.WHITE
 			if tint:
-				var c := Color(rng.randf_range(0.8, 1.15), rng.randf_range(0.85, 1.15), rng.randf_range(0.75, 1.05))
+				c = Color(rng.randf_range(0.8, 1.15), rng.randf_range(0.85, 1.15), rng.randf_range(0.75, 1.05))
 				mm.set_instance_color(i, c)
+			if it.size() > 6:
+				tree_slots[int(it[6])] = [mm, i, xf, c]
 		var mmi := MultiMeshInstance3D.new()
 		mmi.name = "%s_%d" % [group_name, key]
 		mmi.multimesh = mm
 		scatter_root.add_child(mmi)
+
+
+# ------------------------------------------------------------------ felling and building ground
+## Tint a tree while a building is placed: 0 its own colour, 1 may be cleared, 2 will be felled.
+func mark_tree(i: int, level: int) -> void:
+	var slot: Array = tree_slots.get(i, [])
+	if slot.is_empty():
+		return
+	var c: Color = [slot[3], Color(2.1, 1.8, 0.5), Color(5.5, 2.2, 0.3)][level]
+	(slot[0] as MultiMesh).set_instance_color(slot[1], c)
+
+
+## Topple tree `i` toward `away` and sink it into the ground, or hide it at once.
+func fell_tree(i: int, away: Vector3, animate: bool) -> void:
+	var slot: Array = tree_slots.get(i, [])
+	if slot.is_empty():
+		return
+	var mm: MultiMesh = slot[0]
+	var idx: int = slot[1]
+	var rest: Transform3D = slot[2]
+	mm.set_instance_color(idx, slot[3])
+	var gone := Transform3D(Basis().scaled(Vector3.ZERO), rest.origin)
+	if not animate or away == Vector3.ZERO:
+		mm.set_instance_transform(idx, gone)
+		return
+	var axis := Vector3.UP.cross(away).normalized()
+	var tw := create_tween()
+	tw.tween_method(func(k: float) -> void:
+		mm.set_instance_transform(idx, Transform3D(Basis(axis, k * k * deg_to_rad(84.0)) * rest.basis, rest.origin)), 0.0, 1.0, 1.4)
+	tw.tween_method(func(k: float) -> void:
+		var b := Basis(axis, deg_to_rad(84.0)) * rest.basis
+		mm.set_instance_transform(idx, Transform3D(b.scaled(Vector3.ONE * (1.0 - k)), rest.origin - Vector3(0, k * 1.5, 0))), 0.0, 1.0, 1.6).set_delay(0.8)
+	tw.tween_callback(func() -> void: mm.set_instance_transform(idx, gone))
+
+
+## Show (or hide with null) the building-ground map drawn over the terrain while placing:
+## one pixel per nav cell, alpha 0 outside the ground the player may build on.
+func show_build_map(img: Image) -> void:
+	if img == null:
+		terrain_material.set_shader_parameter("build_strength", 0.0)
+		return
+	if build_map == null or build_map.get_size() != Vector2(img.get_size()):
+		build_map = ImageTexture.create_from_image(img)
+		terrain_material.set_shader_parameter("build_map", build_map)
+		terrain_material.set_shader_parameter("build_cells", float(img.get_width()))
+	else:
+		build_map.update(img)
+	terrain_material.set_shader_parameter("build_strength", 1.0)
+

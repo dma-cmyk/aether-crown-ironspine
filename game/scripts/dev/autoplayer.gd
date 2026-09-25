@@ -88,8 +88,9 @@ func _economy() -> void:
 		break
 	for u in world.units:
 		if u.team == 0 and u.alive and u.def_id == "titan" and u.special_ready() and u.target and is_instance_valid(u.target):
-			u.use_special(u.target.global_position)
-			_log("titan light at %s" % u.target.global_position)
+			var at := u.target.global_position  # the special can clear the target
+			u.use_special(at)
+			_log("titan light at %s" % at)
 	for b in world.buildings:
 		if b.team == 0 and b.strike_ready():
 			var foe := world.citadel(1)

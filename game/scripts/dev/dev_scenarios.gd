@@ -9,11 +9,20 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 			commander.set_selection([world.citadel(0)])
 			match_node.hud.build_mode = true
 			match_node.hud.shrine_page = Game.arg("page") == "shrines"
-			camera.set_view(Vector3(-128, 0, 128), -45.0, 90.0)
+			if not Game.args.has("cam"):
+				camera.set_view(Vector3(-128, 0, 128), -45.0, 90.0)
 			if not Game.args.has("noplace"):
-				commander.begin_place("foundry")
-				var m := Game.arg("mouse", "900,480").split(",")
-				Input.warp_mouse(Vector2(float(m[0]), float(m[1])))
+				commander.begin_place(Game.arg("build", "foundry"))
+				if Game.args.has("at"):
+					# --at=x,z (with --touch, so the mouse does not move it): the ghost at a map point
+					var a := Game.arg("at").split(",")
+					commander.place_at(world.terrain.ground_pos(Vector3(float(a[0]), 0, float(a[1]))))
+					if Game.args.has("confirm"):
+						# --confirm=<s>: build it after that many seconds (the trees fall)
+						world.get_tree().create_timer(float(Game.arg("confirm", "1"))).timeout.connect(commander.confirm_ghost)
+				else:
+					var m := Game.arg("mouse", "900,480").split(",")
+					Input.warp_mouse(Vector2(float(m[0]), float(m[1])))
 		"ui_pause":
 			match_node.hud.toggle_pause()
 		"ui_save":
@@ -229,6 +238,38 @@ static func run(name: String, world: World, commander: Commander, camera: Camera
 				for u in ours:
 					print("[gearforge_test] %s hp %.0f/%.0f kills %d" % [u.def_id, u.hp, u.max_hp, u.kills])
 				print("[gearforge_test] foes alive %d" % foes.filter(func(f) -> bool: return is_instance_valid(f) and f.alive).size()))
+		"fell_test":
+			# a foundry over the trees west of the citadel: trees felled, ground opened, and a save
+			# written and read back keeps them felled
+			var at := world.terrain.ground_pos(Vector3(-73, 0, 27))
+			var nav := world.nav
+			var before := 0
+			for i in nav._circle_cells(at, 14.0):
+				before += 1 if nav.walkable(Vector2i(i % nav.n, i / nav.n)) else 0
+			var problem := commander.placement_problem("foundry", at)
+			var trees := world.forest.trees_in(at, 10.0).size()
+			commander.begin_place("foundry")
+			commander.place_at(at)
+			print("[fell_test] trees tinted in the building area %d, marked to fell %d" % [commander._area_trees.size(), commander._marked.size()])
+			if Game.args.has("hold"):
+				return  # --hold: leave the ghost in place for a screenshot
+			commander.confirm_ghost()
+			var after := 0
+			for i in nav._circle_cells(at, 14.0):
+				after += 1 if nav.walkable(Vector2i(i % nav.n, i / nav.n)) or nav.blockers[i] > 0 else 0
+			print("[fell_test] problem='%s' trees=%d felled=%d walkable %d -> %d (with the foundry's own cells), foundry=%s" % [problem,
+					trees, world.forest.felled().size(), before, after, world.count_buildings(0, "foundry") > 0])
+			var path := Game.arg("save-to", "user://fell_test.save")
+			print("[fell_test] saved felled=%d ok=%s" % [SaveGame.capture(match_node)["felled"].size(),
+					SaveGame.write(path, SaveGame.capture(match_node))])
+		"fell_check":
+			# after --load of the fell_test save: the trees are still down and the ground still open
+			var at := world.terrain.ground_pos(Vector3(-73, 0, 27))
+			var nav := world.nav
+			var open := 0
+			for i in nav._circle_cells(at, 14.0):
+				open += 1 if nav.walkable(Vector2i(i % nav.n, i / nav.n)) or nav.blockers[i] > 0 else 0
+			print("[fell_check] felled=%d open=%d standing near=%d" % [world.forest.felled().size(), open, world.forest.trees_in(at, 10.0).size()])
 		"races_test":
 			# a demon and an angel against a Varkesh squad, walker and griffin; specials after 6 s
 			world.fog.enabled = false

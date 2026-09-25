@@ -79,6 +79,7 @@ static func capture(m: Node) -> Dictionary:
 		"sites": sites,
 		"buildings": out_blds,
 		"units": out_units,
+		"felled": w.forest.felled(),
 		"explored": Marshalls.raw_to_base64(w.fog.explored.compress(FileAccess.COMPRESSION_ZSTD)),
 		"mission": m.mission.snapshot(),
 		"ai": m.ai.snapshot(),
@@ -102,6 +103,8 @@ static func restore_world(m: Node, d: Dictionary) -> void:
 		for s in w.sites:
 			if s.site_id == sd["id"]:
 				s.restore(int(sd["owner"]), float(sd["capture"]), int(sd["capturing"]))
+	for i in d.get("felled", []):
+		w.forest.fell(int(i))
 	var ents: Array[Entity] = []
 	for ud: Dictionary in d["units"]:
 		var u := w.spawn_unit(ud["id"], int(ud["team"]), _v3(ud["at"]), float(ud["facing"]))

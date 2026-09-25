@@ -212,10 +212,36 @@ func place_at(g: Vector3) -> void:
 	ghost.global_position = g
 	var to_cam := camera.cam.global_position - g
 	ghost.rotation.y = snappedf(atan2(to_cam.x, to_cam.z), PI / 4.0)
-	var v := placement_valid(place_id, g)
+	var problem := placement_problem(place_id, g)
+	var v := problem == ""
 	if v != ghost_valid:
 		ghost_valid = v
 		_ghost_material(ghost, v)
+	var fp := float(Defs.BUILDINGS[place_id]["footprint"]) + 1.0
+	_mark_trees(world.forest.trees_in(g, fp) if v else PackedInt32Array())
+	var label := ghost.get_node_or_null("PlaceLabel") as Label3D
+	if label:
+		label.visible = problem != "" or not _marked.is_empty()
+		label.text = problem if problem != "" else "木を%d本切り倒して建てる" % _marked.size()
+		label.modulate = GHOST_BAD.lerp(Color.WHITE, 0.2) if problem != "" else Color(1.0, 0.8, 0.35)
+
+
+## Trees the ghost would fell (tinted orange), and the trees that may be cleared anywhere in the
+## building area (a paler yellow) while placing.
+var _marked := PackedInt32Array()
+var _area_trees := {}
+
+
+func _mark_trees(trees: PackedInt32Array) -> void:
+	if trees == _marked:
+		return
+	for i in _marked:
+		if not i in trees:
+			world.terrain.mark_tree(i, 1 if _area_trees.has(i) else 0)
+	for i in trees:
+		if not i in _marked:
+			world.terrain.mark_tree(i, 2)
+	_marked = trees
 
 
 func _click_select(pos: Vector2, add: bool, dbl: bool) -> void:
@@ -494,6 +520,7 @@ func set_mode(m: Mode) -> void:
 		ghost = null
 	if m != Mode.PLACE:
 		_hide_territory()
+		_mark_trees(PackedInt32Array())
 
 
 func cancel_mode() -> void:
@@ -589,6 +616,7 @@ func begin_place(id: String) -> void:
 	ghost = UnitVisual.load_model(Defs.BUILDINGS[id]["model"], 0, true)
 	world.add_child(ghost)
 	_add_footprint(ghost, float(Defs.BUILDINGS[id]["radius"]))
+	_add_place_label(ghost)
 	ghost_valid = true
 	_ghost_material(ghost, true)
 	_show_territory()
@@ -641,19 +669,76 @@ func _add_footprint(root: Node3D, radius: float) -> void:
 	ring.set_instance_shader_parameter("ring_fill", 1.0)
 
 
+## Why the ghost cannot be placed (or how many trees it will fell), floating over it.
+func _add_place_label(root: Node3D) -> void:
+	var l := Label3D.new()
+	l.name = "PlaceLabel"
+	l.font = UITheme.body_font()
+	l.font_size = 36
+	l.pixel_size = 0.0009
+	l.outline_size = 12
+	l.outline_modulate = Color(0.05, 0.06, 0.08, 0.9)
+	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	l.no_depth_test = true
+	l.fixed_size = true
+	l.render_priority = 10
+	l.position = Vector3(0, 1.5, 0)
+	l.visible = false
+	root.add_child(l)
+
+
 func _show_territory() -> void:
 	_hide_territory()
 	_territory = Node3D.new()
 	world.add_child(_territory)
+	for a: Array in world.build_areas(Defs.TEAM_PLAYER):
+		_territory.add_child(_ground_circle(a[0], a[1]))
+	_area_trees.clear()
+	world.terrain.show_build_map(_build_map_image())
+	for t: int in _area_trees:
+		world.terrain.mark_tree(t, 1)
+
+
+## The building-ground map for the terrain shader: every nav cell of the player's building area,
+## green where the ground is free and level, amber under trees (felled when a building goes up),
+## red where rocks, houses, buildings, cliffs or steep slopes are in the way.
+func _build_map_image() -> Image:
+	var nav := world.nav
+	var img := Image.create(nav.n, nav.n, false, Image.FORMAT_RGBA8)
+	var free := Color(0.3, 1.0, 0.45, 1.0)
+	var trees := Color(1.0, 0.88, 0.2, 1.0)
+	var blocked := Color(1.0, 0.16, 0.2, 1.0)
+	# the ground right around a building is kept clear (placement_problem: "too close")
+	var near := {}
 	for b in world.buildings:
-		if b.team == Defs.TEAM_PLAYER and b.alive and b.def_id in ["citadel", "gate"]:
-			_territory.add_child(_ground_circle(b.global_position, 62.0 if b.def_id == "citadel" else 26.0))
-	for st in world.sites:
-		if st.owner_team == Defs.TEAM_PLAYER:
-			_territory.add_child(_ground_circle(st.global_position, st.radius + 20.0))
+		if b.alive:
+			for i in nav._circle_cells(b.global_position, b.radius + 1.0):
+				near[i] = true
+	for a: Array in world.build_areas(Defs.TEAM_PLAYER):
+		for i in nav._circle_cells(a[0], a[1]):
+			var q := Vector2i(i % nav.n, i / nav.n)
+			var w := nav.to_world(q)
+			if img.get_pixelv(q).a > 0.0 or not world.terrain.in_bounds(w.x, w.z, 20.0):
+				continue
+			var c := blocked
+			if near.has(i):
+				c = blocked
+			elif nav.walkable(q):
+				c = free if world.terrain.normal_at(w.x, w.z).y > 0.955 else blocked
+			elif world.forest.clearable(i):
+				c = trees if world.terrain.normal_at(w.x, w.z).y > 0.955 else blocked
+				if c == trees:
+					for t in world.forest.trees_in(w, 0.5):
+						_area_trees[t] = true
+			img.set_pixelv(q, c)
+	return img
 
 
 func _hide_territory() -> void:
+	world.terrain.show_build_map(null)
+	for t: int in _area_trees:
+		world.terrain.mark_tree(t, 0)
+	_area_trees.clear()
 	if _territory:
 		_territory.queue_free()
 		_territory = null
@@ -696,36 +781,35 @@ func _ground_circle(c: Vector3, r: float) -> MeshInstance3D:
 
 
 func placement_valid(id: String, p: Vector3) -> bool:
+	return placement_problem(id, p) == ""
+
+
+## "" when a building `id` may go up at p, otherwise why not (shown over the ghost). Trees are no
+## obstacle: they are felled when construction starts.
+func placement_problem(id: String, p: Vector3) -> String:
 	var d: Dictionary = Defs.BUILDINGS[id]
 	var fp: float = d["footprint"]
-	if not world.terrain.in_bounds(p.x, p.z, 20.0):
-		return false
-	if not world.nav.area_free(p, fp + 1.0):
-		return false
+	if not in_territory(p):
+		return "建てられる範囲の外"
+	for b in world.buildings:
+		if b.alive and Vector2(b.global_position.x - p.x, b.global_position.z - p.z).length() < b.radius + d["radius"] + 1.0:
+			return "ほかの建物に近すぎる"
 	var h0 := world.terrain.height_at(p.x, p.z)
 	for a in 8:
 		var ang := a * TAU / 8.0
 		var q := p + Vector3(cos(ang), 0, sin(ang)) * fp
 		if absf(world.terrain.height_at(q.x, q.z) - h0) > 1.6:
-			return false
-	for b in world.buildings:
-		if b.alive and Vector2(b.global_position.x - p.x, b.global_position.z - p.z).length() < b.radius + d["radius"] + 1.0:
-			return false
+			return "地面が傾きすぎている"
+	if not world.forest.area_buildable(p, fp + 1.0):
+		return "岩や建物がじゃまで建てられない"
 	for u in world.units:
 		if u.alive and not u.is_air and Vector2(u.global_position.x - p.x, u.global_position.z - p.z).length() < fp + u.radius:
-			return false
-	return in_territory(p)
+			return "部隊がいる"
+	return ""
 
 
 func in_territory(p: Vector3) -> bool:
-	for b in world.buildings:
-		if b.team == Defs.TEAM_PLAYER and b.alive and b.def_id in ["citadel", "gate"]:
-			if Vector2(b.global_position.x - p.x, b.global_position.z - p.z).length() < (62.0 if b.def_id == "citadel" else 26.0):
-				return true
-	for s in world.sites:
-		if s.owner_team == Defs.TEAM_PLAYER and Vector2(s.global_position.x - p.x, s.global_position.z - p.z).length() < s.radius + 20.0:
-			return true
-	return false
+	return world.in_build_area(Defs.TEAM_PLAYER, p)
 
 
 func _place_building(p: Vector3) -> void:
@@ -741,7 +825,7 @@ func _place_building(p: Vector3) -> void:
 
 
 func _process(_delta: float) -> void:
-	if mode == Mode.PLACE and ghost and not Game.touch_input:
+	if mode == Mode.PLACE and ghost and not Game.touch_input and not Game.args.has("hold"):
 		var g := ground_at_mouse(get_viewport().get_mouse_position())
 		if g != Vector3.INF:
 			place_at(g)

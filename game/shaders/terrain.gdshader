@@ -30,6 +30,11 @@ uniform vec3 cliff_tint_a : source_color = vec3(0.80, 0.74, 0.66);
 uniform vec3 cliff_tint_b : source_color = vec3(0.62, 0.64, 0.70);
 uniform float normal_strength = 0.9;
 uniform float fog_strength = 0.0;
+// While a building is being placed: one texel per nav cell, rgb = green (free), amber (trees to
+// fell), red (blocked); alpha 0 outside the ground the player may build on.
+uniform sampler2D build_map : filter_nearest, repeat_disable, hint_default_transparent;
+uniform float build_cells = 200.0;
+uniform float build_strength = 0.0;
 
 varying vec3 wpos;
 varying vec3 wnrm;
@@ -106,7 +111,19 @@ void fragment() {
 	float fog = texture(fog_map, muv).r;
 	albedo *= mix(1.0, fog, fog_strength);
 
+	vec3 emit = vec3(0.0);
+	if (build_strength > 0.0) {
+		vec4 bm = texture(build_map, muv);
+		vec2 g2 = abs(fract(muv * build_cells) - 0.5);
+		float line = smoothstep(0.44, 0.49, max(g2.x, g2.y));
+		// ground outside the building area dims; inside, a tinted grid of cells
+		albedo *= mix(1.0, 0.62, build_strength * (1.0 - bm.a));
+		albedo = mix(albedo, bm.rgb, bm.a * build_strength * (0.16 + 0.3 * line));
+		emit = bm.rgb * bm.a * build_strength * (0.03 + 0.14 * line);
+	}
+
 	ALBEDO = albedo;
+	EMISSION = emit;
 	ROUGHNESS = rough;
 	SPECULAR = 0.3;
 	AO = COLOR.r;

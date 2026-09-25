@@ -237,13 +237,14 @@ func _site_for(id: String, home: Vector3) -> Vector3:
 			var q := home.lerp(Vector3.ZERO, rng.randf_range(0.18, 0.3)) + Vector3(rng.randf_range(-12, 12), 0, rng.randf_range(-12, 12))
 			if _valid(id, q):
 				return q
-	var anchors := [[home, 18.0, 62.0]]
+	var A := World.BUILD_AREA
+	var anchors := [[home, 18.0, A["citadel"]]]
 	for b in world.buildings:
 		if b.alive and b.team == team and b.def_id == "gate":
-			anchors.append([b.global_position, 12.0, 26.0])
+			anchors.append([b.global_position, 12.0, A["gate"]])
 	for site in world.sites:
 		if site.owner_team == team:
-			anchors.append([site.global_position, site.radius + 4.0, site.radius + 20.0])
+			anchors.append([site.global_position, site.radius + 4.0, site.radius + A["site"]])
 	for a: Array in anchors:
 		var q := _nearest_free(id, a[0], a[1], a[2])
 		if q != Vector3.INF:
@@ -270,7 +271,7 @@ func _nearest_free(id: String, at: Vector3, r0: float, r1: float) -> Vector3:
 func _valid(id: String, p: Vector3) -> bool:
 	var d: Dictionary = Defs.BUILDINGS[id]
 	var fp: float = d["footprint"]
-	if not world.nav.area_free(p, fp + 1.0):
+	if not world.forest.area_buildable(p, fp + 1.0):
 		return false
 	var h0 := world.terrain.height_at(p.x, p.z)
 	for a in 8:
