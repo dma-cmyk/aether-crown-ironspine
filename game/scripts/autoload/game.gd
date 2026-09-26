@@ -36,6 +36,7 @@ func _ready() -> void:
 			args[kv[0]] = kv[1] if kv.size() > 1 else "1"
 	if OS.has_feature("web"):
 		_read_url_args()
+		_recover_stale_web_page()
 	var t := arg("touch")
 	compact = t != "0" and (t != "" or DisplayServer.is_touchscreen_available())
 	touch_input = compact
@@ -95,6 +96,20 @@ func _read_url_args() -> void:
 	for pair in (q as String).trim_prefix("?").split("&", false):
 		var kv := pair.split("=", true, 1)
 		args[kv[0].uri_decode()] = kv[1].uri_decode() if kv.size() > 1 else "1"
+
+
+## An older PWA worker can serve an old HTML shell with the new PCK. The old
+## shell has no audio_bridge.js, so use a query URL that misses its HTML cache.
+func _recover_stale_web_page() -> void:
+	JavaScriptBridge.eval("""
+		(() => {
+			if (window.AetherAudio) return;
+			const url = new URL(window.location.href);
+			if (url.searchParams.has('ac-refresh')) return;
+			url.searchParams.set('ac-refresh', Date.now().toString());
+			window.location.replace(url.href);
+		})()
+	""", true)
 
 
 # ---------------------------------------------------------------- phones
@@ -184,25 +199,27 @@ func apply_audio() -> void:
 	_set_bus("Master", master_volume)
 	if is_web():
 		# Long tracks use HTML audio on Web, while short Godot samples use Master.
-		JavaScriptBridge.eval("window.AetherAudio.setLevels(%f, %f, %f)" % [master_volume, music_volume, sfx_volume], true)
+		_web_audio("setLevels(%f, %f, %f)" % [master_volume, music_volume, sfx_volume])
 	else:
 		_set_bus("Music", music_volume)
 		_set_bus("SFX", sfx_volume)
 
 
 func web_audio_play(id: String) -> void:
-	if is_web():
-		JavaScriptBridge.eval("window.AetherAudio.play(%s)" % JSON.stringify(id), true)
+	_web_audio("play(%s)" % JSON.stringify(id))
 
 
 func web_audio_stop(id: String) -> void:
-	if is_web():
-		JavaScriptBridge.eval("window.AetherAudio.stop(%s)" % JSON.stringify(id), true)
+	_web_audio("stop(%s)" % JSON.stringify(id))
 
 
 func web_audio_pause(on: bool) -> void:
+	_web_audio("pause(%s)" % str(on).to_lower())
+
+
+func _web_audio(call: String) -> void:
 	if is_web():
-		JavaScriptBridge.eval("window.AetherAudio.pause(%s)" % str(on).to_lower(), true)
+		JavaScriptBridge.eval("window.AetherAudio && window.AetherAudio.%s" % call, true)
 
 
 func _set_bus(bus_name: String, v: float) -> void:
@@ -273,7 +290,7 @@ func _switch_scene(path: String, line: String) -> void:
 		out.tween_property(_fader, "color:a", 1.0, 0.35).set_trans(Tween.TRANS_SINE)
 		# the music fades with the picture; apply_audio() restores it for the next scene
 		if is_web():
-			JavaScriptBridge.eval("window.AetherAudio.fadeTo(0, 350)", true)
+			_web_audio("fadeTo(0, 350)")
 		else:
 			var bus := AudioServer.get_bus_index("Music")
 			if bus >= 0:
@@ -289,7 +306,7 @@ func _switch_scene(path: String, line: String) -> void:
 	apply_audio()
 	if is_web():
 		web_audio_pause(false)
-		JavaScriptBridge.eval("window.AetherAudio.fadeTo(1, 800)", true)
+		_web_audio("fadeTo(1, 800)")
 	for i in 4:
 		await get_tree().process_frame
 	_fader_text.text = ""
