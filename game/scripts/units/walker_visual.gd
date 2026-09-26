@@ -77,7 +77,10 @@ func _process(delta: float) -> void:
 	_last_pos = gp
 	var spd := moved / maxf(delta, 0.001)
 	var walk := clampf(spd / maxf(unit.speed * 0.8, 0.1), 0.0, 1.0)
+	var was := phase
 	phase = fmod(phase + moved / 7.2, 1.0)
+	if walk > 0.3 and visible and fmod(was + 0.25, 0.5) > fmod(phase + 0.25, 0.5):
+		World.inst.sfx.play_at("robot_step_heavy", unit.global_position, -6.0)
 	var target_crouch := 1.0 if unit.fortified else 0.0
 	crouch = move_toward(crouch, target_crouch, delta * 1.2)
 	var t := phase * TAU
@@ -107,5 +110,4 @@ func _process(delta: float) -> void:
 			World.inst.fx.smoke(torso.global_position + Vector3(0, 3.5, -1.5), 1.6, 0.28)
 	if unit.special_time > 0.0 and randf() < delta * 8.0:
 		World.inst.fx.flash(torso.global_position + Vector3(randf_range(-2, 2), randf_range(1, 4), randf_range(-2, 2)), Defs.team_glow(unit.team), 1.2)
-
 

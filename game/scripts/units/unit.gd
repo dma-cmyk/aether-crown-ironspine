@@ -36,6 +36,7 @@ var _air_box := Vector3.ZERO
 var _air_floor := -INF
 var _air_t := 0.0
 var moving := false
+var _flight_sfx_t := 0.0
 var firing_timer := 0.0
 var _acquire_t := 0.0
 var _repath_t := 0.0
@@ -72,6 +73,8 @@ func setup(id: String, t: int, pos: Vector3, face: float) -> void:
 	is_mechanical = type in ["walker", "vehicle", "air"]
 	is_creature = type in ["giant", "beast", "flyer"]
 	altitude = def.get("altitude", 0.0)
+	if is_air:
+		_flight_sfx_t = randf_range(0.3, 1.8)
 	if type == "squad":
 		max_hp = def["members"] * def["member_hp"]
 		height = 2.0
@@ -491,6 +494,8 @@ func tick(dt: float) -> void:
 	_try_fire()
 	_auto_repair(dt)
 	_integrate(dt)
+	if is_air:
+		_flight_sound(dt)
 
 
 func _acquire() -> void:
@@ -791,6 +796,18 @@ func _face_towards(p: Vector3, dt: float) -> void:
 func _facing_ok(p: Vector3, tol: float) -> bool:
 	var to := Vector3(p.x - global_position.x, 0, p.z - global_position.z)
 	return absf(angle_difference(facing, atan2(to.x, to.z))) < tol
+
+
+## Passing air should be audible without looping a sound for every flyer every frame.
+func _flight_sound(dt: float) -> void:
+	_flight_sfx_t -= dt
+	if _flight_sfx_t > 0.0 or not moving or Vector2(velocity.x, velocity.z).length() < speed * 0.45:
+		return
+	_flight_sfx_t = randf_range(3.4, 5.2)
+	if team != Defs.TEAM_PLAYER and not seen_by_player:
+		return
+	var key := "glide_wing" if type == "flyer" else "glide_machine"
+	World.inst.sfx.play_at(key, global_position, -8.0 if type == "flyer" else -10.0)
 
 
 func _integrate(dt: float) -> void:

@@ -164,8 +164,11 @@ func _walk(delta: float) -> void:
 			(p[1] as Node3D).transform = (rest[p[1]] as Transform3D).rotated_local(Vector3.RIGHT, lift * 0.6 + crouch * 0.45 * front)
 		if p[2]:
 			(p[2] as Node3D).transform = (rest[p[2]] as Transform3D).rotated_local(Vector3.RIGHT, swing - lift * 0.6 - crouch * 0.2 * front)
-	# heavy feet: a thud and a puff of dust each time one lands
-	if walk > 0.3 and unit.height > 6.0 and fmod(was + 0.25, 0.5) > fmod(phase + 0.25, 0.5):
+	# A servo click and metal step lands with the procedural gait, including lighter walkers.
+	var landed := walk > 0.3 and fmod(was + 0.25, 0.5) > fmod(phase + 0.25, 0.5)
+	if landed and visible:
+		World.inst.sfx.play_at("robot_step_heavy" if unit.height > 6.0 else "robot_step", unit.global_position, -6.0)
+	if landed and unit.height > 6.0:
 		World.inst.fx.dust(unit.global_position + Vector3(randf_range(-2, 2), 0.3, randf_range(-2, 2)), 1.6)
 		if unit.team == Defs.TEAM_PLAYER or unit.seen_by_player:
 			World.inst.camera.shake(0.08)

@@ -29,8 +29,13 @@ const SOUNDS := {
 	"roar_death": ["roar_death_1"],
 	"screech": ["screech_1"],
 	"howl": ["howl_1"],
+	"robot_step": ["robot_step_1", "robot_step_2", "robot_step_3"],
+	"robot_step_heavy": ["robot_step_heavy_1", "robot_step_heavy_2"],
+	"glide_wing": ["glide_wing_1", "glide_wing_2"],
+	"glide_machine": ["glide_machine_1", "glide_machine_2"],
 }
-const LIMIT := {"rifle": 5, "gatling": 3, "explosion_small": 4, "explosion": 4, "cannon": 4, "beam": 3, "bite": 3, "flame": 3, "smash": 3}
+const LIMIT := {"rifle": 5, "gatling": 3, "explosion_small": 4, "explosion": 4, "cannon": 4, "beam": 3, "bite": 3, "flame": 3, "smash": 3,
+	"robot_step": 4, "robot_step_heavy": 2, "glide_wing": 2, "glide_machine": 2}
 
 var streams := {}
 var pool: Array[AudioStreamPlayer3D] = []

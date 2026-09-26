@@ -5,6 +5,7 @@
 """Synthesise all game sound effects, ambience loops and the battle theme.
 
 Run: uv run tools/audio/gen_audio.py
+     uv run tools/audio/gen_audio.py movement  # regenerate only movement sounds
 Output: short effects as WAV, BGM and ambience as MP3 (requires ffmpeg).
 """
 import math
@@ -187,6 +188,48 @@ def beam(seed):
     crackle = (r.random(len(t)) < 0.004) * r.standard_normal(len(t)) * 1.5
     x = (tone * 0.6 + shimmer + filt(crackle, 800, 8000)) * env_exp(sec, 0.22, 0.01)
     return reverb(x, 0.9, 0.3, 400, 9000)
+
+
+def robot_step(seed, heavy=False):
+    """A quick servo chirp followed by a metal footfall: 'pip, clang'."""
+    r = np.random.default_rng(seed)
+    sec = 0.48 if heavy else 0.34
+    t = secs(n_of(sec))
+    chirp = sweep(1050 if heavy else 1750, 480 if heavy else 900, 0.105)
+    x = np.zeros_like(t)
+    mix_at(x, chirp * env_exp(0.105, 0.045, 0.003), 0.0, 0.65)
+    hit_t = np.maximum(t - 0.09, 0.0)
+    hit = (t >= 0.09) * np.exp(-hit_t / (0.11 if heavy else 0.065))
+    metal = np.sin(2 * np.pi * (310 if heavy else 520) * hit_t) * hit
+    clank = filt(r.standard_normal(len(t)), 180, 3800) * hit
+    bass = np.sin(2 * np.pi * (75 if heavy else 120) * hit_t) * hit
+    x += metal * 0.28 + clank * (0.5 if heavy else 0.4) + bass * (0.7 if heavy else 0.3)
+    return x
+
+
+def glide_pass(seed, wing=False):
+    """A moving gust, with feathers for creatures or a faint turbine for machines."""
+    r = np.random.default_rng(seed)
+    sec = 1.45 if wing else 1.65
+    t = secs(n_of(sec))
+    swell = np.clip(t / 0.16, 0, 1) * np.clip((sec - t) / 0.42, 0, 1)
+    swell *= 0.7 + 0.3 * np.sin(np.pi * t / sec)
+    air = filt(r.standard_normal(len(t)), 180, 2400) * swell
+    hiss = filt(r.standard_normal(len(t)), 1100, 6500) * swell
+    if wing:
+        flutter = 0.8 + 0.2 * np.sin(2 * np.pi * (5.0 * t + 0.7 * t * t))
+        return air * flutter * 0.8 + hiss * 0.22
+    turbine = sweep(115, 155, sec) * swell
+    return air * 0.7 + hiss * 0.15 + turbine * 0.16
+
+
+def movement_sounds():
+    for i in range(3):
+        write("robot_step_%d" % (i + 1), robot_step(210 + i), 0.55)
+    for i in range(2):
+        write("robot_step_heavy_%d" % (i + 1), robot_step(220 + i, True), 0.65)
+        write("glide_wing_%d" % (i + 1), glide_pass(230 + i, True), 0.5)
+        write("glide_machine_%d" % (i + 1), glide_pass(240 + i), 0.45)
 
 
 def explosion(sec, size, seed):
@@ -457,6 +500,9 @@ def main():
     if "creatures" in sys.argv[1:]:
         creature_sounds()
         return
+    if "movement" in sys.argv[1:]:
+        movement_sounds()
+        return
     for i in range(3):
         write("rifle_%d" % (i + 1), rifle_volley(10 + i), 0.55)
     for i in range(2):
@@ -471,6 +517,7 @@ def main():
     ambience()
     music()
     creature_sounds()
+    movement_sounds()
 
 
 if __name__ == "__main__":
