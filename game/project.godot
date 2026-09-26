@@ -23,6 +23,11 @@ boot_splash/image="res://assets/ui/splash.png"
 
 Game="*res://scripts/autoload/game.gd"
 
+[audio]
+
+; Godot's Web sample playback loses output when Music and SFX buses are added.
+general/default_playback_type.web=0
+
 [display]
 
 window/size/viewport_width=1920

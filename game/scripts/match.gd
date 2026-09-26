@@ -166,8 +166,8 @@ static func _looped(path: String) -> AudioStream:
 		s = s.duplicate()
 		s.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		s.loop_begin = 0
-		var frame_bytes := (2 if s.stereo else 1) * 2
-		s.loop_end = s.data.size() / frame_bytes
+		# Imported WAV data may be compressed, so bytes are not sample frames.
+		s.loop_end = maxi(0, roundi(s.get_length() * s.mix_rate) - 1)
 	return s
 
 
