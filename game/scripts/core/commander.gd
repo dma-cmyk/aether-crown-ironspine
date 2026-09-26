@@ -65,15 +65,21 @@ func set_selection(list: Array, add: bool = false) -> void:
 			if is_instance_valid(e):
 				e.set_selected(false)
 		selection.clear()
+	var added: Entity
 	for e in list:
 		if is_instance_valid(e) and e.alive and not e in selection:
 			selection.append(e)
 			e.set_selected(true)
+			if added == null and e is Unit and e.team == Defs.TEAM_PLAYER:
+				added = e
 	selection_changed.emit()
-	_speak("select")
+	_speak("select", added)
 
 
-func _speak(kind: String) -> void:
+func _speak(kind: String, preferred: Entity = null) -> void:
+	if preferred is Unit and preferred.alive and world.sfx.has_voice(preferred.def_id):
+		world.sfx.play_voice(preferred.def_id, kind)
+		return
 	for e in selection:
 		if e is Unit and e.team == Defs.TEAM_PLAYER and e.alive and world.sfx.has_voice(e.def_id):
 			world.sfx.play_voice(e.def_id, kind)
@@ -850,4 +856,3 @@ func _process(_delta: float) -> void:
 	hover = null
 	if not dragging and not Game.touch_input and not _ui_hovered():
 		hover = pick(get_viewport().get_mouse_position())
-

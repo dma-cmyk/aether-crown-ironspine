@@ -164,7 +164,7 @@ godot --path game -- --load=/tmp/s.json
 
 Web 版のBGMと環境音はブラウザがMP3を再生し、短い効果音はGodotが再生します。`tools/export_web.sh` がMP3を配置し、PWAのオフラインキャッシュにも登録します。
 
-選択・移動・攻撃の応答音声を歩兵と装甲歩行機で試作しています。音声はローカルの VOICEVOX Nemo エンジンで事前生成し、ゲームには生成済みの短い WAV を同梱します。再生成はエンジンを起動して `uv run tools/audio/gen_voices.py`。使用音声: **VOICEVOX Nemo：男声1・男声3**（[利用規約](https://voicevox.hiroshiba.jp/nemo/term/)）。
+自軍の全17種のユニットは、選択・移動・攻撃の命令にそれぞれ固有の短い日本語で返事をします。歩兵・工兵・艦長・機械・神獣・天使・悪魔ごとに話者、台詞、速さ、音色を変えています。音声はローカルの VOICEVOX Nemo エンジンで事前生成し、ゲームには短い WAV を同梱します。再生成はエンジンを起動して `uv run tools/audio/gen_voices.py`。使用音声: **VOICEVOX Nemo：男声1〜3・女声1〜6**（[利用規約](https://voicevox.hiroshiba.jp/nemo/term/)）。
 
 設計の詳細は [docs/design.md](docs/design.md) を参照。
 

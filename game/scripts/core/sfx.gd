@@ -36,18 +36,7 @@ const SOUNDS := {
 }
 const LIMIT := {"rifle": 5, "gatling": 3, "explosion_small": 4, "explosion": 4, "cannon": 4, "beam": 3, "bite": 3, "flame": 3, "smash": 3,
 	"robot_step": 4, "robot_step_heavy": 2, "glide_wing": 2, "glide_machine": 2}
-const VOICE_SETS := {
-	"aetherguard": {
-		"select": ["guard_select_1", "guard_select_2"],
-		"move": ["guard_move_1", "guard_move_2"],
-		"attack": ["guard_attack_1", "guard_attack_2"],
-	},
-	"walker": {
-		"select": ["walker_select_1", "walker_select_2"],
-		"move": ["walker_move_1", "walker_move_2"],
-		"attack": ["walker_attack_1", "walker_attack_2"],
-	},
-}
+const VOICE_ACTIONS := ["select", "move", "attack"]
 
 var streams := {}
 var pool: Array[AudioStreamPlayer3D] = []
@@ -56,6 +45,8 @@ var voice_streams := {}
 var voice_player: AudioStreamPlayer
 var _last_voice_ms := -100000
 var _last_voice_kind := ""
+var _last_voice_unit := ""
+var _last_voice_line := {}
 var _next := 0
 var _recent := {}
 
@@ -82,16 +73,21 @@ func _ready() -> void:
 		u.bus = "Master" if Game.is_web() else "SFX"
 		add_child(u)
 		ui_players.append(u)
-	for unit_id in VOICE_SETS:
+	for unit_id in Defs.UNITS:
 		var actions := {}
-		for kind in VOICE_SETS[unit_id]:
+		var complete := true
+		var prefix: String = "guard" if unit_id == "aetherguard" else unit_id
+		for kind in VOICE_ACTIONS:
 			var lines: Array[AudioStream] = []
-			for name in VOICE_SETS[unit_id][kind]:
-				var path := "res://assets/audio/voices/%s.wav" % name
+			for i in 2:
+				var path := "res://assets/audio/voices/%s_%s_%d.wav" % [prefix, kind, i + 1]
 				if ResourceLoader.exists(path):
 					lines.append(load(path))
+			if lines.is_empty():
+				complete = false
 			actions[kind] = lines
-		voice_streams[unit_id] = actions
+		if complete:
+			voice_streams[unit_id] = actions
 	voice_player = AudioStreamPlayer.new()
 	voice_player.bus = "Master" if Game.is_web() else "SFX"
 	add_child(voice_player)
@@ -146,13 +142,23 @@ func play_voice(unit_id: String, kind: String) -> void:
 	if lines.is_empty():
 		return
 	var now := Time.get_ticks_msec()
-	if now - _last_voice_ms < (900 if _last_voice_kind == kind else 170):
+	var same_unit := _last_voice_unit == unit_id
+	var min_gap := 80
+	if same_unit:
+		min_gap = 900 if _last_voice_kind == kind else 170
+	if now - _last_voice_ms < min_gap:
 		return
-	if kind == "select" and voice_player.playing:
+	if kind == "select" and same_unit and voice_player.playing:
 		return
 	_last_voice_ms = now
 	_last_voice_kind = kind
+	_last_voice_unit = unit_id
 	voice_player.stop()
-	voice_player.stream = lines[randi() % lines.size()]
+	var line_key := unit_id + ":" + kind
+	var line_index := randi() % lines.size()
+	if lines.size() > 1 and line_index == int(_last_voice_line.get(line_key, -1)):
+		line_index = (line_index + 1) % lines.size()
+	_last_voice_line[line_key] = line_index
+	voice_player.stream = lines[line_index]
 	voice_player.volume_db = -4.0 + (linear_to_db(maxf(Game.sfx_volume, 0.0001)) if Game.is_web() else 0.0)
 	voice_player.play()
