@@ -70,6 +70,14 @@ func set_selection(list: Array, add: bool = false) -> void:
 			selection.append(e)
 			e.set_selected(true)
 	selection_changed.emit()
+	_speak("select")
+
+
+func _speak(kind: String) -> void:
+	for e in selection:
+		if e is Unit and e.team == Defs.TEAM_PLAYER and e.alive and world.sfx.has_voice(e.def_id):
+			world.sfx.play_voice(e.def_id, kind)
+			return
 
 
 func pick(screen: Vector2) -> Entity:
@@ -317,6 +325,7 @@ func _smart_order(pos: Vector2, queued: bool) -> void:
 		world.fx.ring_burst(e.global_position + Vector3(0, 0.4, 0), e.radius + 1.0, Color(1.0, 0.35, 0.3))
 		world.sfx.play_ui("confirm")
 		order_issued.emit("attack", e.global_position)
+		_speak("attack")
 		return
 	if e and e.team == Defs.TEAM_PLAYER and (e.is_building or e.is_mechanical) and e.hp < e.max_hp:
 		var any := false
@@ -333,6 +342,7 @@ func _smart_order(pos: Vector2, queued: bool) -> void:
 	world.fx.ring_burst(ground + Vector3(0, 0.4, 0), 2.5, Color(0.5, 1.0, 0.6))
 	world.sfx.play_ui("confirm")
 	order_issued.emit("move", ground)
+	_speak("move")
 
 
 func move_group(units: Array, target: Vector3, queued: bool, attack: bool, patrol: bool = false) -> void:
@@ -530,18 +540,22 @@ func cancel_mode() -> void:
 func _confirm_mode(pos: Vector2, shift: bool) -> void:
 	var ground := ground_at_mouse(pos)
 	var units := own_units()
+	var spoken := ""
 	match mode:
 		Mode.MOVE:
 			if ground != Vector3.INF:
 				move_group(units, ground, shift, false)
+				spoken = "move"
 		Mode.ATTACK:
 			var e := pick(pos)
 			if e and e.team != Defs.TEAM_PLAYER and e.team >= 0:
 				for u in units:
 					u.order_attack(e)
+				spoken = "attack"
 			elif ground != Vector3.INF:
 				move_group(units, ground, false, true)
 				world.fx.ring_burst(ground + Vector3(0, 0.4, 0), 3.0, Color(1.0, 0.4, 0.3))
+				spoken = "attack"
 		Mode.PATROL:
 			if ground != Vector3.INF:
 				move_group(units, ground, false, false, true)
@@ -569,6 +583,8 @@ func _confirm_mode(pos: Vector2, shift: bool) -> void:
 				world.sfx.play_ui("error")
 				return
 	world.sfx.play_ui("confirm")
+	if spoken != "":
+		_speak(spoken)
 	set_mode(Mode.NONE)
 
 
@@ -834,5 +850,4 @@ func _process(_delta: float) -> void:
 	hover = null
 	if not dragging and not Game.touch_input and not _ui_hovered():
 		hover = pick(get_viewport().get_mouse_position())
-
 

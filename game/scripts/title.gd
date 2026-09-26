@@ -144,6 +144,16 @@ func _build_ui() -> void:
 	foot.offset_bottom = -20
 	foot.visible = not c
 	ui.add_child(foot)
+	var voice_credit := UITheme.label("Unit voices: VOICEVOX Nemo", 12, UITheme.TEXT_DIM, UITheme.italic_font(), 2)
+	voice_credit.anchor_left = 1.0 if c else 0.0
+	voice_credit.anchor_right = 1.0 if c else 0.0
+	voice_credit.anchor_top = 1.0
+	voice_credit.anchor_bottom = 1.0
+	voice_credit.offset_left = -290 if c else 122
+	voice_credit.offset_top = -22
+	voice_credit.offset_right = -12 if c else 700
+	voice_credit.offset_bottom = -4
+	ui.add_child(voice_credit)
 	if not Game.is_capture():
 		# the crest, the name and then the menu drift in from the left as the curtain lifts
 		var parts: Array[Control] = [crest, title, tag, jp, menu]

@@ -14,6 +14,7 @@ func _init() -> void:
 			for line: String in part["copyright"]:
 				t += "  Copyright: " + line + "\n"
 			t += "  License: " + str(part["license"]) + "\n"
+	t += "\n== Unit voices ==\n\nVOICEVOX Nemo: 男声1・男声3\nhttps://voicevox.hiroshiba.jp/nemo/\n"
 	t += "\n== Fonts ==\n\n" + FileAccess.get_file_as_string("res://assets/fonts/OFL.txt") + "\n"
 	t += "\n== License texts ==\n"
 	var info := Engine.get_license_info()
