@@ -31,13 +31,16 @@ func _ready() -> void:
 	terrain.register_chimneys(world.fx)
 	_stage_scene()
 	_build_ui()
-	music = AudioStreamPlayer.new()
-	music.bus = "Music"
-	music.stream = preload("res://scripts/match.gd")._looped("res://assets/audio/music_battle.wav")
-	music.volume_db = -30.0
-	add_child(music)
-	music.play()
-	music.create_tween().tween_property(music, "volume_db", -4.0, 2.5)
+	if Game.is_web():
+		Game.web_audio_play("music_battle")
+	else:
+		music = AudioStreamPlayer.new()
+		music.bus = "Music"
+		music.stream = preload("res://scripts/match.gd")._looped("res://assets/audio/music_battle.mp3")
+		music.volume_db = -30.0
+		add_child(music)
+		music.play()
+		music.create_tween().tween_property(music, "volume_db", -4.0, 2.5)
 	if Game.is_capture():
 		var cap := preload("res://scripts/dev/capture.gd").new()
 		add_child(cap)

@@ -11,6 +11,10 @@ mkdir -p "$out"
 godot --headless --path game --import >/dev/null 2>&1
 godot --headless --path game --script res://scripts/dev/check_glyphs.gd
 godot --headless --path game --export-release "Web" "$out/index.html"
+cp tools/web/audio_bridge.js "$out/audio_bridge.js"
+mkdir -p "$out/audio"
+cp game/assets/audio/music_battle.mp3 game/assets/audio/amb_wind.mp3 game/assets/audio/amb_battle.mp3 "$out/audio/"
+python3 tools/web/cache_audio.py "$out/index.service.worker.js"
 godot --headless --path game --script res://scripts/dev/licenses.gd -- "$out/THIRD-PARTY-NOTICES.txt"
 cp LICENSE "$out/LICENSE.txt"
 ls -l "$out"

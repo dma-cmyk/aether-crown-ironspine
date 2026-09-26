@@ -141,9 +141,14 @@ func _load_scenario() -> Scenario:
 
 
 func _start_audio() -> void:
+	if Game.is_web():
+		Game.web_audio_play("music_battle")
+		Game.web_audio_play("amb_wind")
+		Game.web_audio_play("amb_battle")
+		return
 	music = AudioStreamPlayer.new()
 	music.bus = "Music"
-	music.stream = _looped("res://assets/audio/music_battle.wav")
+	music.stream = _looped("res://assets/audio/music_battle.mp3")
 	music.volume_db = -30.0
 	add_child(music)
 	music.play()
@@ -151,24 +156,24 @@ func _start_audio() -> void:
 	for f in ["amb_wind", "amb_battle"]:
 		var a := AudioStreamPlayer.new()
 		a.bus = "SFX"
-		a.stream = _looped("res://assets/audio/%s.wav" % f)
+		a.stream = _looped("res://assets/audio/%s.mp3" % f)
 		a.volume_db = -14.0 if f == "amb_wind" else -20.0
 		add_child(a)
 		a.play()
 		ambience.append(a)
 
 
+func _exit_tree() -> void:
+	if Game.is_web():
+		Game.web_audio_stop("amb_wind")
+		Game.web_audio_stop("amb_battle")
+
+
 static func _looped(path: String) -> AudioStream:
 	if not ResourceLoader.exists(path):
 		return null
-	var s := load(path) as AudioStreamWAV
-	if s:
-		s = s.duplicate()
-		s.loop_mode = AudioStreamWAV.LOOP_FORWARD
-		s.loop_begin = 0
-		# Imported WAV data may be compressed, so bytes are not sample frames.
-		s.loop_end = maxi(0, roundi(s.get_length() * s.mix_rate) - 1)
-	return s
+	# Looping is set on the MP3 importer.
+	return load(path) as AudioStreamMP3
 
 
 func _unhandled_input(event: InputEvent) -> void:

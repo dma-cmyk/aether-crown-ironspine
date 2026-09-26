@@ -182,8 +182,27 @@ func save_settings() -> void:
 
 func apply_audio() -> void:
 	_set_bus("Master", master_volume)
-	_set_bus("Music", music_volume)
-	_set_bus("SFX", sfx_volume)
+	if is_web():
+		# Long tracks use HTML audio on Web, while short Godot samples use Master.
+		JavaScriptBridge.eval("window.AetherAudio.setLevels(%f, %f, %f)" % [master_volume, music_volume, sfx_volume], true)
+	else:
+		_set_bus("Music", music_volume)
+		_set_bus("SFX", sfx_volume)
+
+
+func web_audio_play(id: String) -> void:
+	if is_web():
+		JavaScriptBridge.eval("window.AetherAudio.play(%s)" % JSON.stringify(id), true)
+
+
+func web_audio_stop(id: String) -> void:
+	if is_web():
+		JavaScriptBridge.eval("window.AetherAudio.stop(%s)" % JSON.stringify(id), true)
+
+
+func web_audio_pause(on: bool) -> void:
+	if is_web():
+		JavaScriptBridge.eval("window.AetherAudio.pause(%s)" % str(on).to_lower(), true)
 
 
 func _set_bus(bus_name: String, v: float) -> void:
@@ -253,9 +272,12 @@ func _switch_scene(path: String, line: String) -> void:
 		var out := _fader.create_tween().set_parallel()
 		out.tween_property(_fader, "color:a", 1.0, 0.35).set_trans(Tween.TRANS_SINE)
 		# the music fades with the picture; apply_audio() restores it for the next scene
-		var bus := AudioServer.get_bus_index("Music")
-		if bus >= 0:
-			out.tween_method(func(db: float) -> void: AudioServer.set_bus_volume_db(bus, db), AudioServer.get_bus_volume_db(bus), -40.0, 0.35)
+		if is_web():
+			JavaScriptBridge.eval("window.AetherAudio.fadeTo(0, 350)", true)
+		else:
+			var bus := AudioServer.get_bus_index("Music")
+			if bus >= 0:
+				out.tween_method(func(db: float) -> void: AudioServer.set_bus_volume_db(bus, db), AudioServer.get_bus_volume_db(bus), -40.0, 0.35)
 		await out.finished
 	_fader_text.text = line
 	# let the black frame and the line reach the screen before the load blocks
@@ -265,6 +287,9 @@ func _switch_scene(path: String, line: String) -> void:
 	get_tree().change_scene_to_file(path)
 	await get_tree().process_frame
 	apply_audio()
+	if is_web():
+		web_audio_pause(false)
+		JavaScriptBridge.eval("window.AetherAudio.fadeTo(1, 800)", true)
 	for i in 4:
 		await get_tree().process_frame
 	_fader_text.text = ""

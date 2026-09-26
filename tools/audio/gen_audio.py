@@ -5,10 +5,11 @@
 """Synthesise all game sound effects, ambience loops and the battle theme.
 
 Run: uv run tools/audio/gen_audio.py
-Output: game/assets/audio/*.wav (44.1 kHz, 16-bit)
+Output: short effects as WAV, BGM and ambience as MP3 (requires ffmpeg).
 """
 import math
 import pathlib
+import subprocess
 import sys
 import wave
 
@@ -16,6 +17,7 @@ import numpy as np
 
 SR = 44100
 OUT = pathlib.Path(__file__).resolve().parents[2] / "game" / "assets" / "audio"
+LONG_BITRATES = {"music_battle": "128k", "amb_wind": "48k", "amb_battle": "48k"}
 rng = np.random.default_rng(1234)
 
 
@@ -112,6 +114,16 @@ def write(name, x, peak=0.9, stereo=None):
         data = normalize(fade_tail(x.copy()), peak)[:, None]
         ch = 1
     pcm = (np.clip(data, -1, 1) * 32767).astype("<i2")
+    if name in LONG_BITRATES:
+        target = OUT / (name + ".mp3")
+        subprocess.run([
+            "ffmpeg", "-nostdin", "-loglevel", "error", "-y",
+            "-f", "s16le", "-ar", str(SR), "-ac", str(ch), "-i", "pipe:0",
+            "-codec:a", "libmp3lame", "-b:a", LONG_BITRATES[name],
+            "-map_metadata", "-1", str(target),
+        ], input=pcm.tobytes(), check=True)
+        print("wrote", name, "%.2fs" % (len(pcm) / SR), LONG_BITRATES[name])
+        return
     with wave.open(str(OUT / (name + ".wav")), "wb") as w:
         w.setnchannels(ch)
         w.setsampwidth(2)

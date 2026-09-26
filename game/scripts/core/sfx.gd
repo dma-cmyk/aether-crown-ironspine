@@ -49,7 +49,7 @@ func _ready() -> void:
 		streams[key] = list
 	for i in 28:
 		var p := AudioStreamPlayer3D.new()
-		p.bus = "SFX"
+		p.bus = "Master" if Game.is_web() else "SFX"
 		p.unit_size = 16.0
 		p.max_distance = 260.0
 		p.attenuation_model = AudioStreamPlayer3D.ATTENUATION_INVERSE_DISTANCE
@@ -58,7 +58,7 @@ func _ready() -> void:
 		pool.append(p)
 	for i in 4:
 		var u := AudioStreamPlayer.new()
-		u.bus = "SFX"
+		u.bus = "Master" if Game.is_web() else "SFX"
 		add_child(u)
 		ui_players.append(u)
 
@@ -83,7 +83,7 @@ func play_at(key: String, pos: Vector3, volume_db: float = 0.0) -> void:
 	var p := pool[_next]
 	_next = (_next + 1) % pool.size()
 	p.stream = list[randi() % list.size()]
-	p.volume_db = volume_db
+	p.volume_db = volume_db + (linear_to_db(maxf(Game.sfx_volume, 0.0001)) if Game.is_web() else 0.0)
 	p.pitch_scale = randf_range(0.92, 1.08)
 	p.global_position = pos
 	p.play()
@@ -96,6 +96,6 @@ func play_ui(key: String, volume_db: float = -4.0) -> void:
 	for u in ui_players:
 		if not u.playing:
 			u.stream = list[randi() % list.size()]
-			u.volume_db = volume_db
+			u.volume_db = volume_db + (linear_to_db(maxf(Game.sfx_volume, 0.0001)) if Game.is_web() else 0.0)
 			u.play()
 			return

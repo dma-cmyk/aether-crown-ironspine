@@ -25,8 +25,9 @@ Game="*res://scripts/autoload/game.gd"
 
 [audio]
 
-; Godot's Web sample playback loses output when Music and SFX buses are added.
-general/default_playback_type.web=0
+; Web: short effects use low-latency samples; long MP3 loops use browser audio.
+; Keeping only Master for Godot audio avoids the multi-bus Web sample bug.
+general/default_playback_type.web=1
 
 [display]
 

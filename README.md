@@ -114,7 +114,7 @@ tools/                 アセット生成スクリプトと書き出し（export
   textures/            Material Maker（CLI 書き出し）＋ ImageMagick、神獣の皮・鱗・毛・羽は numpy で生成
   ui/make_icons.py     HUD アイコン（SVG）
   ui/make_splash.sh    起動画面（ブラウザ版の読み込み画面も兼ねる）
-  audio/gen_audio.py   効果音・環境音・BGM の合成（numpy）
+  audio/gen_audio.py   効果音（WAV）・環境音とBGM（MP3）の合成（numpy・ffmpeg）
   fonts/subset_fonts.py  同梱する Noto フォントのサブセット（ゲームの文字＋かな）
   web/browser_check.py   ブラウザ版を Chrome で動かして確認（スマホの模擬・タッチ・撮影・FPS）
 art/blend/             生成された .blend（Blender で開いて確認・編集できる）
@@ -133,7 +133,7 @@ tools/build_all.sh terrain    # 段階を指定: terrain | models | textures | f
 
 配布用のパッケージは `tools/export.sh v1.0.0` で `build/` に作ります（Linux の .tar.gz と Windows の .zip。Godot 4.7.2 のエクスポートテンプレートが必要）。
 
-使用ツール: Blender 5.2、Material Maker 1.7、ImageMagick 7、Inkscape（アイコン確認）、uv（音声合成）、Godot 4.7。
+使用ツール: Blender 5.2、Material Maker 1.7、ImageMagick 7、Inkscape（アイコン確認）、uv・ffmpeg（音声生成）、Godot 4.7。
 Material Maker は CLI 書き出し後も終了しないため、`build_textures.sh` は出力ファイルを待ってから終了させています。
 
 ## 開発用オプション
@@ -161,6 +161,8 @@ uv run tools/web/browser_check.py --phone --out /tmp/web '[["wait",3],["shot","t
 godot --headless --path game -- --match --autoplay --save-at=150 --save-to=/tmp/s.json
 godot --path game -- --load=/tmp/s.json
 ```
+
+Web 版のBGMと環境音はブラウザがMP3を再生し、短い効果音はGodotが再生します。`tools/export_web.sh` がMP3を配置し、PWAのオフラインキャッシュにも登録します。
 
 設計の詳細は [docs/design.md](docs/design.md) を参照。
 

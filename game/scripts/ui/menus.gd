@@ -147,6 +147,7 @@ func toggle_pause() -> void:
 	settings_box.visible = false
 	dim.visible = show
 	get_tree().paused = show
+	Game.web_audio_pause(show)
 	if show:
 		_center(pause_box)
 
